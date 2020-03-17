@@ -5,5 +5,5 @@ int main()
     for (i = 0; i < 11; ++i) { 
         sum += i; 
     }
-    return sum;
+    return sum == 55;
 }

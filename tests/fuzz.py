@@ -22,6 +22,7 @@ REPLACE_DICT = {
     "int16_t": "int",
     "int32_t": "int",
     "uint": "unsigned int",
+    "static ": "",
 }
 CSMITH_DIR = "csmith-2.3.0"
 
@@ -44,7 +45,12 @@ def generate(tests_dir, bin_file, runtime, file_name):
     A developer may customize the options to meet one's needs for testing.
     """
     global CSMITH_DIR
-    options = ["--no-builtins", "--no-safe-math", "--no-unions"]
+    options = [
+        "--no-argc", "--no-arrays", "--no-checksum",
+        "--no-jumps", "--no-longlong", "--no-int8",
+        "--no-uint8", "--no-safe-math", "--no-pointers",
+        "--no-structs", "--no-unions", "--no-builtins"
+    ]
     args = [bin_file] + options
     dst_path = os.path.join(runtime, file_name)
 

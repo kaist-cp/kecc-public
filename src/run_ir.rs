@@ -78,7 +78,7 @@ pub enum InterpreterError {
         display = "{}:{}:{} / Undef value cannot be used as an operand",
         func_name, bid, iid
     )]
-    Undef {
+    Misc {
         func_name: String,
         bid: BlockId,
         iid: usize,
@@ -198,6 +198,9 @@ mod calculator {
             (ast::BinaryOperator::Less, Value::Int(lhs), Value::Int(rhs)) => {
                 Ok(Value::Bool(lhs < rhs))
             }
+            (ast::BinaryOperator::GreaterOrEqual, Value::Int(lhs), Value::Int(rhs)) => {
+                Ok(Value::Bool(lhs >= rhs))
+            }
             _ => todo!(),
         }
     }
@@ -212,6 +215,16 @@ mod calculator {
             (ast::UnaryOperator::Minus, Value::Int(value)) => Ok(Value::Int(-value)),
             (ast::UnaryOperator::Negate, Value::Bool(value)) => Ok(Value::Bool(!value)),
             _ => todo!(),
+        }
+    }
+
+    pub fn calculate_typecast(value: &Value, dtype: &crate::ir::Dtype) -> Result<Value, ()> {
+        match (value, dtype) {
+            (Value::Int(_), crate::ir::Dtype::Int { .. }) => Ok(value.clone()),
+            (Value::Bool(b), crate::ir::Dtype::Int { .. }) => {
+                Ok(Value::Int(if *b { 1 } else { 0 }))
+            }
+            _ => todo!("calculate_typecast ({:?}) {:?}", dtype, value),
         }
     }
 }
@@ -250,7 +263,7 @@ impl<'i> State<'i> {
         // Create State
         let mut state = State {
             global_map: GlobalMap::default(),
-            stack_frame: StackFrame::new(func_def.bid_init.clone(), func_name, func_def),
+            stack_frame: StackFrame::new(func_def.bid_init, func_name, func_def),
             stack: Vec::new(),
             memory: Vec::new(),
             ir,
@@ -351,7 +364,7 @@ impl<'i> State<'i> {
             .stack_frame
             .func_def
             .blocks
-            .get(&self.stack_frame.pc.bid.clone())
+            .get(&self.stack_frame.pc.bid)
             .expect("block matched with `bid` must be exist");
 
         if block.instructions.len() == self.stack_frame.pc.iid {
@@ -378,8 +391,7 @@ impl<'i> State<'i> {
                 self.stack_frame = prev_stack_frame;
 
                 // create temporary register to write return value
-                let register =
-                    RegisterId::temp(self.stack_frame.pc.bid.clone(), self.stack_frame.pc.iid);
+                let register = RegisterId::temp(self.stack_frame.pc.bid, self.stack_frame.pc.iid);
                 self.register_write(register, value);
                 self.stack_frame.pc.increment();
             }
@@ -392,7 +404,7 @@ impl<'i> State<'i> {
     ) -> Result<Option<Value>, InterpreterError> {
         match block_exit {
             BlockExit::Jump { bid } => {
-                self.stack_frame.pc = Pc::new(bid.clone());
+                self.stack_frame.pc = Pc::new(*bid);
                 Ok(None)
             }
             BlockExit::ConditionalJump {
@@ -403,11 +415,7 @@ impl<'i> State<'i> {
                 let value = self.get_value(condition.clone())?;
                 let value = value.get_bool().expect("`condition` must be `Value::Bool`");
 
-                self.stack_frame.pc = Pc::new(if value {
-                    bid_then.clone()
-                } else {
-                    bid_else.clone()
-                });
+                self.stack_frame.pc = Pc::new(if value { *bid_then } else { *bid_else });
                 Ok(None)
             }
             BlockExit::Switch {
@@ -421,10 +429,10 @@ impl<'i> State<'i> {
                 let bid_next = cases
                     .iter()
                     .find(|(c, _)| value == self.constant_to_value(c.clone()))
-                    .map(|(_, bid)| bid.clone())
-                    .unwrap_or_else(|| default.clone());
+                    .map(|(_, bid)| bid)
+                    .unwrap_or_else(|| default);
 
-                self.stack_frame.pc = Pc::new(bid_next);
+                self.stack_frame.pc = Pc::new(*bid_next);
 
                 Ok(None)
             }
@@ -443,9 +451,9 @@ impl<'i> State<'i> {
                 let rhs = self.get_value(rhs.clone())?;
 
                 calculator::calculate_binary_operator_expression(&op, lhs, rhs).map_err(|_| {
-                    InterpreterError::Undef {
+                    InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
-                        bid: self.stack_frame.pc.bid.clone(),
+                        bid: self.stack_frame.pc.bid,
                         iid: self.stack_frame.pc.iid,
                     }
                 })?
@@ -454,9 +462,9 @@ impl<'i> State<'i> {
                 let operand = self.get_value(operand.clone())?;
 
                 calculator::calculate_unary_operator_expression(&op, operand).map_err(|_| {
-                    InterpreterError::Undef {
+                    InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
-                        bid: self.stack_frame.pc.bid.clone(),
+                        bid: self.stack_frame.pc.bid,
                         iid: self.stack_frame.pc.iid,
                     }
                 })?
@@ -502,7 +510,7 @@ impl<'i> State<'i> {
 
                 let args = self.preprocess_args(func_signature, args)?;
 
-                let stack_frame = StackFrame::new(func_def.bid_init.clone(), callee_name, func_def);
+                let stack_frame = StackFrame::new(func_def.bid_init, callee_name, func_def);
                 let prev_stack_frame = mem::replace(&mut self.stack_frame, stack_frame);
                 self.stack.push(prev_stack_frame);
 
@@ -512,10 +520,22 @@ impl<'i> State<'i> {
 
                 return Ok(None);
             }
-            _ => todo!("{:?} will be supported in the future", instruction),
+            Instruction::TypeCast {
+                value,
+                target_dtype,
+            } => {
+                let value = self.get_value(value.clone())?;
+                calculator::calculate_typecast(&value, target_dtype).map_err(|_| {
+                    InterpreterError::Misc {
+                        func_name: self.stack_frame.func_name.clone(),
+                        bid: self.stack_frame.pc.bid,
+                        iid: self.stack_frame.pc.iid,
+                    }
+                })?
+            }
         };
 
-        let register = RegisterId::temp(self.stack_frame.pc.bid.clone(), self.stack_frame.pc.iid);
+        let register = RegisterId::temp(self.stack_frame.pc.bid, self.stack_frame.pc.iid);
         self.register_write(register, result);
         self.stack_frame.pc.increment();
 

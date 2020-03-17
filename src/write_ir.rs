@@ -104,7 +104,7 @@ impl WriteLine for (&BlockId, &Block) {
             writeln!(
                 write,
                 "{}:{} = {}",
-                RegisterId::temp(self.0.clone(), i),
+                RegisterId::temp(*self.0, i),
                 instr.dtype(),
                 instr.write_string()
             )?;

@@ -11,5 +11,5 @@ int main(){
     *&*foo(*p2) += 1;
     *foo(p3) += 1;
     
-    return a;
+    return a == 3;
 }

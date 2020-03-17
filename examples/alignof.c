@@ -1,3 +1,3 @@
 int main() {
-    return _Alignof(const int);
+    return _Alignof(const int) == 4;
 }

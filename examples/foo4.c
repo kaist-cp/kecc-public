@@ -11,5 +11,5 @@ int (* (* foo3())())(int, int, int){
 }
 
 int main() {
-  return foo3()()(2, 2, 2);
+  return foo3()()(2, 2, 2) == 6;
 }

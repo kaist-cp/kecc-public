@@ -4,5 +4,5 @@ int foo(int x, int y, int z){
 }
 
 int main() {
-    return foo(0, 1, -1);
+    return foo(0, 1, -1) == -1;
 }

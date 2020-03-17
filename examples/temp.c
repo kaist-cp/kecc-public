@@ -3,3 +3,7 @@ int fibonacci(int n) {
         return n;
     }
 }
+
+int main() {
+    return 1;
+}

@@ -1,3 +1,3 @@
 int main() {
-    return sizeof(const int);
+    return sizeof(const int) == 4;
 }

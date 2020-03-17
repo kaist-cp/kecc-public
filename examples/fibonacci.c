@@ -7,5 +7,5 @@ int fibonacci(int n) {
 }
 
 int main() {
-    return fibonacci(9);
+    return fibonacci(9) == 34;
 }

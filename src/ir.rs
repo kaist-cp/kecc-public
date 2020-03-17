@@ -1058,7 +1058,7 @@ impl HasDtype for Instruction {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct BlockId(pub usize);
 
 impl fmt::Display for BlockId {
