@@ -86,7 +86,6 @@ if __name__ == "__main__":
     install_csmith(tests_dir, csmith_bin)
 
     # Run cargo test infinitely
-    TEST_FAIL_TOKEN = "test result: FAILED."
     raw_test_file = "raw_test.c"
     test_file = "test.c"
     try:
@@ -101,12 +100,16 @@ if __name__ == "__main__":
             print("Test case #{}".format(i))
             preprocess(generate(tests_dir, csmith_bin, csmith_runtime, raw_test_file), test_file)
             args = ["cargo", "run", "--release", "--bin", "fuzz", "--", cargo_arg, os.path.join(csmith_runtime, test_file)]
-            proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
-            test_result = str(proc.stdout.read())
-            if TEST_FAIL_TOKEN in test_result:
-                sys.exit("[Error] Test failed. Check `{}` that failed to parse.\nTo investigate, run '{}` in terminal."
-                    .format(os.path.join(csmith_runtime, test_file), " ".join(args)))
+
+            try:
+                proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
+                (out, err) = proc.communicate(timeout=10)
+                if proc.returncode != 0:
+                    raise Exception("Test `{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
+            except subprocess.TimeoutExpired as e:
+                proc.kill()
+                raise e
 
     except KeyboardInterrupt:
         proc.terminate()
-        print("\n[KeyboardInterrupt] Test ended")
+        print("\n[Ctrl+C] interrupted")
