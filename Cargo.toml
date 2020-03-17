@@ -1,0 +1,31 @@
+[package]
+name = "kecc"
+version = "0.1.0"
+authors = ["Chunmyong Park <chunmyong.park@kaist.ac.kr>", "Jeehoon Kang <jeehoon.kang@kaist.ac.kr>", "Hyunsu Kim <hyunsu.kim00@kaist.ac.kr>"]
+edition = "2018"
+default-run = "kecc"
+
+description = "KAIST Educational C Compiler"
+homepage = "https://github.com/kaist-cp/kecc"
+repository = "https://github.com/kaist-cp/kecc"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "kecc"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kecc"
+path = "bin/kecc.rs"
+
+[[bin]]
+name = "fuzz"
+path = "bin/fuzz.rs"
+
+[dependencies]
+clap = { version = "2.33.0", features = ["yaml"] }
+lang-c = "0.7.0"
+itertools = "0.8"
+failure = "0.1.6"
+tempfile = "3.1.0"

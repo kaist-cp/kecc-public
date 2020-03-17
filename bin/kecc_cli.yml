@@ -1,0 +1,24 @@
+name: kecc
+args:
+    - print:
+        short: p
+        long: print
+        help: Prints the input file's AST
+    - irgen:
+        short: i
+        long: irgen
+        help: Generates IR
+    - optimize:
+        short: O
+        long: optimize
+        help: Optimizes IR
+    - output:
+        short: o
+        long: output
+        value_name: FILE
+        help: Sets the output file to use
+        takes_value: true
+    - INPUT:
+        help: Sets the input file to use
+        required: true
+        index: 1
