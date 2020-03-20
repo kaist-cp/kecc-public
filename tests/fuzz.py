@@ -95,6 +95,14 @@ if __name__ == "__main__":
     raw_test_file = "raw_test.c"
     test_file = "test.c"
     try:
+        print("Building KECC..")
+        try:
+            proc = subprocess.Popen(["cargo", "build", "--release"], cwd=tests_dir)
+            proc.communicate()
+        except subprocess.TimeoutExpired as e:
+            proc.kill()
+            raise e
+
         if args.num is None:
             print("Fuzzing with infinitely many test cases.  Please press [ctrl+C] to break.")
             iterator = itertools.count(0)

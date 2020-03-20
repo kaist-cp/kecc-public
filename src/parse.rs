@@ -93,7 +93,7 @@ impl AssertSupported for FunctionDefinition {
     fn assert_supported(&self) {
         self.specifiers.assert_supported();
         self.declarator.assert_supported();
-        self.declarations.is_empty();
+        assert!(self.declarations.is_empty());
         self.statement.assert_supported();
     }
 }
