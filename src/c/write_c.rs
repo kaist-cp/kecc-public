@@ -1,8 +1,8 @@
 use lang_c::ast::*;
 use lang_c::span::Node;
 
+use core::ops::Deref;
 use std::io::{Result, Write};
-use std::ops::Deref;
 
 use crate::write_base::*;
 
@@ -44,8 +44,4 @@ impl WriteLine for TranslationUnit {
     fn write_line(&self, _indent: usize, _write: &mut dyn Write) -> Result<()> {
         todo!("homework 1")
     }
-}
-
-pub fn write_c(unit: &TranslationUnit, write: &mut dyn Write) -> Result<()> {
-    unit.write_line(0, write)
 }

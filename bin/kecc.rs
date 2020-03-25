@@ -5,7 +5,7 @@ use clap::{crate_authors, crate_description, crate_version, App};
 #[macro_use]
 extern crate kecc;
 
-use kecc::{Codegen, Irgen, Optimize, Parse, Translate, O1};
+use kecc::{write, Asmgen, Irgen, Optimize, Parse, Translate, O1};
 
 fn main() {
     let yaml = load_yaml!("kecc_cli.yml");
@@ -27,7 +27,7 @@ fn main() {
     };
 
     if matches.is_present("print") {
-        kecc::write_c(&unit, &mut output).unwrap();
+        write(&unit, &mut output).unwrap();
         return;
     }
 
@@ -39,7 +39,7 @@ fn main() {
         }
     };
     if matches.is_present("irgen") {
-        kecc::write_ir(&ir, &mut output).unwrap();
+        write(&ir, &mut output).unwrap();
         return;
     }
 
@@ -47,6 +47,6 @@ fn main() {
         O1::default().optimize(&mut ir);
     }
 
-    let asm = ok_or_exit!(Codegen::default().translate(&ir), 1);
-    kecc::write_asm(&asm, &mut output);
+    let asm = ok_or_exit!(Asmgen::default().translate(&ir), 1);
+    write(&asm, &mut output).unwrap();
 }

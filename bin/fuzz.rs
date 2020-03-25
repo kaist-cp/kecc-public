@@ -6,6 +6,7 @@ use clap::{crate_authors, crate_description, crate_version, App};
 extern crate kecc;
 
 use kecc::{Parse, Translate};
+use std::path::Path;
 
 fn main() {
     let yaml = load_yaml!("fuzz_cli.yml");
@@ -20,7 +21,10 @@ fn main() {
     let unit = ok_or_exit!(Parse::default().translate(&input), 1);
 
     if matches.is_present("print") {
-        kecc::write_c_test(&unit);
-        return;
+        kecc::test_write_c(&unit, Path::new(&input));
+    }
+
+    if matches.is_present("irgen") {
+        kecc::test_irgen(&unit, Path::new(&input));
     }
 }

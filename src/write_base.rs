@@ -16,3 +16,7 @@ pub trait WriteString {
 pub trait WriteOp {
     fn write_operation(&self) -> String;
 }
+
+pub fn write<T: WriteLine>(t: &T, write: &mut dyn Write) -> Result<()> {
+    t.write_line(0, write)
+}

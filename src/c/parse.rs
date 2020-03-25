@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use core::ops::Deref;
 use std::path::Path;
 
 use lang_c::ast::*;
@@ -10,6 +10,7 @@ use crate::Translate;
 #[derive(Debug)]
 pub enum Error {
     ParseError(ParseError),
+    #[allow(dead_code)]
     Unsupported,
 }
 
@@ -101,12 +102,23 @@ impl AssertSupported for FunctionDefinition {
 impl AssertSupported for DeclarationSpecifier {
     fn assert_supported(&self) {
         match self {
-            Self::StorageClass(_) => panic!("DeclarationSpecifier::StorageClass"),
+            Self::StorageClass(storage_class_specifier) => {
+                storage_class_specifier.assert_supported()
+            }
             Self::TypeSpecifier(type_specifier) => type_specifier.assert_supported(),
             Self::TypeQualifier(type_qualifier) => type_qualifier.assert_supported(),
             Self::Function(_) => panic!("DeclarationSpecifier::Function"),
             Self::Alignment(_) => panic!("DeclarationSpecifier::Alignment"),
             Self::Extension(_) => panic!("DeclarationSpecifier::Extension"),
+        }
+    }
+}
+
+impl AssertSupported for StorageClassSpecifier {
+    fn assert_supported(&self) {
+        match self {
+            Self::Typedef => (),
+            _ => panic!("StorageClassifier other than Typedef"),
         }
     }
 }
@@ -128,7 +140,7 @@ impl AssertSupported for TypeSpecifier {
             Self::Atomic(_) => panic!("TypeSpecifier::Atomic"),
             Self::Struct(struct_type) => struct_type.assert_supported(),
             Self::Enum(_) => panic!("TypeSpecifier::Enum"),
-            Self::TypedefName(_) => panic!("TypeSpecifier::TypedefName"),
+            Self::TypedefName(_) => (),
             Self::TypeOf(_) => panic!("TypeSpecifier::TypeOf"),
             Self::TS18661Float(_) => panic!("TypeSpecifier::TS18661Float"),
         }
@@ -271,7 +283,7 @@ impl AssertSupported for ParameterDeclaration {
 impl AssertSupported for DeclaratorKind {
     fn assert_supported(&self) {
         match self {
-            Self::Abstract => panic!("DeclaratorKind::Abstract"),
+            Self::Abstract => (),
             Self::Identifier(_) => (),
             Self::Declarator(decl) => decl.assert_supported(),
         }
@@ -415,8 +427,8 @@ impl AssertSupported for Expression {
         match self {
             Self::Identifier(_) => (),
             Self::Constant(constant) => constant.assert_supported(),
-            Self::StringLiteral(_) => panic!("Expression:StringLiteral"),
-            Self::GenericSelection(_) => panic!("Expression:GenericSelection"),
+            Self::StringLiteral(_) => panic!("Expression::StringLiteral"),
+            Self::GenericSelection(_) => panic!("Expression::GenericSelection"),
             Self::Member(member) => member.assert_supported(),
             Self::Call(call) => call.assert_supported(),
             Self::CompoundLiteral(_) => panic!("Expression::CompoundLiteral"),
@@ -531,11 +543,7 @@ impl AssertSupported for FloatFormat {
 }
 
 impl AssertSupported for UnaryOperator {
-    fn assert_supported(&self) {
-        if let Self::SizeOf = self {
-            panic!("UnaryOperaotr::SizeOf")
-        }
-    }
+    fn assert_supported(&self) {}
 }
 
 impl AssertSupported for BinaryOperator {

@@ -13,30 +13,71 @@ import itertools
 import argparse
 import sys
 import re
+from pathlib import Path
 
 REPLACE_DICT = {
-    "#include \"csmith.h\"": "",
     "volatile ": "",
-    "uint16_t": "unsigned int",
-    "uint32_t": "unsigned int",
-    "int16_t": "int",
-    "int32_t": "int",
-    "uint": "unsigned int",
     "static ": "",
+    "extern ": "",
+    "__restrict": "",
+    "long __undefined;": "",
+    "return 0;": "return crc32_context % 128;",
+    r"__attribute__ \(\(.*\)\)": "",
+    "_Float128": "long double",
+    "union": "struct",
+    r"enum\s*\{[^\}]*\};": "",
+    "const char \*const sys_errlist\[\];": "",
+    r"[^\n]*printf[^;]*;": "",
+    r"[^\n]*scanf[^;]*;": "",
 }
 CSMITH_DIR = "csmith-2.3.0"
 
-def install_csmith(tests_dir, bin_file):
+def install_csmith(tests_dir):
     global CSMITH_DIR
-    csmith_root_dir = os.path.join(tests_dir, CSMITH_DIR)
-    if not os.path.exists(bin_file):
-        subprocess.Popen(["curl", "https://embed.cs.utah.edu/csmith/" + CSMITH_DIR + ".tar.gz", "-o", CSMITH_DIR + ".tar.gz"], cwd=tests_dir).communicate()
-        subprocess.Popen(["tar", "xzvf", CSMITH_DIR + ".tar.gz"], cwd=tests_dir).communicate()
-        subprocess.Popen("cmake .; make -j", shell=True, cwd=csmith_root_dir).communicate()
-    else:
-        print("Using the existing csmith...")
 
-def generate(tests_dir, bin_file, runtime, file_name):
+    usr_bin_path = "/usr/bin/csmith"
+    usr_inc_path = "/usr/include/csmith"
+    if os.path.exists(usr_bin_path):
+        assert os.path.exists(usr_inc_path)
+        return usr_bin_path, usr_inc_path
+
+    bin_path = os.path.abspath(os.path.join(tests_dir, CSMITH_DIR, "src/csmith"))
+    inc_path = os.path.abspath(os.path.join(tests_dir, CSMITH_DIR, "runtime"))
+    if not os.path.exists(bin_path):
+        csmith_filename = "{}.tar.gz".format(CSMITH_DIR)
+        try:
+            args = ["curl", "https://embed.cs.utah.edu/csmith/{}".format(csmith_filename), "-o", csmith_filename]
+            proc = subprocess.Popen(args, cwd=tests_dir)
+            proc.communicate()
+            if proc.returncode != 0:
+                raise Exception("Failed to download Csmith (exit code: {}): `{}`".format(proc.returncode, " ".join(args)))
+        except subprocess.TimeoutExpired as e:
+            proc.kill()
+            raise e
+
+        try:
+            args = ["tar", "xzvf", csmith_filename]
+            proc = subprocess.Popen(args, cwd=tests_dir)
+            proc.communicate()
+            if proc.returncode != 0:
+                raise Exception("Failed to extract Csmith (exit code: {}): `{}`".format(proc.returncode, " ".join(args)))
+        except subprocess.TimeoutExpired as e:
+            proc.kill()
+            raise e
+
+        csmith_root_dir = os.path.join(tests_dir, CSMITH_DIR)
+        try:
+            proc = subprocess.Popen("cmake . && make -j", shell=True, cwd=csmith_root_dir)
+            proc.communicate()
+            if proc.returncode != 0:
+                raise Exception("Failed to build Csmith (exit code: {})".format(proc.returncode))
+        except subprocess.TimeoutExpired as e:
+            proc.kill()
+            raise e
+
+    return bin_path, inc_path
+
+def generate(tests_dir, bin_path):
     """Feeding options to built Csmith to randomly generate test case.
 
     For generality, I disabled most of the features that are enabled by default.
@@ -46,54 +87,103 @@ def generate(tests_dir, bin_file, runtime, file_name):
     """
     global CSMITH_DIR
     options = [
-        "--no-argc", "--no-arrays", "--no-checksum",
+        "--no-argc", "--no-arrays",
         "--no-jumps", "--no-longlong", "--no-int8",
         "--no-uint8", "--no-safe-math", "--no-pointers",
-        "--no-structs", "--no-unions", "--no-builtins"
+        "--no-structs", "--no-unions", "--no-builtins",
     ]
-    args = [bin_file] + options
-    dst_path = os.path.join(runtime, file_name)
+    args = [bin_path] + options
 
-    with open(dst_path, 'w') as f_dst:
-        subprocess.Popen(args, cwd=tests_dir, stdout=f_dst).wait()
-        f_dst.flush()
+    try:
+        proc = subprocess.Popen(args, cwd=tests_dir, stdout=subprocess.PIPE)
+        (src, err) = proc.communicate()
+        return src.decode()
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        raise e
 
-    return dst_path
-
-def preprocess(src_path, file_name):
-    """Preprocessing test case to fit in kecc parser specification.
-
-    It resolves an issue that arbitrarily included header file to hinder parsing.
+def polish(src, inc_path):
+    """Polishing test case to fit in kecc parser specification.
     """
     global REPLACE_DICT, CSMITH_DIR
-    with open(src_path, 'r') as src:
-        src = str(src.read())
 
-        for _from, _to in REPLACE_DICT.items():
-            src = src.replace(_from, _to)
+    try:
+        args = ["gcc",
+                "-I", inc_path,
+                "-E",
+                "-",
+        ]
+        proc = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (src_preprocessed, err) = proc.communicate(src.encode())
+        src_preprocessed = src_preprocessed.decode()
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        raise e
 
-        with open(os.path.join(os.path.dirname(src_path), file_name), 'w') as dst:
-            dst.write(str(src))
+    src_replaced = src_preprocessed
+    for _from, _to in REPLACE_DICT.items():
+        src_replaced = re.sub(_from, _to, src_replaced)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Fuzzing KECC.')
-    parser.add_argument('-n', '--num', type=int, help='The number of tests')
-    parser.add_argument('-p', '--print', action='store_true', help='Fuzzing C AST printer')
-    args = parser.parse_args()
+    return src_replaced
 
-    if args.print:
-        cargo_arg = "-p"
-    else:
-        raise "Specify fuzzing argument"
+def make_reduce_criteria(tests_dir, fuzz_arg):
+    """Make executable reduce_criteria.sh
+    """
+    # Make shell script i.e. dependent to KECC path
+    arg_dict = {
+        "$PROJECT_DIR": str(Path(tests_dir).parent),
+        "$FUZZ_ARG": fuzz_arg,
+    }
+    with open(os.path.join(tests_dir, "reduce-criteria-template.sh"), "r") as t:
+        temp = t.read()
+        for _from, _to in arg_dict.items():
+            temp = temp.replace(_from, _to)
+        with open(os.path.join(tests_dir, "reduce-criteria.sh"), "w") as f:
+            f.write(temp)
 
-    tests_dir = os.path.abspath(os.path.dirname(__file__))
-    csmith_bin = os.path.abspath(os.path.join(tests_dir, CSMITH_DIR, "src/csmith"))
-    csmith_runtime = os.path.abspath(os.path.join(tests_dir, CSMITH_DIR, "runtime/"))
-    install_csmith(tests_dir, csmith_bin)
+    # chmod the script executable
+    try:
+        args = ["chmod", "u+x", "reduce-criteria.sh"]
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
+        proc.communicate()
+        if proc.returncode != 0:
+            raise Exception("`{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        raise e
 
-    # Run cargo test infinitely
-    raw_test_file = "raw_test.c"
-    test_file = "test.c"
+def creduce(tests_dir, fuzz_arg):
+    """Reduce `tests/test_polished.c` to `tests/test_reduced.c`
+
+    First, we copy test_polished.c to test_reduced.c.
+    Then, when Creduce reduces test_reduced.c, it overwrites partially reduced program to itself.
+    Original file is moved to test_reduced.c.orig which is then identical to test_polished.c.
+    """
+    make_reduce_criteria(tests_dir, fuzz_arg)
+
+    try:
+        args = ["cp", "test_polished.c", "test_reduced.c"]
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
+        proc.communicate()
+        if proc.returncode != 0:
+            raise Exception("`{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        raise e
+
+    try:
+        args = ["creduce", "./reduce-criteria.sh", "test_reduced.c"]
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
+        (out, err) = proc.communicate()
+        if proc.returncode != 0:
+            print(out.decode())
+            raise Exception("Reducing test_reduced.c by `{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        raise e
+
+def fuzz(tests_dir, fuzz_arg, num_iter):
+    csmith_bin, csmith_inc = install_csmith(tests_dir)
     try:
         print("Building KECC..")
         try:
@@ -103,27 +193,55 @@ if __name__ == "__main__":
             proc.kill()
             raise e
 
-        if args.num is None:
+        if num_iter is None:
             print("Fuzzing with infinitely many test cases.  Please press [ctrl+C] to break.")
             iterator = itertools.count(0)
         else:
-            print("Fuzzing with {} test cases.".format(args.num))
-            iterator = range(args.num)
+            print("Fuzzing with {} test cases.".format(num_iter))
+            iterator = range(num_iter)
 
         for i in iterator:
             print("Test case #{}".format(i))
-            preprocess(generate(tests_dir, csmith_bin, csmith_runtime, raw_test_file), test_file)
-            args = ["cargo", "run", "--release", "--bin", "fuzz", "--", cargo_arg, os.path.join(csmith_runtime, test_file)]
+            src = generate(tests_dir, csmith_bin)
+            with open(os.path.join(tests_dir, "test.c"), 'w') as dst:
+                dst.write(src)
+
+            src_polished = polish(src, csmith_inc)
+            with open(os.path.join(tests_dir, "test_polished.c"), 'w') as dst:
+                dst.write(src_polished)
 
             try:
+                args = ["cargo", "run", "--release", "--bin", "fuzz", "--", fuzz_arg, os.path.join(tests_dir, "test_polished.c")]
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
-                (out, err) = proc.communicate(timeout=10)
+                proc.communicate(timeout=10)
                 if proc.returncode != 0:
                     raise Exception("Test `{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
             except subprocess.TimeoutExpired as e:
                 proc.kill()
                 raise e
-
     except KeyboardInterrupt:
         proc.terminate()
         print("\n[Ctrl+C] interrupted")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Fuzzing KECC.')
+    parser.add_argument('-n', '--num', type=int, help='The number of tests')
+    parser.add_argument('-p', '--print', action='store_true', help='Fuzzing C AST printer')
+    parser.add_argument('-i', '--irgen', action='store_true', help='Fuzzing irgen')
+    parser.add_argument('-r', '--reduce', action='store_true', help="Reducing input file")
+    args = parser.parse_args()
+
+    if args.print and args.irgen:
+        raise Exception("Choose an option used for fuzzing: '--print' or '--irgen', NOT both")
+    if args.print:
+        fuzz_arg = "-p"
+    elif args.irgen:
+        fuzz_arg = "-i"
+    else:
+        raise Exception("Specify fuzzing argument")
+
+    tests_dir = os.path.abspath(os.path.dirname(__file__))
+    if args.reduce:
+        creduce(tests_dir, fuzz_arg)
+    else:
+        fuzz(tests_dir, fuzz_arg, args.num)

@@ -3,7 +3,7 @@
 use lang_c::ast::*;
 use lang_c::span::Node;
 
-use std::ops::Deref;
+use core::ops::Deref;
 
 use itertools::izip;
 

@@ -4,6 +4,10 @@ args:
         short: p
         long: print
         help: Fuzzes C AST printer
+    - irgen:
+        short: i
+        long: irgen
+        help: Fuzzes irgen
     - INPUT:
         help: Sets the input file to use
         required: true

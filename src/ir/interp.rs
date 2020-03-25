@@ -1,11 +1,12 @@
-use crate::ir::*;
-use crate::*;
-
+use core::fmt;
+use core::mem;
 use failure::Fail;
 use std::collections::HashMap;
-use std::mem;
 
 use itertools::izip;
+
+use crate::ir::*;
+use crate::*;
 
 // TODO: the variants of Value will be added in the future
 #[derive(Debug, PartialEq, Clone)]
@@ -74,21 +75,24 @@ pub enum InterpreterError {
     NoMainFunction,
     #[fail(display = "ir has no function definition of {} function", func_name)]
     NoFunctionDefinition { func_name: String },
-    #[fail(
-        display = "{}:{}:{} / Undef value cannot be used as an operand",
-        func_name, bid, iid
-    )]
+    #[fail(display = "{}:{} / {}", func_name, pc, msg)]
     Misc {
         func_name: String,
-        bid: BlockId,
-        iid: usize,
+        pc: Pc,
+        msg: String,
     },
 }
 
-#[derive(Debug, PartialEq, Clone)]
-struct Pc {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct Pc {
     pub bid: BlockId,
     pub iid: usize,
+}
+
+impl fmt::Display for Pc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.bid, self.iid)
+    }
 }
 
 impl Pc {
@@ -101,16 +105,20 @@ impl Pc {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Default, Debug, PartialEq, Clone)]
 struct RegisterMap {
     inner: HashMap<RegisterId, Value>,
 }
 
 impl RegisterMap {
-    fn new() -> Self {
-        Self {
-            inner: HashMap::new(),
-        }
+    fn read(&self, rid: RegisterId) -> &Value {
+        self.inner
+            .get(&rid)
+            .expect("`rid` must be assigned before it can be used")
+    }
+
+    fn write(&mut self, rid: RegisterId, value: Value) {
+        let _ = self.inner.insert(rid, value);
     }
 }
 
@@ -164,7 +172,7 @@ impl<'i> StackFrame<'i> {
     fn new(bid: BlockId, func_name: String, func_def: &'i FunctionDefinition) -> Self {
         StackFrame {
             pc: Pc::new(bid),
-            registers: RegisterMap::new(),
+            registers: Default::default(),
             func_name,
             func_def,
         }
@@ -229,6 +237,39 @@ mod calculator {
     }
 }
 
+#[derive(Default, Debug, PartialEq)]
+struct Memory {
+    // TODO: memory type should change to Vec<Vec<Byte>>
+    inner: Vec<Vec<Value>>,
+}
+
+impl Memory {
+    fn alloc(&mut self, dtype: &Dtype) -> Result<usize, InterpreterError> {
+        let memory_block = match dtype {
+            Dtype::Unit { .. } => vec![],
+            Dtype::Int { width, .. } => match width {
+                32 => vec![Value::Undef],
+                _ => todo!(),
+            },
+            Dtype::Float { .. } => todo!(),
+            Dtype::Pointer { .. } => vec![Value::Undef],
+            Dtype::Function { .. } => vec![],
+        };
+
+        self.inner.push(memory_block);
+
+        Ok(self.inner.len() - 1)
+    }
+
+    fn load(&self, bid: usize, offset: usize) -> &Value {
+        &self.inner[bid][offset]
+    }
+
+    fn store(&mut self, bid: usize, offset: usize, value: Value) {
+        self.inner[bid][offset] = value;
+    }
+}
+
 // TODO: allocation fields will be added in the future
 // TODO: program fields will be added in the future
 #[derive(Debug, PartialEq)]
@@ -238,8 +279,7 @@ struct State<'i> {
     pub global_map: GlobalMap,
     pub stack_frame: StackFrame<'i>,
     pub stack: Vec<StackFrame<'i>>,
-    // TODO: memory type should change to Vec<Vec<Byte>>
-    pub memory: Vec<Vec<Value>>,
+    pub memory: Memory,
     pub ir: &'i TranslationUnit,
 }
 
@@ -265,35 +305,35 @@ impl<'i> State<'i> {
             global_map: GlobalMap::default(),
             stack_frame: StackFrame::new(func_def.bid_init, func_name, func_def),
             stack: Vec::new(),
-            memory: Vec::new(),
+            memory: Default::default(),
             ir,
         };
 
-        state.alloc_global_variable()?;
+        state.alloc_global_variables()?;
 
         // Initialize state with main function and args
-        state.pass_arguments(args)?;
-        state.alloc_local_variable()?;
+        state.write_args(func_def.bid_init, args)?;
+        state.alloc_local_variables()?;
 
         Ok(state)
     }
 
-    fn alloc_global_variable(&mut self) -> Result<(), InterpreterError> {
+    fn alloc_global_variables(&mut self) -> Result<(), InterpreterError> {
         for (name, decl) in &self.ir.decls {
             // Memory allocation
-            let bid = self.alloc_memory(&decl.dtype())?;
+            let bid = self.memory.alloc(&decl.dtype())?;
             self.global_map.insert(name.clone(), bid)?;
 
             // Initialize allocated memory space
             match decl {
                 Declaration::Variable { dtype, initializer } => {
                     let value = if let Some(constant) = initializer {
-                        self.constant_to_value(constant.clone())
+                        self.interp_constant(constant.clone())
                     } else {
                         Value::default_from_dtype(dtype)
                     };
 
-                    self.memory[bid][0] = value;
+                    self.memory.store(bid, 0, value);
                 }
                 // If functin declaration, skip initialization
                 Declaration::Function { .. } => (),
@@ -303,46 +343,70 @@ impl<'i> State<'i> {
         Ok(())
     }
 
-    fn pass_arguments(&mut self, args: Vec<Value>) -> Result<(), InterpreterError> {
-        for (i, value) in args.iter().enumerate() {
-            self.register_write(RegisterId::arg(i), value.clone());
-        }
-
-        Ok(())
-    }
-
-    fn alloc_local_variable(&mut self) -> Result<(), InterpreterError> {
+    fn alloc_local_variables(&mut self) -> Result<(), InterpreterError> {
         // add alloc register
         for (id, allocation) in self.stack_frame.func_def.allocations.iter().enumerate() {
-            let bid = self.alloc_memory(&allocation)?;
+            let bid = self.memory.alloc(&allocation)?;
             let ptr = Value::pointer(Some(bid), 0);
             let rid = RegisterId::local("".to_string(), id);
 
-            self.register_write(rid, ptr)
+            self.stack_frame.registers.write(rid, ptr)
         }
 
         Ok(())
     }
 
-    fn alloc_memory(&mut self, dtype: &Dtype) -> Result<usize, InterpreterError> {
-        // TODO: memory block will be handled as Vec<Byte>
-        let memory_block = match dtype {
-            Dtype::Unit { .. } => vec![],
-            Dtype::Int { width, .. } => match width {
-                32 => vec![Value::Undef],
-                _ => todo!(),
-            },
-            Dtype::Float { .. } => todo!(),
-            Dtype::Pointer { .. } => vec![Value::Undef],
-            Dtype::Function { .. } => vec![],
-        };
+    fn write_args(&mut self, bid_init: BlockId, args: Vec<Value>) -> Result<(), InterpreterError> {
+        for (i, value) in args.iter().enumerate() {
+            self.stack_frame
+                .registers
+                .write(RegisterId::arg(bid_init, i), value.clone());
+        }
 
-        self.memory.push(memory_block);
-
-        Ok(self.memory.len() - 1)
+        Ok(())
     }
 
-    fn preprocess_args(
+    fn step(&mut self) -> Result<Option<Value>, InterpreterError> {
+        let block = self
+            .stack_frame
+            .func_def
+            .blocks
+            .get(&self.stack_frame.pc.bid)
+            .expect("block matched with `bid` must be exist");
+
+        // If it's time to execute an instruction, do so.
+        if let Some(instr) = block.instructions.get(self.stack_frame.pc.iid) {
+            self.interp_instruction(instr)?;
+            return Ok(None);
+        }
+
+        // Execute a block exit.
+        let return_value = some_or!(self.interp_block_exit(&block.exit)?, return Ok(None));
+
+        // If it's returning from a function, pop the stack frame.
+
+        // TODO: free memory allocated in the callee
+
+        // restore previous state
+        let prev_stack_frame = some_or!(self.stack.pop(), return Ok(Some(return_value)));
+        self.stack_frame = prev_stack_frame;
+
+        // create temporary register to write return value
+        let register = RegisterId::temp(self.stack_frame.pc.bid, self.stack_frame.pc.iid);
+        self.stack_frame.registers.write(register, return_value);
+        self.stack_frame.pc.increment();
+        Ok(None)
+    }
+
+    fn run(&mut self) -> Result<Value, InterpreterError> {
+        loop {
+            if let Some(value) = self.step()? {
+                return Ok(value);
+            }
+        }
+    }
+
+    fn interp_args(
         &self,
         signature: &FunctionSignature,
         args: &[Operand],
@@ -355,135 +419,111 @@ impl<'i> State<'i> {
         }
 
         args.iter()
-            .map(|a| self.get_value(a.clone()))
+            .map(|a| self.interp_operand(a.clone()))
             .collect::<Result<Vec<_>, _>>()
     }
 
-    fn step(&mut self) -> Result<Option<Value>, InterpreterError> {
+    fn interp_jump(&mut self, arg: &JumpArg) -> Result<Option<Value>, InterpreterError> {
         let block = self
             .stack_frame
             .func_def
             .blocks
-            .get(&self.stack_frame.pc.bid)
-            .expect("block matched with `bid` must be exist");
+            .get(&arg.bid)
+            .expect("block matched with `arg.bid` must be exist");
 
-        if block.instructions.len() == self.stack_frame.pc.iid {
-            self.interpret_block_exit(&block.exit)
-        } else {
-            let instr = block
-                .instructions
-                .get(self.stack_frame.pc.iid)
-                .expect("instruction matched with `iid` must be exist");
-
-            self.interpret_instruction(instr)
+        assert_eq!(arg.args.len(), block.phinodes.len());
+        for (a, d) in izip!(&arg.args, &block.phinodes) {
+            assert!(a.dtype().is_compatible(&d));
         }
+
+        for (i, a) in arg.args.iter().enumerate() {
+            let v = self.interp_operand(a.clone()).unwrap();
+            self.stack_frame
+                .registers
+                .inner
+                .insert(RegisterId::arg(arg.bid, i), v)
+                .unwrap();
+        }
+
+        self.stack_frame.pc = Pc::new(arg.bid);
+        Ok(None)
     }
 
-    fn run(&mut self) -> Result<Value, InterpreterError> {
-        loop {
-            if let Some(value) = self.step()? {
-                // TODO: Before return, free memory allocated in a function
-
-                // restore previous state
-                let prev_stack_frame = some_or!(self.stack.pop(), {
-                    return Ok(value);
-                });
-                self.stack_frame = prev_stack_frame;
-
-                // create temporary register to write return value
-                let register = RegisterId::temp(self.stack_frame.pc.bid, self.stack_frame.pc.iid);
-                self.register_write(register, value);
-                self.stack_frame.pc.increment();
-            }
-        }
-    }
-
-    fn interpret_block_exit(
+    fn interp_block_exit(
         &mut self,
         block_exit: &BlockExit,
     ) -> Result<Option<Value>, InterpreterError> {
         match block_exit {
-            BlockExit::Jump { bid } => {
-                self.stack_frame.pc = Pc::new(*bid);
-                Ok(None)
-            }
+            BlockExit::Jump { arg } => self.interp_jump(arg),
             BlockExit::ConditionalJump {
                 condition,
-                bid_then,
-                bid_else,
+                arg_then,
+                arg_else,
             } => {
-                let value = self.get_value(condition.clone())?;
+                let value = self.interp_operand(condition.clone())?;
                 let value = value.get_bool().expect("`condition` must be `Value::Bool`");
-
-                self.stack_frame.pc = Pc::new(if value { *bid_then } else { *bid_else });
-                Ok(None)
+                self.interp_jump(if value { arg_then } else { arg_else })
             }
             BlockExit::Switch {
                 value,
                 default,
                 cases,
             } => {
-                let value = self.get_value(value.clone())?;
+                let value = self.interp_operand(value.clone())?;
 
                 // TODO: consider different integer `width` in the future
-                let bid_next = cases
+                let arg = cases
                     .iter()
-                    .find(|(c, _)| value == self.constant_to_value(c.clone()))
-                    .map(|(_, bid)| bid)
+                    .find(|(c, _)| value == self.interp_constant(c.clone()))
+                    .map(|(_, arg)| arg)
                     .unwrap_or_else(|| default);
-
-                self.stack_frame.pc = Pc::new(*bid_next);
-
-                Ok(None)
+                self.interp_jump(arg)
             }
-            BlockExit::Return { value } => Ok(Some(self.get_value(value.clone())?)),
+            BlockExit::Return { value } => Ok(Some(self.interp_operand(value.clone())?)),
             BlockExit::Unreachable => Err(InterpreterError::Unreachable),
         }
     }
 
-    fn interpret_instruction(
-        &mut self,
-        instruction: &Instruction,
-    ) -> Result<Option<Value>, InterpreterError> {
+    fn interp_instruction(&mut self, instruction: &Instruction) -> Result<(), InterpreterError> {
         let result = match instruction {
             Instruction::BinOp { op, lhs, rhs, .. } => {
-                let lhs = self.get_value(lhs.clone())?;
-                let rhs = self.get_value(rhs.clone())?;
+                let lhs = self.interp_operand(lhs.clone())?;
+                let rhs = self.interp_operand(rhs.clone())?;
 
                 calculator::calculate_binary_operator_expression(&op, lhs, rhs).map_err(|_| {
                     InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
-                        bid: self.stack_frame.pc.bid,
-                        iid: self.stack_frame.pc.iid,
+                        pc: self.stack_frame.pc,
+                        msg: "calculate_binary_operator_expression".into(),
                     }
                 })?
             }
             Instruction::UnaryOp { op, operand, .. } => {
-                let operand = self.get_value(operand.clone())?;
+                let operand = self.interp_operand(operand.clone())?;
 
                 calculator::calculate_unary_operator_expression(&op, operand).map_err(|_| {
                     InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
-                        bid: self.stack_frame.pc.bid,
-                        iid: self.stack_frame.pc.iid,
+                        pc: self.stack_frame.pc,
+                        msg: "calculate_unary_operator_expression".into(),
                     }
                 })?
             }
             Instruction::Store { ptr, value, .. } => {
-                let ptr = self.get_value(ptr.clone())?;
-                let value = self.get_value(value.clone())?;
-
-                self.memory_store(ptr, value)?;
+                let ptr = self.interp_operand(ptr.clone())?;
+                let value = self.interp_operand(value.clone())?;
+                let (bid, offset) = self.interp_ptr(ptr)?;
+                self.memory.store(bid, offset, value);
 
                 Value::Unit
             }
             Instruction::Load { ptr, .. } => {
-                let ptr = self.get_value(ptr.clone())?;
-
-                self.memory_load(ptr)?
+                let ptr = self.interp_operand(ptr.clone())?;
+                let (bid, offset) = self.interp_ptr(ptr)?;
+                self.memory.load(bid, offset).clone()
             }
             Instruction::Call { callee, args, .. } => {
-                let ptr = self.get_value(callee.clone())?;
+                let ptr = self.interp_operand(callee.clone())?;
 
                 // Get function name from pointer
                 let (bid, _) = ptr.get_pointer().expect("`ptr` must be `Value::Pointer`");
@@ -508,48 +548,50 @@ impl<'i> State<'i> {
                             func_name: callee_name.clone(),
                         })?;
 
-                let args = self.preprocess_args(func_signature, args)?;
+                let args = self.interp_args(func_signature, args)?;
 
                 let stack_frame = StackFrame::new(func_def.bid_init, callee_name, func_def);
                 let prev_stack_frame = mem::replace(&mut self.stack_frame, stack_frame);
                 self.stack.push(prev_stack_frame);
 
                 // Initialize state with function obtained by callee and args
-                self.pass_arguments(args)?;
-                self.alloc_local_variable()?;
+                self.write_args(func_def.bid_init, args)?;
+                self.alloc_local_variables()?;
 
-                return Ok(None);
+                return Ok(());
             }
             Instruction::TypeCast {
                 value,
                 target_dtype,
             } => {
-                let value = self.get_value(value.clone())?;
+                let value = self.interp_operand(value.clone())?;
                 calculator::calculate_typecast(&value, target_dtype).map_err(|_| {
                     InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
-                        bid: self.stack_frame.pc.bid,
-                        iid: self.stack_frame.pc.iid,
+                        pc: self.stack_frame.pc,
+                        msg: "calculate_typecast".into(),
                     }
                 })?
             }
         };
 
         let register = RegisterId::temp(self.stack_frame.pc.bid, self.stack_frame.pc.iid);
-        self.register_write(register, result);
+        self.stack_frame.registers.write(register, result);
         self.stack_frame.pc.increment();
 
-        Ok(None)
+        Ok(())
     }
 
-    fn get_value(&self, operand: Operand) -> Result<Value, InterpreterError> {
+    fn interp_operand(&self, operand: Operand) -> Result<Value, InterpreterError> {
         match &operand {
-            Operand::Constant(value) => Ok(self.constant_to_value(value.clone())),
-            Operand::Register { rid, .. } => Ok(self.register_read(rid.clone())),
+            Operand::Constant(value) => Ok(self.interp_constant(value.clone())),
+            Operand::Register { rid, .. } => {
+                Ok(self.stack_frame.registers.read(rid.clone()).clone())
+            }
         }
     }
 
-    fn constant_to_value(&self, value: Constant) -> Value {
+    fn interp_constant(&self, value: Constant) -> Value {
         match value {
             Constant::Unit => Value::Unit,
             // TODO: consider `width` and `is_signed` in the future
@@ -570,43 +612,27 @@ impl<'i> State<'i> {
         }
     }
 
-    fn register_write(&mut self, rid: RegisterId, value: Value) {
-        let _ = self.stack_frame.registers.inner.insert(rid, value);
-    }
-
-    fn register_read(&self, rid: RegisterId) -> Value {
-        self.stack_frame
-            .registers
-            .inner
-            .get(&rid)
-            .cloned()
-            .expect("`rid` must be assigned before it can be used")
-    }
-
-    fn memory_store(&mut self, pointer: Value, value: Value) -> Result<(), InterpreterError> {
+    fn interp_ptr(&mut self, pointer: Value) -> Result<(usize, usize), InterpreterError> {
         let (bid, offset) = pointer
             .get_pointer()
-            .expect("`pointer` must be `Value::Pointer` to access memory");
+            .ok_or_else(|| InterpreterError::Misc {
+                func_name: self.stack_frame.func_name.clone(),
+                pc: self.stack_frame.pc,
+                msg: "Accessing memory with non-pointer".into(),
+            })?;
 
-        let bid = bid.expect("write to memory using constant value address is not allowed");
-        self.memory[bid][offset] = value;
+        let bid = bid.ok_or_else(|| InterpreterError::Misc {
+            func_name: self.stack_frame.func_name.clone(),
+            pc: self.stack_frame.pc,
+            msg: "Accessing memory with constant pointer".into(),
+        })?;
 
-        Ok(())
-    }
-
-    fn memory_load(&self, pointer: Value) -> Result<Value, InterpreterError> {
-        let (bid, offset) = pointer
-            .get_pointer()
-            .expect("`pointer` must be `Value::Pointer` to access memory");
-
-        let bid = bid.expect("read from memory using constant value address is not allowed");
-
-        Ok(self.memory[bid][offset].clone())
+        Ok((bid, offset))
     }
 }
 
 #[inline]
-pub fn run_ir(ir: &TranslationUnit, args: Vec<Value>) -> Result<Value, InterpreterError> {
+pub fn interp(ir: &TranslationUnit, args: Vec<Value>) -> Result<Value, InterpreterError> {
     let mut init_state = State::new(ir, args)?;
     init_state.run()
 }

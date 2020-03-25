@@ -188,16 +188,16 @@ impl WriteOp for ast::UnaryOperator {
 impl WriteString for BlockExit {
     fn write_string(&self) -> String {
         match self {
-            BlockExit::Jump { bid } => format!("j {}", bid),
+            BlockExit::Jump { arg } => format!("j {}", arg),
             BlockExit::ConditionalJump {
                 condition,
-                bid_then,
-                bid_else,
+                arg_then,
+                arg_else,
             } => format!(
                 "br {}, {}, {}",
                 condition.write_string(),
-                bid_then,
-                bid_else
+                arg_then,
+                arg_else
             ),
             BlockExit::Switch {
                 value,
@@ -217,8 +217,4 @@ impl WriteString for BlockExit {
             BlockExit::Unreachable => "<unreachable>\t\t\t\t; error state".to_string(),
         }
     }
-}
-
-pub fn write_ir(ir: &TranslationUnit, write: &mut dyn Write) -> Result<()> {
-    ir.write_line(0, write)
 }

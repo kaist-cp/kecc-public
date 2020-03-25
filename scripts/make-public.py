@@ -11,8 +11,9 @@ import sys
 import re
 
 if __name__ == "__main__":
-    for fullname in os.listdir("src"):
-        (filename, ext) = os.path.splitext(fullname)
+    for root, dir, files in os.walk("src"):
+        for f in files:
+            (filename, ext) = os.path.splitext(f)
 
-        if ext == ".public":
-            os.rename(os.path.join("src", fullname), os.path.join("src", filename))
+            if ext == ".public":
+                os.rename(os.path.join(root, f), os.path.join(root, filename))
