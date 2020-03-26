@@ -22,13 +22,18 @@ REPLACE_DICT = {
     "__restrict": "",
     "long __undefined;": "",
     "return 0;": "return crc32_context % 128;",
-    r"__attribute__ \(\(.*\)\)": "",
+    r"__attribute__\s*\(\(.*\)\)": "",
     "_Float128": "long double",
     "union": "struct",
-    r"enum\s*\{[^\}]*\};": "",
+    r"enum[\w\s]*\{[^\}]*\};": "",
     "const char \*const sys_errlist\[\];": "",
     r"[^\n]*printf[^;]*;": "",
     r"[^\n]*scanf[^;]*;": "",
+    " restrict": "",
+    "inline ": "",
+    "_Nullable": "",
+    "\"g_\w*\", ": "",
+    "char\* vname, ": "",
 }
 CSMITH_DIR = "csmith-2.3.0"
 
@@ -172,7 +177,8 @@ def creduce(tests_dir, fuzz_arg):
         raise e
 
     try:
-        args = ["creduce", "./reduce-criteria.sh", "test_reduced.c"]
+        # --tidy: Do not make a backup copy of each file to reduce as file.orig
+        args = ["creduce", "--tidy", "./reduce-criteria.sh", "test_reduced.c"]
         proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
         (out, err) = proc.communicate()
         if proc.returncode != 0:

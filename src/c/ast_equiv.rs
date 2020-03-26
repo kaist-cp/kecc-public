@@ -102,6 +102,7 @@ impl IsEquiv for Declarator {
 impl IsEquiv for DeclaratorKind {
     fn is_equiv(&self, other: &Self) -> bool {
         match (self, other) {
+            (Self::Abstract, Self::Abstract) => true,
             (Self::Identifier(identifier), Self::Identifier(other_identifier)) => {
                 identifier.node.name == other_identifier.node.name
             }

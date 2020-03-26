@@ -52,5 +52,8 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
         .expect("failed to generate ir");
 
     let args = Vec::new();
-    assert_eq!(ir::interp(&ir, args), Ok(ir::Value::Int(status)));
+    assert_eq!(
+        ir::interp(&ir, args),
+        Ok(ir::Value::int(status as u128, 32, true))
+    );
 }

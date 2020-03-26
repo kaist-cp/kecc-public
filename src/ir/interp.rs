@@ -11,24 +11,61 @@ use crate::*;
 // TODO: the variants of Value will be added in the future
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
-    Undef,
     Unit,
-    Int(i32),
-    Float(f32),
-    Bool(bool),
-    Pointer { bid: Option<usize>, offset: usize },
+    Int {
+        value: u128,
+        width: usize,
+        is_signed: bool,
+    },
+    Float {
+        /// `value` may be `f32`, but it is possible to consider it as `f64`.
+        ///
+        /// * Casting from an f32 to an f64 is perfect and lossless (f32 -> f64)
+        /// * Casting from an f64 to an f32 will produce the closest possible value (f64 -> f32)
+        /// https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#type-cast-expressions
+        value: f64,
+        width: usize,
+    },
+    Pointer {
+        bid: Option<usize>,
+        offset: usize,
+    },
 }
 
 impl Value {
+    #[inline]
+    fn unit() -> Self {
+        Self::Unit
+    }
+
+    #[inline]
+    pub fn int(value: u128, width: usize, is_signed: bool) -> Self {
+        Self::Int {
+            value,
+            width,
+            is_signed,
+        }
+    }
+
+    #[inline]
+    fn float(value: f64, width: usize) -> Self {
+        Self::Float { value, width }
+    }
+
     #[inline]
     fn pointer(bid: Option<usize>, offset: usize) -> Self {
         Self::Pointer { bid, offset }
     }
 
     #[inline]
-    fn get_bool(self) -> Option<bool> {
-        if let Value::Bool(value) = self {
-            Some(value)
+    fn get_int(self) -> Option<(u128, usize, bool)> {
+        if let Value::Int {
+            value,
+            width,
+            is_signed,
+        } = self
+        {
+            Some((value, width, is_signed))
         } else {
             None
         }
@@ -54,13 +91,11 @@ impl Value {
     #[inline]
     fn default_from_dtype(dtype: &Dtype) -> Self {
         match dtype {
-            // TODO: consider `Unit` value in the future
-            ir::Dtype::Unit { .. } => todo!(),
-            ir::Dtype::Int { width, .. } => match width {
-                32 => Self::Int(i32::default()),
-                _ => todo!("other cases will be covered"),
-            },
-            ir::Dtype::Float { .. } => Self::Float(f32::default()),
+            ir::Dtype::Unit { .. } => Self::unit(),
+            ir::Dtype::Int {
+                width, is_signed, ..
+            } => Self::int(u128::default(), *width, *is_signed),
+            ir::Dtype::Float { width, .. } => Self::float(f64::default(), *width),
             ir::Dtype::Pointer { .. } => Self::nullptr(),
             ir::Dtype::Function { .. } => panic!("function types do not have a default value"),
         }
@@ -183,31 +218,51 @@ mod calculator {
     use super::Value;
     use lang_c::ast;
 
+    // TODO: change to template function in the future
     pub fn calculate_binary_operator_expression(
         op: &ast::BinaryOperator,
         lhs: Value,
         rhs: Value,
     ) -> Result<Value, ()> {
         match (op, lhs, rhs) {
-            (_, Value::Undef, _) => Err(()),
-            (_, _, Value::Undef) => Err(()),
-            (ast::BinaryOperator::Plus, Value::Int(lhs), Value::Int(rhs)) => {
-                Ok(Value::Int(lhs + rhs))
-            }
-            (ast::BinaryOperator::Minus, Value::Int(lhs), Value::Int(rhs)) => {
-                Ok(Value::Int(lhs - rhs))
-            }
-            (ast::BinaryOperator::Equals, Value::Int(lhs), Value::Int(rhs)) => {
-                Ok(Value::Bool(lhs == rhs))
-            }
-            (ast::BinaryOperator::NotEquals, Value::Int(lhs), Value::Int(rhs)) => {
-                Ok(Value::Bool(lhs != rhs))
-            }
-            (ast::BinaryOperator::Less, Value::Int(lhs), Value::Int(rhs)) => {
-                Ok(Value::Bool(lhs < rhs))
-            }
-            (ast::BinaryOperator::GreaterOrEqual, Value::Int(lhs), Value::Int(rhs)) => {
-                Ok(Value::Bool(lhs >= rhs))
+            (
+                op,
+                Value::Int {
+                    value: lhs,
+                    width: lhs_w,
+                    is_signed: lhs_s,
+                },
+                Value::Int {
+                    value: rhs,
+                    width: rhs_w,
+                    is_signed: rhs_s,
+                },
+            ) => {
+                assert_eq!(lhs_w, rhs_w);
+                assert_eq!(lhs_s, rhs_s);
+
+                match op {
+                    ast::BinaryOperator::Plus => Ok(Value::int(lhs + rhs, lhs_w, lhs_s)),
+                    ast::BinaryOperator::Minus => Ok(Value::int(lhs - rhs, lhs_w, lhs_s)),
+                    ast::BinaryOperator::Multiply => Ok(Value::int(lhs * rhs, lhs_w, lhs_s)),
+                    ast::BinaryOperator::Equals => {
+                        let result = if lhs == rhs { 1 } else { 0 };
+                        Ok(Value::int(result, 1, lhs_s))
+                    }
+                    ast::BinaryOperator::NotEquals => {
+                        let result = if lhs != rhs { 1 } else { 0 };
+                        Ok(Value::int(result, 1, lhs_s))
+                    }
+                    ast::BinaryOperator::Less => {
+                        let result = if lhs < rhs { 1 } else { 0 };
+                        Ok(Value::int(result, 1, lhs_s))
+                    }
+                    ast::BinaryOperator::GreaterOrEqual => {
+                        let result = if lhs >= rhs { 1 } else { 0 };
+                        Ok(Value::int(result, 1, lhs_s))
+                    }
+                    _ => todo!("will be covered all operator"),
+                }
             }
             _ => todo!(),
         }
@@ -218,21 +273,57 @@ mod calculator {
         operand: Value,
     ) -> Result<Value, ()> {
         match (op, operand) {
-            (_, Value::Undef) => Err(()),
-            (ast::UnaryOperator::Plus, Value::Int(value)) => Ok(Value::Int(value)),
-            (ast::UnaryOperator::Minus, Value::Int(value)) => Ok(Value::Int(-value)),
-            (ast::UnaryOperator::Negate, Value::Bool(value)) => Ok(Value::Bool(!value)),
+            (
+                ast::UnaryOperator::Plus,
+                Value::Int {
+                    value,
+                    width,
+                    is_signed,
+                },
+            ) => Ok(Value::int(value, width, is_signed)),
+            (
+                ast::UnaryOperator::Minus,
+                Value::Int {
+                    value,
+                    width,
+                    is_signed,
+                },
+            ) => {
+                assert!(is_signed);
+                let result = -(value as i128);
+                Ok(Value::int(result as u128, width, is_signed))
+            }
+            (
+                ast::UnaryOperator::Negate,
+                Value::Int {
+                    value,
+                    width,
+                    is_signed,
+                },
+            ) => {
+                // Check if it is boolean
+                assert!(width == 1);
+                let result = if value == 0 { 1 } else { 0 };
+                Ok(Value::int(result, width, is_signed))
+            }
             _ => todo!(),
         }
     }
 
-    pub fn calculate_typecast(value: &Value, dtype: &crate::ir::Dtype) -> Result<Value, ()> {
+    pub fn calculate_typecast(value: Value, dtype: crate::ir::Dtype) -> Result<Value, ()> {
         match (value, dtype) {
-            (Value::Int(_), crate::ir::Dtype::Int { .. }) => Ok(value.clone()),
-            (Value::Bool(b), crate::ir::Dtype::Int { .. }) => {
-                Ok(Value::Int(if *b { 1 } else { 0 }))
+            // TODO: distinguish zero/signed extension in the future
+            // TODO: consider truncate in the future
+            (
+                Value::Int { value, .. },
+                crate::ir::Dtype::Int {
+                    width, is_signed, ..
+                },
+            ) => Ok(Value::int(value, width, is_signed)),
+            (Value::Float { value, .. }, crate::ir::Dtype::Float { width, .. }) => {
+                Ok(Value::float(value, width))
             }
-            _ => todo!("calculate_typecast ({:?}) {:?}", dtype, value),
+            (value, dtype) => todo!("calculate_typecast ({:?}) {:?}", dtype, value),
         }
     }
 }
@@ -246,14 +337,11 @@ struct Memory {
 impl Memory {
     fn alloc(&mut self, dtype: &Dtype) -> Result<usize, InterpreterError> {
         let memory_block = match dtype {
-            Dtype::Unit { .. } => vec![],
-            Dtype::Int { width, .. } => match width {
-                32 => vec![Value::Undef],
-                _ => todo!(),
-            },
-            Dtype::Float { .. } => todo!(),
-            Dtype::Pointer { .. } => vec![Value::Undef],
-            Dtype::Function { .. } => vec![],
+            ir::Dtype::Unit { .. }
+            | ir::Dtype::Int { .. }
+            | ir::Dtype::Float { .. }
+            | ir::Dtype::Pointer { .. } => vec![Value::default_from_dtype(dtype)],
+            ir::Dtype::Function { .. } => vec![],
         };
 
         self.inner.push(memory_block);
@@ -327,13 +415,14 @@ impl<'i> State<'i> {
             // Initialize allocated memory space
             match decl {
                 Declaration::Variable { dtype, initializer } => {
-                    let value = if let Some(constant) = initializer {
-                        self.interp_constant(constant.clone())
-                    } else {
-                        Value::default_from_dtype(dtype)
-                    };
+                    if dtype.get_function_inner().is_some() {
+                        panic!("function variable does not exist")
+                    }
 
-                    self.memory.store(bid, 0, value);
+                    if let Some(constant) = initializer {
+                        let value = self.interp_constant(constant.clone());
+                        self.memory.store(bid, 0, value);
+                    }
                 }
                 // If functin declaration, skip initialization
                 Declaration::Function { .. } => (),
@@ -461,8 +550,11 @@ impl<'i> State<'i> {
                 arg_else,
             } => {
                 let value = self.interp_operand(condition.clone())?;
-                let value = value.get_bool().expect("`condition` must be `Value::Bool`");
-                self.interp_jump(if value { arg_then } else { arg_else })
+                let (value, width, _) = value.get_int().expect("`condition` must be `Value::Int`");
+                // Check if it is boolean
+                assert!(width == 1);
+
+                self.interp_jump(if value == 1 { arg_then } else { arg_else })
             }
             BlockExit::Switch {
                 value,
@@ -565,7 +657,7 @@ impl<'i> State<'i> {
                 target_dtype,
             } => {
                 let value = self.interp_operand(value.clone())?;
-                calculator::calculate_typecast(&value, target_dtype).map_err(|_| {
+                calculator::calculate_typecast(value, target_dtype.clone()).map_err(|_| {
                     InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
                         pc: self.stack_frame.pc,
@@ -594,9 +686,16 @@ impl<'i> State<'i> {
     fn interp_constant(&self, value: Constant) -> Value {
         match value {
             Constant::Unit => Value::Unit,
-            // TODO: consider `width` and `is_signed` in the future
-            Constant::Int { value, .. } => Value::Int(value as i32),
-            Constant::Float { value, .. } => Value::Float(value as f32),
+            Constant::Int {
+                value,
+                width,
+                is_signed,
+            } => Value::Int {
+                value,
+                width,
+                is_signed,
+            },
+            Constant::Float { value, width } => Value::Float { value, width },
             Constant::GlobalVariable { name, .. } => {
                 let bid = self
                     .global_map

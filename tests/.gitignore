@@ -1,4 +1,4 @@
 /platform.info
 /csmith-*
-/test*.c*
+/test*.c
 /reduce-criteria.sh

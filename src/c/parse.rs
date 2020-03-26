@@ -525,7 +525,6 @@ impl AssertSupported for Integer {
 
 impl AssertSupported for Float {
     fn assert_supported(&self) {
-        assert_eq!(self.base, FloatBase::Decimal);
         self.suffix.format.assert_supported();
         assert_eq!(false, self.suffix.imaginary);
     }
