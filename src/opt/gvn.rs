@@ -1,11 +1,13 @@
-use crate::ir;
+use crate::opt::FunctionPass;
 use crate::*;
 
-#[derive(Default)]
-pub struct Gvn {}
+pub type Gvn = FunctionPass<Repeat<GvnInner>>;
 
-impl Optimize<ir::TranslationUnit> for Gvn {
-    fn optimize(&mut self, _code: &mut ir::TranslationUnit) -> bool {
-        todo!()
+#[derive(Default)]
+pub struct GvnInner {}
+
+impl Optimize<ir::FunctionDefinition> for GvnInner {
+    fn optimize(&mut self, _code: &mut ir::FunctionDefinition) -> bool {
+        todo!("homework 5")
     }
 }

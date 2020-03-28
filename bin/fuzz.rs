@@ -27,4 +27,20 @@ fn main() {
     if matches.is_present("irgen") {
         kecc::test_irgen(&unit, Path::new(&input));
     }
+
+    if matches.is_present("simplify-cfg") {
+        todo!("test simplify-cfg");
+    }
+
+    if matches.is_present("mem2erg") {
+        todo!("test mem2reg");
+    }
+
+    if matches.is_present("deadcode") {
+        todo!("test deadcode");
+    }
+
+    if matches.is_present("gvn") {
+        todo!("test gvn");
+    }
 }

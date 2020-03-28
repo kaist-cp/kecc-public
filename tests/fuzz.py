@@ -26,6 +26,7 @@ REPLACE_DICT = {
     "_Float128": "long double",
     "union": "struct",
     r"enum[\w\s]*\{[^\}]*\};": "",
+    r"typedef enum[\w\s]*\{[^;]*;[\s_A-Z]*;": "",
     "const char \*const sys_errlist\[\];": "",
     r"[^\n]*printf[^;]*;": "",
     r"[^\n]*scanf[^;]*;": "",
@@ -191,14 +192,6 @@ def creduce(tests_dir, fuzz_arg):
 def fuzz(tests_dir, fuzz_arg, num_iter):
     csmith_bin, csmith_inc = install_csmith(tests_dir)
     try:
-        print("Building KECC..")
-        try:
-            proc = subprocess.Popen(["cargo", "build", "--release"], cwd=tests_dir)
-            proc.communicate()
-        except subprocess.TimeoutExpired as e:
-            proc.kill()
-            raise e
-
         if num_iter is None:
             print("Fuzzing with infinitely many test cases.  Please press [ctrl+C] to break.")
             iterator = itertools.count(0)
@@ -247,6 +240,15 @@ if __name__ == "__main__":
         raise Exception("Specify fuzzing argument")
 
     tests_dir = os.path.abspath(os.path.dirname(__file__))
+
+    print("Building KECC..")
+    try:
+        proc = subprocess.Popen(["cargo", "build", "--release"], cwd=tests_dir)
+        proc.communicate()
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        raise e
+
     if args.reduce:
         creduce(tests_dir, fuzz_arg)
     else:

@@ -120,6 +120,7 @@ impl WriteLine for (&BlockId, &Block) {
 impl WriteString for Instruction {
     fn write_string(&self) -> String {
         match self {
+            Instruction::Nop => "nop".into(),
             Instruction::BinOp { op, lhs, rhs, .. } => format!(
                 "{} {} {}",
                 op.write_operation(),

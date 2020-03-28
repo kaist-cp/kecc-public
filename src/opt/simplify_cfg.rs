@@ -1,21 +1,9 @@
 use crate::ir::*;
+use crate::opt::FunctionPass;
 use crate::*;
 
-pub type SimplifyCfg = Repeat<(SimplifyCfgConstProp, (SimplifyCfgReach, SimplifyCfgMerge))>;
-
-impl Optimize<TranslationUnit> for SimplifyCfg {
-    fn optimize(&mut self, code: &mut TranslationUnit) -> bool {
-        code.decls.iter_mut().any(|(_, decl)| self.optimize(decl))
-    }
-}
-
-impl Optimize<Declaration> for SimplifyCfg {
-    fn optimize(&mut self, code: &mut Declaration) -> bool {
-        let (_fsig, fdef) = some_or!(code.get_function_mut(), return false);
-        let fdef = some_or!(fdef, return false);
-        self.optimize(fdef)
-    }
-}
+pub type SimplifyCfg =
+    FunctionPass<Repeat<(SimplifyCfgConstProp, (SimplifyCfgReach, SimplifyCfgMerge))>>;
 
 /// Simplifies block exits by propagating constants.
 #[derive(Default)]

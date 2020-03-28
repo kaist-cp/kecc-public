@@ -11,6 +11,9 @@ use crate::*;
 // TODO: the variants of Value will be added in the future
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
+    Undef {
+        dtype: Dtype,
+    },
     Unit,
     Int {
         value: u128,
@@ -97,7 +100,8 @@ impl Value {
             } => Self::int(u128::default(), *width, *is_signed),
             ir::Dtype::Float { width, .. } => Self::float(f64::default(), *width),
             ir::Dtype::Pointer { .. } => Self::nullptr(),
-            ir::Dtype::Function { .. } => panic!("function types do not have a default value"),
+            ir::Dtype::Array { .. } => panic!("array type does not have a default value"),
+            ir::Dtype::Function { .. } => panic!("function type does not have a default value"),
         }
     }
 }
@@ -225,6 +229,8 @@ mod calculator {
         rhs: Value,
     ) -> Result<Value, ()> {
         match (op, lhs, rhs) {
+            (_, Value::Undef { .. }, _) => Err(()),
+            (_, _, Value::Undef { .. }) => Err(()),
             (
                 op,
                 Value::Int {
@@ -273,6 +279,7 @@ mod calculator {
         operand: Value,
     ) -> Result<Value, ()> {
         match (op, operand) {
+            (_, Value::Undef { .. }) => Err(()),
             (
                 ast::UnaryOperator::Plus,
                 Value::Int {
@@ -312,6 +319,7 @@ mod calculator {
 
     pub fn calculate_typecast(value: Value, dtype: crate::ir::Dtype) -> Result<Value, ()> {
         match (value, dtype) {
+            (Value::Undef { .. }, _) => Err(()),
             // TODO: distinguish zero/signed extension in the future
             // TODO: consider truncate in the future
             (
@@ -336,14 +344,7 @@ struct Memory {
 
 impl Memory {
     fn alloc(&mut self, dtype: &Dtype) -> Result<usize, InterpreterError> {
-        let memory_block = match dtype {
-            ir::Dtype::Unit { .. }
-            | ir::Dtype::Int { .. }
-            | ir::Dtype::Float { .. }
-            | ir::Dtype::Pointer { .. } => vec![Value::default_from_dtype(dtype)],
-            ir::Dtype::Function { .. } => vec![],
-        };
-
+        let memory_block = Self::block_from_dtype(dtype);
         self.inner.push(memory_block);
 
         Ok(self.inner.len() - 1)
@@ -355,6 +356,25 @@ impl Memory {
 
     fn store(&mut self, bid: usize, offset: usize, value: Value) {
         self.inner[bid][offset] = value;
+    }
+
+    fn block_from_dtype(dtype: &Dtype) -> Vec<Value> {
+        match dtype {
+            ir::Dtype::Unit { .. } => vec![],
+            ir::Dtype::Int { .. } | ir::Dtype::Float { .. } | ir::Dtype::Pointer { .. } => {
+                vec![Value::Undef {
+                    dtype: dtype.clone(),
+                }]
+            }
+            ir::Dtype::Array { inner, size, .. } => {
+                let sub_vec = Self::block_from_dtype(inner.deref());
+                (0..*size).fold(vec![], |mut result, _| {
+                    result.append(&mut sub_vec.clone());
+                    result
+                })
+            }
+            ir::Dtype::Function { .. } => vec![],
+        }
     }
 }
 
@@ -414,16 +434,20 @@ impl<'i> State<'i> {
 
             // Initialize allocated memory space
             match decl {
-                Declaration::Variable { dtype, initializer } => {
-                    if dtype.get_function_inner().is_some() {
-                        panic!("function variable does not exist")
-                    }
+                Declaration::Variable { dtype, initializer } => match &dtype {
+                    ir::Dtype::Unit { .. } => (),
+                    ir::Dtype::Int { .. } | ir::Dtype::Float { .. } | ir::Dtype::Pointer { .. } => {
+                        let value = if let Some(constant) = initializer {
+                            self.interp_constant(constant.clone())
+                        } else {
+                            Value::default_from_dtype(&dtype)
+                        };
 
-                    if let Some(constant) = initializer {
-                        let value = self.interp_constant(constant.clone());
                         self.memory.store(bid, 0, value);
                     }
-                }
+                    ir::Dtype::Array { .. } => todo!("Initializer::List is needed"),
+                    ir::Dtype::Function { .. } => panic!("function variable does not exist"),
+                },
                 // If functin declaration, skip initialization
                 Declaration::Function { .. } => (),
             }
@@ -578,6 +602,7 @@ impl<'i> State<'i> {
 
     fn interp_instruction(&mut self, instruction: &Instruction) -> Result<(), InterpreterError> {
         let result = match instruction {
+            Instruction::Nop => Value::unit(),
             Instruction::BinOp { op, lhs, rhs, .. } => {
                 let lhs = self.interp_operand(lhs.clone())?;
                 let rhs = self.interp_operand(rhs.clone())?;
@@ -685,6 +710,7 @@ impl<'i> State<'i> {
 
     fn interp_constant(&self, value: Constant) -> Value {
         match value {
+            Constant::Undef { dtype } => Value::Undef { dtype },
             Constant::Unit => Value::Unit,
             Constant::Int {
                 value,

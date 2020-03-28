@@ -44,6 +44,10 @@ pub enum Dtype {
         inner: Box<Dtype>,
         is_const: bool,
     },
+    Array {
+        inner: Box<Dtype>,
+        size: usize,
+    },
     Function {
         ret: Box<Dtype>,
         params: Vec<Dtype>,
@@ -342,6 +346,30 @@ impl Dtype {
         }
     }
 
+    // Suppose the C declaration is `int *a[2][3]`. Then `a`'s `ir::Dtype` should be `[2 x [3 x int*]]`.
+    // But in the AST, it is parsed as `Array(3, Array(2, Pointer(int)))`, reversing the order of `2` and `3`.
+    // In the recursive translation of declaration into Dtype, we need to insert `3` inside `[2 * int*]`.
+    pub fn array(base_dtype: Dtype, size: usize) -> Self {
+        match base_dtype {
+            Self::Array {
+                inner,
+                size: old_size,
+            } => {
+                let inner = inner.deref().clone();
+                let inner = Self::array(inner, size);
+                Self::Array {
+                    inner: Box::new(inner),
+                    size: old_size,
+                }
+            }
+            Self::Function { .. } => panic!("array size cannot be applied to function type"),
+            inner => Self::Array {
+                inner: Box::new(inner),
+                size,
+            },
+        }
+    }
+
     #[inline]
     pub fn function(ret: Dtype, params: Vec<Dtype>) -> Self {
         Self::Function {
@@ -411,9 +439,8 @@ impl Dtype {
             Self::Int { is_const, .. } => *is_const,
             Self::Float { is_const, .. } => *is_const,
             Self::Pointer { is_const, .. } => *is_const,
-            Self::Function { .. } => {
-                panic!("there should be no case that check whether `Function` is `const`")
-            }
+            Self::Array { .. } => true,
+            Self::Function { .. } => true,
         }
     }
 
@@ -429,36 +456,36 @@ impl Dtype {
             },
             Self::Float { width, .. } => Self::Float { width, is_const },
             Self::Pointer { inner, .. } => Self::Pointer { inner, is_const },
-            Self::Function { .. } => panic!("`const` cannot be applied to `Dtype::Function`"),
+            Self::Array { .. } => self,
+            Self::Function { .. } => self,
         }
     }
 
-    /// Return byte size of `Dtype`
-    pub fn size_of(&self) -> Result<usize, DtypeError> {
-        // TODO: consider complex type like array, structure in the future
+    pub fn size_align_of(&self) -> Result<(usize, usize), DtypeError> {
         match self {
-            Self::Unit { .. } => Ok(0),
-            Self::Int { width, .. } => Ok(*width / Self::WIDTH_OF_BYTE),
-            Self::Float { width, .. } => Ok(*width / Self::WIDTH_OF_BYTE),
-            Self::Pointer { .. } => Ok(Self::WIDTH_OF_POINTER / Self::WIDTH_OF_BYTE),
-            Self::Function { .. } => Err(DtypeError::Misc {
-                message: "`sizeof` cannot be used with function types".to_string(),
-            }),
-        }
-    }
+            Self::Unit { .. } => Ok((0, 1)),
+            Self::Int { width, .. } | Self::Float { width, .. } => {
+                let align_of = *width / Self::WIDTH_OF_BYTE;
+                let size_of = align_of;
 
-    /// Return alignment requirements of `Dtype`
-    pub fn align_of(&self) -> Result<usize, DtypeError> {
-        // TODO: consider complex type like array, structure in the future
-        // TODO: when considering complex type like a structure,
-        // the calculation method should be different from `Dtype::size_of`.
-        match self {
-            Self::Unit { .. } => Ok(0),
-            Self::Int { width, .. } => Ok(*width / Self::WIDTH_OF_BYTE),
-            Self::Float { width, .. } => Ok(*width / Self::WIDTH_OF_BYTE),
-            Self::Pointer { .. } => Ok(Self::WIDTH_OF_POINTER / Self::WIDTH_OF_BYTE),
+                Ok((size_of, align_of))
+            }
+            Self::Pointer { .. } => {
+                let align_of = Self::WIDTH_OF_POINTER / Self::WIDTH_OF_BYTE;
+                let size_of = align_of;
+
+                Ok((size_of, align_of))
+            }
+            Self::Array { inner, size, .. } => {
+                let (size_of_inner, align_of_inner) = inner.size_align_of()?;
+
+                Ok((
+                    size * std::cmp::max(size_of_inner, align_of_inner),
+                    align_of_inner,
+                ))
+            }
             Self::Function { .. } => Err(DtypeError::Misc {
-                message: "`alignof` cannot be used with function types".to_string(),
+                message: "`size_align_of` cannot be used with function types".to_string(),
             }),
         }
     }
@@ -590,6 +617,7 @@ impl fmt::Display for Dtype {
             Self::Pointer { inner, is_const } => {
                 write!(f, "{}* {}", inner, if *is_const { "const" } else { "" })
             }
+            Self::Array { inner, size, .. } => write!(f, "[{} x {}]", size, inner,),
             Self::Function { ret, params } => write!(
                 f,
                 "{} ({})",

@@ -1,5 +1,8 @@
 name: kecc
 args:
+    - parse:
+        long: parse
+        help: Parses the input file
     - print:
         short: p
         long: print
@@ -12,6 +15,18 @@ args:
         short: O
         long: optimize
         help: Optimizes IR
+    - simplify-cfg:
+        long: simplify-cfg
+        help: Performs simplify-cfg
+    - mem2reg:
+        long: mem2reg
+        help: Performs mem2reg
+    - deadcode:
+        long: deadcode
+        help: Performs deadcode elimination
+    - gvn:
+        long: gvn
+        help: Performs gvn
     - output:
         short: o
         long: output

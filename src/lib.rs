@@ -21,4 +21,4 @@ pub use c::Parse;
 
 pub use asmgen::Asmgen;
 pub use irgen::Irgen;
-pub use opt::{Gvn, Mem2reg, Optimize, Repeat, SimplifyCfg, Translate, O0, O1};
+pub use opt::{Deadcode, Gvn, Mem2reg, Optimize, Repeat, SimplifyCfg, O0, O1};

@@ -5,7 +5,9 @@ use clap::{crate_authors, crate_description, crate_version, App};
 #[macro_use]
 extern crate kecc;
 
-use kecc::{write, Asmgen, Irgen, Optimize, Parse, Translate, O1};
+use kecc::{
+    write, Asmgen, Deadcode, Gvn, Irgen, Mem2reg, Optimize, Parse, SimplifyCfg, Translate, O1,
+};
 
 fn main() {
     let yaml = load_yaml!("kecc_cli.yml");
@@ -26,6 +28,10 @@ fn main() {
         Box::new(ok_or_exit!(::std::fs::File::open(output), 1))
     };
 
+    if matches.is_present("parse") {
+        return;
+    }
+
     if matches.is_present("print") {
         write(&unit, &mut output).unwrap();
         return;
@@ -45,6 +51,22 @@ fn main() {
 
     if matches.is_present("optimize") {
         O1::default().optimize(&mut ir);
+    } else {
+        if matches.is_present("simplify-cfg") {
+            SimplifyCfg::default().optimize(&mut ir);
+        }
+
+        if matches.is_present("mem2erg") {
+            Mem2reg::default().optimize(&mut ir);
+        }
+
+        if matches.is_present("deadcode") {
+            Deadcode::default().optimize(&mut ir);
+        }
+
+        if matches.is_present("gvn") {
+            Gvn::default().optimize(&mut ir);
+        }
     }
 
     let asm = ok_or_exit!(Asmgen::default().translate(&ir), 1);

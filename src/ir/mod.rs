@@ -49,12 +49,13 @@ impl TryFrom<Dtype> for Declaration {
             Dtype::Unit { .. } => Err(DtypeError::Misc {
                 message: "A variable of type `void` cannot be declared".to_string(),
             }),
-            Dtype::Int { .. } | Dtype::Float { .. } | Dtype::Pointer { .. } => {
-                Ok(Declaration::Variable {
-                    dtype,
-                    initializer: None,
-                })
-            }
+            Dtype::Int { .. }
+            | Dtype::Float { .. }
+            | Dtype::Pointer { .. }
+            | Dtype::Array { .. } => Ok(Declaration::Variable {
+                dtype,
+                initializer: None,
+            }),
             Dtype::Function { .. } => Ok(Declaration::Function {
                 signature: FunctionSignature::new(dtype),
                 definition: None,
@@ -257,6 +258,9 @@ impl Hash for RegisterId {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Constant {
+    Undef {
+        dtype: Dtype,
+    },
     Unit,
     Int {
         value: u128,
@@ -365,8 +369,14 @@ impl Constant {
         }
     }
 
+    #[inline]
+    pub fn undef(dtype: Dtype) -> Self {
+        Self::Undef { dtype }
+    }
+
+    #[inline]
     pub fn unit() -> Self {
-        Constant::Unit
+        Self::Unit
     }
 
     #[inline]
@@ -374,7 +384,7 @@ impl Constant {
         let width = dtype.get_int_width().expect("`dtype` must be `Dtype::Int`");
         let is_signed = dtype.is_int_signed();
 
-        Constant::Int {
+        Self::Int {
             value,
             width,
             is_signed,
@@ -387,18 +397,27 @@ impl Constant {
             .get_float_width()
             .expect("`dtype` must be `Dtype::Float`");
 
-        Constant::Float { value, width }
+        Self::Float { value, width }
     }
 
     #[inline]
     pub fn global_variable(name: String, dtype: Dtype) -> Self {
         Self::GlobalVariable { name, dtype }
     }
+
+    pub fn is_undef(&self) -> bool {
+        if let Self::Undef { .. } = self {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl fmt::Display for Constant {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Undef { .. } => write!(f, "undef"),
             Self::Unit => write!(f, "unit"),
             Self::Int { value, .. } => write!(f, "{}", value),
             Self::Float { value, .. } => write!(f, "{}", value),
@@ -410,6 +429,7 @@ impl fmt::Display for Constant {
 impl HasDtype for Constant {
     fn dtype(&self) -> Dtype {
         match self {
+            Self::Undef { dtype } => dtype.clone(),
             Self::Unit => Dtype::unit(),
             Self::Int {
                 width, is_signed, ..
@@ -450,6 +470,14 @@ impl Operand {
             None
         }
     }
+
+    pub fn get_register_mut(&mut self) -> Option<(&mut RegisterId, &mut Dtype)> {
+        if let Self::Register { rid, dtype } = self {
+            Some((rid, dtype))
+        } else {
+            None
+        }
+    }
 }
 
 impl fmt::Display for Operand {
@@ -471,8 +499,10 @@ impl HasDtype for Operand {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum Instruction {
     // TODO: the variants of Instruction will be added in the future
+    Nop,
     BinOp {
         op: ast::BinaryOperator,
         lhs: Operand,
@@ -505,6 +535,7 @@ pub enum Instruction {
 impl HasDtype for Instruction {
     fn dtype(&self) -> Dtype {
         match self {
+            Self::Nop => Dtype::unit(),
             Self::BinOp { dtype, .. } => dtype.clone(),
             Self::UnaryOp { dtype, .. } => dtype.clone(),
             Self::Store { .. } => Dtype::unit(),
@@ -517,6 +548,16 @@ impl HasDtype for Instruction {
                 .set_const(false),
             Self::Call { return_type, .. } => return_type.clone(),
             Self::TypeCast { target_dtype, .. } => target_dtype.clone(),
+        }
+    }
+}
+
+impl Instruction {
+    pub fn is_pure(&self) -> bool {
+        match self {
+            Self::Store { .. } => false,
+            Self::Call { .. } => false,
+            _ => true,
         }
     }
 }

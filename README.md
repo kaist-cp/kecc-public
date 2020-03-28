@@ -39,6 +39,21 @@ cargo test <test-name> # run a particular test
 
 ## Fuzzing
 
+We encourage you to do homework using the test-driven development approach (TDD). You randomly
+generate test input, and if it fails, then reduce it as much as possible and manually inspect the
+reduced test input. For example, for homework 1, do:
+
+```sh
+# randomly generates test inputs and tests them
+python3 tests/fuzz.py --print
+
+# reduces the failing test input as much as possible
+python3 tests/fuzz.py --print --reduce
+
+# fix your code for the reduced test input
+cat tests/test_reduced.c
+```
+
 ### Install
 
 ```sh

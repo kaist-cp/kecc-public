@@ -44,3 +44,10 @@ macro_rules! some_or_exit {
         }
     }};
 }
+
+pub trait Translate<S> {
+    type Target;
+    type Error;
+
+    fn translate(&mut self, source: &S) -> Result<Self::Target, Self::Error>;
+}

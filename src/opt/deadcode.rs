@@ -2,13 +2,13 @@ use crate::ir::*;
 use crate::opt::FunctionPass;
 use crate::*;
 
-pub type Mem2reg = FunctionPass<Mem2regInner>;
+pub type Deadcode = FunctionPass<DeadcodeInner>;
 
 #[derive(Default)]
-pub struct Mem2regInner {}
+pub struct DeadcodeInner {}
 
-impl Optimize<FunctionDefinition> for Mem2regInner {
+impl Optimize<FunctionDefinition> for DeadcodeInner {
     fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("homework 4")
+        todo!("homework 6")
     }
 }
