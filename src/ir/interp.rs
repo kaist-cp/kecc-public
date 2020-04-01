@@ -1,4 +1,5 @@
 use core::fmt;
+use core::iter;
 use core::mem;
 use failure::Fail;
 use std::collections::HashMap;
@@ -31,11 +32,39 @@ pub enum Value {
     },
     Pointer {
         bid: Option<usize>,
-        offset: usize,
+        offset: isize,
+        dtype: Dtype,
+    },
+    Array {
+        inner_dtype: Dtype,
+        values: Vec<Value>,
     },
 }
 
+impl HasDtype for Value {
+    fn dtype(&self) -> Dtype {
+        match self {
+            Self::Undef { dtype } => dtype.clone(),
+            Self::Unit => Dtype::unit(),
+            Self::Int {
+                width, is_signed, ..
+            } => Dtype::int(*width).set_signed(*is_signed),
+            Self::Float { width, .. } => Dtype::float(*width),
+            Self::Pointer { dtype, .. } => Dtype::pointer(dtype.clone()),
+            Self::Array {
+                inner_dtype,
+                values,
+            } => Dtype::array(inner_dtype.clone(), values.len()),
+        }
+    }
+}
+
 impl Value {
+    #[inline]
+    fn undef(dtype: Dtype) -> Self {
+        Self::Undef { dtype }
+    }
+
     #[inline]
     fn unit() -> Self {
         Self::Unit
@@ -56,8 +85,8 @@ impl Value {
     }
 
     #[inline]
-    fn pointer(bid: Option<usize>, offset: usize) -> Self {
-        Self::Pointer { bid, offset }
+    fn pointer(bid: Option<usize>, offset: isize, dtype: Dtype) -> Self {
+        Self::Pointer { bid, offset, dtype }
     }
 
     #[inline]
@@ -75,19 +104,20 @@ impl Value {
     }
 
     #[inline]
-    fn get_pointer(self) -> Option<(Option<usize>, usize)> {
-        if let Value::Pointer { bid, offset } = self {
-            Some((bid, offset))
+    fn get_pointer(&self) -> Option<(&Option<usize>, &isize, &Dtype)> {
+        if let Value::Pointer { bid, offset, dtype } = self {
+            Some((bid, offset, dtype))
         } else {
             None
         }
     }
 
     #[inline]
-    fn nullptr() -> Self {
+    fn nullptr(dtype: Dtype) -> Self {
         Self::Pointer {
             bid: None,
             offset: 0,
+            dtype,
         }
     }
 
@@ -99,9 +129,10 @@ impl Value {
                 width, is_signed, ..
             } => Self::int(u128::default(), *width, *is_signed),
             ir::Dtype::Float { width, .. } => Self::float(f64::default(), *width),
-            ir::Dtype::Pointer { .. } => Self::nullptr(),
+            ir::Dtype::Pointer { inner, .. } => Self::nullptr(inner.deref().clone()),
             ir::Dtype::Array { .. } => panic!("array type does not have a default value"),
             ir::Dtype::Function { .. } => panic!("function type does not have a default value"),
+            ir::Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
     }
 }
@@ -248,9 +279,11 @@ mod calculator {
                 assert_eq!(lhs_s, rhs_s);
 
                 match op {
+                    // TODO: consider signed value in the future
                     ast::BinaryOperator::Plus => Ok(Value::int(lhs + rhs, lhs_w, lhs_s)),
                     ast::BinaryOperator::Minus => Ok(Value::int(lhs - rhs, lhs_w, lhs_s)),
                     ast::BinaryOperator::Multiply => Ok(Value::int(lhs * rhs, lhs_w, lhs_s)),
+                    ast::BinaryOperator::Modulo => Ok(Value::int(lhs % rhs, lhs_w, lhs_s)),
                     ast::BinaryOperator::Equals => {
                         let result = if lhs == rhs { 1 } else { 0 };
                         Ok(Value::int(result, 1, lhs_s))
@@ -263,11 +296,28 @@ mod calculator {
                         let result = if lhs < rhs { 1 } else { 0 };
                         Ok(Value::int(result, 1, lhs_s))
                     }
+                    ast::BinaryOperator::Greater => {
+                        let result = if lhs > rhs { 1 } else { 0 };
+                        Ok(Value::int(result, 1, lhs_s))
+                    }
+                    ast::BinaryOperator::LessOrEqual => {
+                        let result = if lhs <= rhs { 1 } else { 0 };
+                        Ok(Value::int(result, 1, lhs_s))
+                    }
                     ast::BinaryOperator::GreaterOrEqual => {
                         let result = if lhs >= rhs { 1 } else { 0 };
                         Ok(Value::int(result, 1, lhs_s))
                     }
-                    _ => todo!("will be covered all operator"),
+                    ast::BinaryOperator::LogicalAnd => {
+                        assert!(lhs < 2);
+                        assert!(rhs < 2);
+                        let result = lhs | rhs;
+                        Ok(Value::int(result, 1, lhs_s))
+                    }
+                    _ => todo!(
+                        "calculate_binary_operator_expression: not supported operator {:?}",
+                        op
+                    ),
                 }
             }
             _ => todo!(),
@@ -336,45 +386,246 @@ mod calculator {
     }
 }
 
+// TODO
+#[allow(dead_code)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+enum Byte {
+    Undef,
+    Concrete(u8),
+    Pointer {
+        bid: usize,
+        offset: isize,
+        index: usize,
+    },
+}
+
 #[derive(Default, Debug, PartialEq)]
 struct Memory {
-    // TODO: memory type should change to Vec<Vec<Byte>>
-    inner: Vec<Vec<Value>>,
+    inner: Vec<Option<Vec<Byte>>>,
+}
+
+impl Byte {
+    #[inline]
+    fn concrete(byte: u8) -> Self {
+        Self::Concrete(byte)
+    }
+
+    #[inline]
+    fn pointer(bid: usize, offset: isize, index: usize) -> Self {
+        Self::Pointer { bid, offset, index }
+    }
+
+    fn get_concrete(&self) -> Option<u8> {
+        if let Self::Concrete(byte) = self {
+            Some(*byte)
+        } else {
+            None
+        }
+    }
+
+    fn get_pointer(&self) -> Option<(usize, isize, usize)> {
+        if let Self::Pointer { bid, offset, index } = self {
+            Some((*bid, *offset, *index))
+        } else {
+            None
+        }
+    }
+
+    fn block_from_dtype(dtype: &Dtype) -> Vec<Self> {
+        let size = dtype.size_align_of().unwrap().0;
+        iter::repeat(Self::Undef).take(size).collect()
+    }
+
+    fn u128_to_bytes(mut value: u128, size: usize) -> Vec<u8> {
+        let divisor = 1u128 << Dtype::BITS_OF_BYTE;
+        let mut bytes = Vec::new();
+        for _ in 0..size {
+            bytes.push((value % divisor) as u8);
+            value /= divisor;
+        }
+
+        bytes
+    }
+
+    fn bytes_to_u128(bytes: &[u8], is_signed: bool) -> u128 {
+        let width = bytes.len();
+        assert!(0 < width && width <= 16);
+
+        let is_negative = is_signed && *bytes.last().unwrap() >= 128;
+        let mut array = [if is_negative { 255 } else { 0 }; 16];
+        array[0..width].copy_from_slice(bytes);
+        u128::from_le_bytes(array)
+    }
+
+    fn bytes_to_value<'b, I>(bytes: &mut I, dtype: &Dtype) -> Result<Value, InterpreterError>
+    where
+        I: Iterator<Item = &'b Self>,
+    {
+        match dtype {
+            ir::Dtype::Unit { .. } => Ok(Value::Unit),
+            ir::Dtype::Int {
+                width, is_signed, ..
+            } => {
+                let value = some_or!(
+                    bytes
+                        .by_ref()
+                        .take(*width)
+                        .map(|b| b.get_concrete())
+                        .collect::<Option<Vec<_>>>(),
+                    return Ok(Value::undef(dtype.clone()))
+                );
+                let value = Self::bytes_to_u128(&value, *is_signed);
+                Ok(Value::int(value, *width, *is_signed))
+            }
+            ir::Dtype::Float { width, .. } => {
+                let value = some_or!(
+                    bytes
+                        .by_ref()
+                        .take(*width)
+                        .map(|b| b.get_concrete())
+                        .collect::<Option<Vec<_>>>(),
+                    return Ok(Value::undef(dtype.clone()))
+                );
+                let value = Self::bytes_to_u128(&value, false);
+                let value = if *width == Dtype::SIZE_OF_FLOAT {
+                    f32::from_bits(value as u32) as f64
+                } else {
+                    f64::from_bits(value as u64)
+                };
+
+                Ok(Value::float(value, *width))
+            }
+            ir::Dtype::Pointer { inner, .. } => {
+                let value = some_or!(
+                    bytes
+                        .by_ref()
+                        .take(Dtype::SIZE_OF_POINTER)
+                        .map(|b| b.get_pointer())
+                        .collect::<Option<Vec<_>>>(),
+                    return Ok(Value::undef(dtype.clone()))
+                );
+
+                let (bid, offset, _) = value.first().expect("not empty");
+
+                Ok(
+                    if !value
+                        .iter()
+                        .enumerate()
+                        .all(|(idx, ptr)| *ptr == (*bid, *offset, idx))
+                    {
+                        Value::undef(inner.deref().clone())
+                    } else {
+                        Value::pointer(Some(*bid), *offset, inner.deref().clone())
+                    },
+                )
+            }
+            ir::Dtype::Array { inner, size } => {
+                let (inner_size, inner_align) = inner.size_align_of().unwrap();
+                let padding = std::cmp::max(inner_size, inner_align) - inner_size;
+                let values = (0..*size)
+                    .map(|_| {
+                        let value = Self::bytes_to_value(bytes, inner)?;
+                        let _ = bytes.by_ref().take(padding);
+                        Ok(value)
+                    })
+                    .collect::<Result<Vec<_>, InterpreterError>>()?;
+                Ok(Value::Array {
+                    inner_dtype: inner.deref().clone(),
+                    values,
+                })
+            }
+            ir::Dtype::Function { .. } => panic!("function value cannot be constructed from bytes"),
+            ir::Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
+        }
+    }
+
+    fn value_to_bytes(value: &Value) -> Vec<Self> {
+        match value {
+            Value::Undef { dtype } => Self::block_from_dtype(dtype),
+            Value::Unit => Vec::new(),
+            Value::Int { value, width, .. } => {
+                let size = (*width + Dtype::BITS_OF_BYTE - 1) / Dtype::BITS_OF_BYTE;
+                Self::u128_to_bytes(*value, size)
+                    .iter()
+                    .map(|b| Self::concrete(*b))
+                    .collect::<Vec<_>>()
+            }
+            Value::Float { value, width } => {
+                let size = (*width + Dtype::BITS_OF_BYTE - 1) / Dtype::BITS_OF_BYTE;
+                let value: u128 = match size {
+                    Dtype::SIZE_OF_FLOAT => (*value as f32).to_bits() as u128,
+                    Dtype::SIZE_OF_DOUBLE => (*value as f64).to_bits() as u128,
+                    _ => panic!("value_to_bytes: {} is not a valid float size", size),
+                };
+
+                Self::u128_to_bytes(value, size)
+                    .iter()
+                    .map(|b| Self::concrete(*b))
+                    .collect::<Vec<_>>()
+            }
+            Value::Pointer { bid, offset, .. } => (0..Dtype::SIZE_OF_POINTER)
+                .map(|i| Self::pointer(bid.unwrap(), *offset, i))
+                .collect(),
+            Value::Array {
+                inner_dtype,
+                values,
+            } => {
+                let (inner_size, inner_align) = inner_dtype.size_align_of().unwrap();
+                let padding = std::cmp::max(inner_size, inner_align) - inner_size;
+                values
+                    .iter()
+                    .map(|v| {
+                        let mut result = Self::value_to_bytes(v);
+                        result.extend(iter::repeat(Byte::Undef).take(padding));
+                        result
+                    })
+                    .flatten()
+                    .collect()
+            }
+        }
+    }
 }
 
 impl Memory {
     fn alloc(&mut self, dtype: &Dtype) -> Result<usize, InterpreterError> {
-        let memory_block = Self::block_from_dtype(dtype);
-        self.inner.push(memory_block);
-
-        Ok(self.inner.len() - 1)
+        let bid = self.inner.len();
+        self.inner.push(Some(Byte::block_from_dtype(dtype)));
+        Ok(bid)
     }
 
-    fn load(&self, bid: usize, offset: usize) -> &Value {
-        &self.inner[bid][offset]
+    fn dealloc(
+        &mut self,
+        bid: usize,
+        offset: isize,
+        dtype: &Dtype,
+    ) -> Result<(), InterpreterError> {
+        let block = &mut self.inner[bid];
+        assert_eq!(offset, 0);
+        assert_eq!(
+            block.as_mut().unwrap().len(),
+            dtype.size_align_of().unwrap().0
+        );
+        *block = None;
+        Ok(())
     }
 
-    fn store(&mut self, bid: usize, offset: usize, value: Value) {
-        self.inner[bid][offset] = value;
+    fn load(&self, bid: usize, offset: isize, dtype: &Dtype) -> Result<Value, InterpreterError> {
+        assert!(0 <= offset);
+        let offset = offset as usize;
+        let size = dtype.size_align_of().unwrap().0;
+        let mut iter = self.inner[bid].as_ref().unwrap()[offset..(offset + size)].iter();
+        Byte::bytes_to_value(&mut iter, dtype)
     }
 
-    fn block_from_dtype(dtype: &Dtype) -> Vec<Value> {
-        match dtype {
-            ir::Dtype::Unit { .. } => vec![],
-            ir::Dtype::Int { .. } | ir::Dtype::Float { .. } | ir::Dtype::Pointer { .. } => {
-                vec![Value::Undef {
-                    dtype: dtype.clone(),
-                }]
-            }
-            ir::Dtype::Array { inner, size, .. } => {
-                let sub_vec = Self::block_from_dtype(inner.deref());
-                (0..*size).fold(vec![], |mut result, _| {
-                    result.append(&mut sub_vec.clone());
-                    result
-                })
-            }
-            ir::Dtype::Function { .. } => vec![],
-        }
+    fn store(&mut self, bid: usize, offset: isize, value: &Value) {
+        assert!(0 <= offset);
+        let offset = offset as usize;
+        let size = value.dtype().size_align_of().unwrap().0;
+        let bytes = Byte::value_to_bytes(value);
+        self.inner[bid]
+            .as_mut()
+            .unwrap()
+            .splice(offset..(offset + size), bytes.iter().cloned());
     }
 }
 
@@ -443,10 +694,11 @@ impl<'i> State<'i> {
                             Value::default_from_dtype(&dtype)
                         };
 
-                        self.memory.store(bid, 0, value);
+                        self.memory.store(bid, 0, &value);
                     }
                     ir::Dtype::Array { .. } => todo!("Initializer::List is needed"),
                     ir::Dtype::Function { .. } => panic!("function variable does not exist"),
+                    ir::Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
                 },
                 // If functin declaration, skip initialization
                 Declaration::Function { .. } => (),
@@ -460,8 +712,8 @@ impl<'i> State<'i> {
         // add alloc register
         for (id, allocation) in self.stack_frame.func_def.allocations.iter().enumerate() {
             let bid = self.memory.alloc(&allocation)?;
-            let ptr = Value::pointer(Some(bid), 0);
-            let rid = RegisterId::local("".to_string(), id);
+            let ptr = Value::pointer(Some(bid), 0, allocation.deref().clone());
+            let rid = RegisterId::local(id);
 
             self.stack_frame.registers.write(rid, ptr)
         }
@@ -498,7 +750,17 @@ impl<'i> State<'i> {
 
         // If it's returning from a function, pop the stack frame.
 
-        // TODO: free memory allocated in the callee
+        // Frees memory allocated in the callee
+        for (i, d) in self.stack_frame.func_def.allocations.iter().enumerate() {
+            let (bid, offset, dtype) = self
+                .stack_frame
+                .registers
+                .read(RegisterId::local(i))
+                .get_pointer()
+                .unwrap();
+            assert_eq!(d.deref(), dtype);
+            self.memory.dealloc(bid.unwrap(), *offset, dtype)?;
+        }
 
         // restore previous state
         let prev_stack_frame = some_or!(self.stack.pop(), return Ok(Some(return_value)));
@@ -526,7 +788,8 @@ impl<'i> State<'i> {
     ) -> Result<Vec<Value>, InterpreterError> {
         // Check that the dtype of each args matches the expected
         if !(args.len() == signature.params.len()
-            && izip!(args, &signature.params).all(|(a, d)| a.dtype().is_compatible(d)))
+            && izip!(args, &signature.params)
+                .all(|(a, d)| a.dtype().set_const(false) == d.clone().set_const(false)))
         {
             panic!("dtype of args and params must be compatible")
         }
@@ -546,16 +809,14 @@ impl<'i> State<'i> {
 
         assert_eq!(arg.args.len(), block.phinodes.len());
         for (a, d) in izip!(&arg.args, &block.phinodes) {
-            assert!(a.dtype().is_compatible(&d));
+            assert!(a.dtype().set_const(false) == d.deref().clone().set_const(false));
         }
 
         for (i, a) in arg.args.iter().enumerate() {
             let v = self.interp_operand(a.clone()).unwrap();
             self.stack_frame
                 .registers
-                .inner
-                .insert(RegisterId::arg(arg.bid, i), v)
-                .unwrap();
+                .write(RegisterId::arg(arg.bid, i), v);
         }
 
         self.stack_frame.pc = Pc::new(arg.bid);
@@ -629,21 +890,20 @@ impl<'i> State<'i> {
             Instruction::Store { ptr, value, .. } => {
                 let ptr = self.interp_operand(ptr.clone())?;
                 let value = self.interp_operand(value.clone())?;
-                let (bid, offset) = self.interp_ptr(ptr)?;
-                self.memory.store(bid, offset, value);
-
+                let (bid, offset, _) = self.interp_ptr(&ptr)?;
+                self.memory.store(bid, offset, &value);
                 Value::Unit
             }
             Instruction::Load { ptr, .. } => {
                 let ptr = self.interp_operand(ptr.clone())?;
-                let (bid, offset) = self.interp_ptr(ptr)?;
-                self.memory.load(bid, offset).clone()
+                let (bid, offset, dtype) = self.interp_ptr(&ptr)?;
+                self.memory.load(bid, offset, &dtype)?
             }
             Instruction::Call { callee, args, .. } => {
                 let ptr = self.interp_operand(callee.clone())?;
 
                 // Get function name from pointer
-                let (bid, _) = ptr.get_pointer().expect("`ptr` must be `Value::Pointer`");
+                let (bid, _, _) = ptr.get_pointer().expect("`ptr` must be `Value::Pointer`");
                 let bid = bid.expect("pointer for global variable must have bid value");
                 let callee_name = self
                     .global_map
@@ -721,8 +981,11 @@ impl<'i> State<'i> {
                 width,
                 is_signed,
             },
-            Constant::Float { value, width } => Value::Float { value, width },
-            Constant::GlobalVariable { name, .. } => {
+            Constant::Float { value, width } => Value::Float {
+                value: value.into_inner(),
+                width,
+            },
+            Constant::GlobalVariable { name, dtype } => {
                 let bid = self
                     .global_map
                     .get_bid(&name)
@@ -732,13 +995,14 @@ impl<'i> State<'i> {
                 Value::Pointer {
                     bid: Some(bid),
                     offset: 0,
+                    dtype,
                 }
             }
         }
     }
 
-    fn interp_ptr(&mut self, pointer: Value) -> Result<(usize, usize), InterpreterError> {
-        let (bid, offset) = pointer
+    fn interp_ptr(&mut self, pointer: &Value) -> Result<(usize, isize, Dtype), InterpreterError> {
+        let (bid, offset, dtype) = pointer
             .get_pointer()
             .ok_or_else(|| InterpreterError::Misc {
                 func_name: self.stack_frame.func_name.clone(),
@@ -752,7 +1016,7 @@ impl<'i> State<'i> {
             msg: "Accessing memory with constant pointer".into(),
         })?;
 
-        Ok((bid, offset))
+        Ok((bid, *offset, dtype.clone()))
     }
 }
 

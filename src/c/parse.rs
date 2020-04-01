@@ -76,7 +76,20 @@ impl AssertSupported for TranslationUnit {
 impl AssertSupported for ExternalDeclaration {
     fn assert_supported(&self) {
         match self {
-            Self::Declaration(decl) => decl.assert_supported(),
+            Self::Declaration(decl) => {
+                for spec in &decl.node.specifiers {
+                    if let DeclarationSpecifier::StorageClass(storage_class) = &spec.node {
+                        // `typedef` is allowed only when it is used in the external declaration.
+                        if StorageClassSpecifier::Typedef != storage_class.node {
+                            panic!("`StorageClassifier` other than `Typedef`")
+                        }
+                    } else {
+                        spec.assert_supported();
+                    }
+                }
+
+                decl.node.declarators.assert_supported();
+            }
             Self::StaticAssert(_) => panic!("ExternalDeclaration::StaticAssert"),
             Self::FunctionDefinition(fdef) => fdef.assert_supported(),
         }
@@ -102,23 +115,12 @@ impl AssertSupported for FunctionDefinition {
 impl AssertSupported for DeclarationSpecifier {
     fn assert_supported(&self) {
         match self {
-            Self::StorageClass(storage_class_specifier) => {
-                storage_class_specifier.assert_supported()
-            }
+            Self::StorageClass(_) => panic!("DeclarationSpecifier::StorageClass"),
             Self::TypeSpecifier(type_specifier) => type_specifier.assert_supported(),
             Self::TypeQualifier(type_qualifier) => type_qualifier.assert_supported(),
             Self::Function(_) => panic!("DeclarationSpecifier::Function"),
             Self::Alignment(_) => panic!("DeclarationSpecifier::Alignment"),
             Self::Extension(_) => panic!("DeclarationSpecifier::Extension"),
-        }
-    }
-}
-
-impl AssertSupported for StorageClassSpecifier {
-    fn assert_supported(&self) {
-        match self {
-            Self::Typedef => (),
-            _ => panic!("StorageClassifier other than Typedef"),
         }
     }
 }
@@ -242,7 +244,11 @@ impl AssertSupported for PointerQualifier {
 
 impl AssertSupported for ArrayDeclarator {
     fn assert_supported(&self) {
-        self.qualifiers.assert_supported();
+        // In C99, type qualifier(e.g., const) is allowed when
+        // array declarator is used as function parameter.
+        // However, KECC does not allow this feature because
+        // it complicates IR generating logic.
+        assert!(self.qualifiers.is_empty());
         self.size.assert_supported();
     }
 }

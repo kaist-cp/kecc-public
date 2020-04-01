@@ -1,5 +1,5 @@
 use lang_c::ast::*;
-use std::fs::File;
+use std::fs::{self, File};
 use std::path::Path;
 use std::process::Command;
 use tempfile::tempdir;
@@ -35,7 +35,7 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
         .expect("failed to compile the given program");
 
     // Execute compiled executable
-    let status = Command::new(bin_path.clone())
+    let status = Command::new(fs::canonicalize(format!("./{}", bin_path.clone())).unwrap())
         .status()
         .expect("failed to execute the compiled executable")
         .code()

@@ -27,14 +27,15 @@ REPLACE_DICT = {
     "union": "struct",
     r"enum[\w\s]*\{[^\}]*\};": "",
     r"typedef enum[\w\s]*\{[^;]*;[\s_A-Z]*;": "",
-    "const char \*const sys_errlist\[\];": "",
+    "const char \*const sys_errlist\[\];": "",      # ArraySize::Unknown 삭제
     r"[^\n]*printf[^;]*;": "",
     r"[^\n]*scanf[^;]*;": "",
     " restrict": "",
     "inline ": "",
     "_Nullable": "",
-    "\"g_\w*\", ": "",
-    "char\* vname, ": "",
+    "\"g_\w*\", ": "",              # transparent_crc에서 프린트 목적으로 받은 StringLiteral 삭제
+    "char\* vname, ": "",           # transparent_crc에서 사용하지 않는 파라미터 삭제
+    r"[^\n]*_IO_2_1_[^;]*;": "",    # extern을 지우면서 생긴 size를 알 수 없는 struct 삭제
 }
 CSMITH_DIR = "csmith-2.3.0"
 
@@ -94,9 +95,8 @@ def generate(tests_dir, bin_path):
     global CSMITH_DIR
     options = [
         "--no-argc", "--no-arrays",
-        "--no-jumps", "--no-longlong", "--no-int8",
-        "--no-uint8", "--no-safe-math", "--no-pointers",
-        "--no-structs", "--no-unions", "--no-builtins",
+        "--no-jumps", "--no-pointers",
+        "--no-structs", "--no-unions",
     ]
     args = [bin_path] + options
 

@@ -1,4 +1,4 @@
-int f(int i, int const a[const i]) {
+int f(int i, int const a[i]) {
   int temp = 0;
   const float temp2 = 0.f, temp3 = 0.f;
   temp = sizeof(unsigned char);

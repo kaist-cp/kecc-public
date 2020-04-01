@@ -9,9 +9,6 @@ mod simplify_cfg;
 pub use deadcode::Deadcode;
 pub use gvn::Gvn;
 pub use mem2reg::Mem2reg;
-pub use opt_utils::{
-    make_cfg, make_domtree, replace_operand, replace_operands, reverse_cfg, Domtree, Walk,
-};
 pub use simplify_cfg::SimplifyCfg;
 
 use crate::ir;

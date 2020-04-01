@@ -1,12 +1,13 @@
 use core::convert::TryFrom;
 use core::fmt;
 use core::ops::Deref;
-use itertools::izip;
+use failure::Fail;
 use lang_c::ast;
 use lang_c::span::Node;
+use std::collections::HashMap;
 use std::hash::Hash;
 
-use failure::Fail;
+use crate::ir::*;
 
 #[derive(Debug, PartialEq, Fail)]
 pub enum DtypeError {
@@ -22,8 +23,11 @@ pub trait HasDtype {
 #[derive(Default)]
 struct BaseDtype {
     scalar: Option<ast::TypeSpecifier>,
+    size_modifiers: Option<ast::TypeSpecifier>,
     signed_option: Option<ast::TypeSpecifier>,
+    typedef_name: Option<String>,
     is_const: bool,
+    is_typedef: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -52,9 +56,40 @@ pub enum Dtype {
         ret: Box<Dtype>,
         params: Vec<Dtype>,
     },
+    Typedef {
+        name: String,
+        is_const: bool,
+    },
 }
 
 impl BaseDtype {
+    /// Apply `StorageClassSpecifier` to `BaseDtype`
+    ///
+    /// let's say declaration is `typedef int i32_t;`, if `self` represents `int`
+    /// and `type_qualifier` represents `typedef`, `self` is transformed to
+    /// representing `typedef int` after function performs.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - Part that has been converted to 'BaseDtype' on the declaration
+    /// * `storage_class` - storage class requiring apply to 'self' immediately
+    ///
+    #[inline]
+    fn apply_storage_class(
+        &mut self,
+        storage_class: &ast::StorageClassSpecifier,
+    ) -> Result<(), DtypeError> {
+        match storage_class {
+            ast::StorageClassSpecifier::Typedef => {
+                // duplicate `typedef` is allowed
+                self.is_typedef = true;
+            }
+            _ => panic!("unsupported storage class"),
+        }
+
+        Ok(())
+    }
+
     /// Apply `TypeSpecifier` to `BaseDtype`
     ///
     /// let's say declaration is `const int a;`, if `self` represents `int`
@@ -81,9 +116,11 @@ impl BaseDtype {
                 self.signed_option = Some(type_specifier.clone());
             }
             ast::TypeSpecifier::Void
+            | ast::TypeSpecifier::Bool
             | ast::TypeSpecifier::Char
             | ast::TypeSpecifier::Int
-            | ast::TypeSpecifier::Float => {
+            | ast::TypeSpecifier::Float
+            | ast::TypeSpecifier::Double => {
                 if self.scalar.is_some() {
                     return Err(DtypeError::Misc {
                         message: "two or more scalar types in declaration specifiers".to_string(),
@@ -91,7 +128,23 @@ impl BaseDtype {
                 }
                 self.scalar = Some(type_specifier.clone());
             }
-            _ => todo!("support more like `double` in the future"),
+            ast::TypeSpecifier::Short | ast::TypeSpecifier::Long => {
+                if self.size_modifiers.is_some() {
+                    return Err(DtypeError::Misc {
+                        message: "two or more size modifiers in declaration specifiers".to_string(),
+                    });
+                }
+                self.size_modifiers = Some(type_specifier.clone());
+            }
+            ast::TypeSpecifier::TypedefName(identifier) => {
+                if self.typedef_name.is_some() {
+                    return Err(DtypeError::Misc {
+                        message: "two or more typedef names in declaration specifiers".to_string(),
+                    });
+                }
+                self.typedef_name = Some(identifier.node.name.clone());
+            }
+            _ => todo!("apply_type_specifier: support {:?}", type_specifier),
         }
 
         Ok(())
@@ -145,9 +198,8 @@ impl BaseDtype {
         declaration_specifier: &ast::DeclarationSpecifier,
     ) -> Result<(), DtypeError> {
         match declaration_specifier {
-            // TODO: `dtype` must be defined taking into account all specifier information.
-            ast::DeclarationSpecifier::StorageClass(_storage_class_spec) => {
-                todo!("analyze storage class specifier keyword to create correct `dtype`")
+            ast::DeclarationSpecifier::StorageClass(storage_class) => {
+                self.apply_storage_class(&storage_class.node)?
             }
             ast::DeclarationSpecifier::TypeSpecifier(type_specifier) => {
                 self.apply_type_specifier(&type_specifier.node)?
@@ -221,48 +273,80 @@ impl TryFrom<BaseDtype> for Dtype {
     /// # Example
     ///
     /// For declaration is `const unsigned int * p`, `specifiers` is `const unsigned int`,
-    /// and the result is `Dtype::Int{ width: 32, is_signed: false, is_const: ture }`
+    /// and the result is `Dtype::Int{ width: 4, is_signed: false, is_const: ture }`
     fn try_from(spec: BaseDtype) -> Result<Self, DtypeError> {
         assert!(
-            !(spec.scalar.is_none() && spec.signed_option.is_none() && !spec.is_const),
+            !(spec.scalar.is_none()
+                && spec.size_modifiers.is_none()
+                && spec.signed_option.is_none()
+                && spec.typedef_name.is_none()
+                && !spec.is_const),
             "BaseDtype is empty"
         );
 
-        // Creates `dtype` from scalar.
-        let mut dtype = if let Some(t) = spec.scalar {
-            match t {
-                ast::TypeSpecifier::Void => Self::unit(),
-                ast::TypeSpecifier::Unsigned | ast::TypeSpecifier::Signed => {
-                    panic!("Signed option to scalar is not supported")
-                }
-                ast::TypeSpecifier::Bool => Self::BOOL,
-                ast::TypeSpecifier::Char => Self::CHAR,
-                ast::TypeSpecifier::Short => Self::SHORT,
-                ast::TypeSpecifier::Int => Self::INT,
-                ast::TypeSpecifier::Long => Self::LONG,
-                ast::TypeSpecifier::Float => Self::FLOAT,
-                ast::TypeSpecifier::Double => Self::DOUBLE,
-                _ => panic!("Unsupported ast::TypeSpecifier"),
+        let mut dtype = if let Some(name) = spec.typedef_name {
+            if spec.scalar.is_some() || spec.signed_option.is_some() {
+                return Err(DtypeError::Misc {
+                    message: "typedef' cannot be used with scalar type or signed option"
+                        .to_string(),
+                });
             }
-        } else {
-            Dtype::default()
-        };
 
-        // Applies signedness.
-        if let Some(signed_option) = spec.signed_option {
-            let is_signed = match signed_option {
-                ast::TypeSpecifier::Signed => true,
-                ast::TypeSpecifier::Unsigned => false,
-                _ => panic!(
-                    "`signed_option` must be `TypeSpecifier::Signed` or `TypeSpecifier::Unsigned`"
-                ),
+            Self::typedef(name)
+        } else {
+            // Creates `dtype` from scalar.
+            let mut dtype = if let Some(t) = spec.scalar {
+                match t {
+                    ast::TypeSpecifier::Void => Self::unit(),
+                    ast::TypeSpecifier::Bool => Self::BOOL,
+                    ast::TypeSpecifier::Char => Self::CHAR,
+                    ast::TypeSpecifier::Int => Self::INT,
+                    ast::TypeSpecifier::Float => Self::FLOAT,
+                    ast::TypeSpecifier::Double => Self::DOUBLE,
+                    ast::TypeSpecifier::Unsigned | ast::TypeSpecifier::Signed => {
+                        panic!("Signed option to scalar is not supported")
+                    }
+                    _ => panic!("Dtype::try_from::<BaseDtype>: {:?} is not a scalar type", t),
+                }
+            } else {
+                Self::default()
             };
 
-            dtype = dtype.set_signed(is_signed);
-        }
+            // Applies size modifier
+            if let Some(size_modifiers) = spec.size_modifiers {
+                if dtype != Self::INT {
+                    return Err(DtypeError::Misc {
+                        message: "size modifier can only be used with `int`".to_string(),
+                    });
+                }
 
-        // Applies constness.
-        assert!(!dtype.is_const());
+                dtype = match size_modifiers {
+                    ast::TypeSpecifier::Short => Self::SHORT,
+                    ast::TypeSpecifier::Long => Self::LONG,
+                    _ => panic!(
+                        "Dtype::try_from::<BaseDtype>: {:?} is not a size modifier",
+                        size_modifiers
+                    ),
+                }
+            }
+
+            // Applies signedness.
+            if let Some(signed_option) = spec.signed_option {
+                let is_signed = match signed_option {
+                    ast::TypeSpecifier::Signed => true,
+                    ast::TypeSpecifier::Unsigned => false,
+                    _ => panic!(
+                        "Dtype::try_from::<BaseDtype>: {:?} is not a signed option",
+                        signed_option
+                    ),
+                };
+
+                dtype = dtype.set_signed(is_signed);
+            }
+
+            dtype
+        };
+
         dtype = dtype.set_const(spec.is_const);
 
         Ok(dtype)
@@ -296,25 +380,48 @@ impl TryFrom<&ast::ParameterDeclaration> for Dtype {
 
         if let Some(declarator) = &parameter_decl.declarator {
             dtype = dtype.with_ast_declarator(&declarator.node)?;
+
+            // A function call with an array argument performs array-to-pointer conversion.
+            // For this reason, when `declarator` is from function parameter declaration
+            // and `base_dtype` is `Dtype::Array`, `base_dtype` is transformed to pointer type.
+            // https://www.eskimo.com/~scs/cclass/notes/sx10f.html
+            if let Some(inner) = dtype.get_array_inner() {
+                dtype = Self::pointer(inner.clone());
+            }
         }
         Ok(dtype)
     }
 }
 
 impl Dtype {
-    pub const BOOL: Self = Self::int(1);
-    pub const CHAR: Self = Self::int(8);
-    pub const SHORT: Self = Self::int(16);
-    pub const INT: Self = Self::int(32);
-    pub const LONG: Self = Self::int(64);
-    pub const LONGLONG: Self = Self::int(64);
-
-    pub const FLOAT: Self = Self::float(32);
-    pub const DOUBLE: Self = Self::float(64);
-
-    const WIDTH_OF_BYTE: usize = 8;
+    pub const BITS_OF_BYTE: usize = 8;
+    pub const SIZE_OF_BYTE: usize = 1;
     // TODO: consider architecture dependency in the future
-    const WIDTH_OF_POINTER: usize = 32;
+    pub const SIZE_OF_POINTER: usize = 4;
+
+    pub const SIZE_OF_CHAR: usize = 1;
+    pub const SIZE_OF_SHORT: usize = 2;
+    pub const SIZE_OF_INT: usize = 4;
+    pub const SIZE_OF_LONG: usize = 8;
+    pub const SIZE_OF_LONGLONG: usize = 8;
+
+    pub const SIZE_OF_FLOAT: usize = 4;
+    pub const SIZE_OF_DOUBLE: usize = 8;
+
+    // signed option cannot be applied to boolean value
+    pub const BOOL: Self = Self::Int {
+        width: 1,
+        is_signed: false,
+        is_const: false,
+    };
+    pub const CHAR: Self = Self::int(Self::SIZE_OF_CHAR * Self::BITS_OF_BYTE);
+    pub const SHORT: Self = Self::int(Self::SIZE_OF_SHORT * Self::BITS_OF_BYTE);
+    pub const INT: Self = Self::int(Self::SIZE_OF_INT * Self::BITS_OF_BYTE);
+    pub const LONG: Self = Self::int(Self::SIZE_OF_LONG * Self::BITS_OF_BYTE);
+    pub const LONGLONG: Self = Self::int(Self::SIZE_OF_LONGLONG * Self::BITS_OF_BYTE);
+
+    pub const FLOAT: Self = Self::float(Self::SIZE_OF_FLOAT * Self::BITS_OF_BYTE);
+    pub const DOUBLE: Self = Self::float(Self::SIZE_OF_DOUBLE * Self::BITS_OF_BYTE);
 
     #[inline]
     pub const fn unit() -> Self {
@@ -379,6 +486,14 @@ impl Dtype {
     }
 
     #[inline]
+    pub fn typedef(name: String) -> Self {
+        Self::Typedef {
+            name,
+            is_const: false,
+        }
+    }
+
+    #[inline]
     pub fn get_int_width(&self) -> Option<usize> {
         if let Self::Int { width, .. } = self {
             Some(*width)
@@ -399,6 +514,15 @@ impl Dtype {
     #[inline]
     pub fn get_pointer_inner(&self) -> Option<&Dtype> {
         if let Self::Pointer { inner, .. } = self {
+            Some(inner.deref())
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn get_array_inner(&self) -> Option<&Dtype> {
+        if let Self::Array { inner, .. } = self {
             Some(inner.deref())
         } else {
             None
@@ -441,6 +565,7 @@ impl Dtype {
             Self::Pointer { is_const, .. } => *is_const,
             Self::Array { .. } => true,
             Self::Function { .. } => true,
+            Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
     }
 
@@ -458,6 +583,7 @@ impl Dtype {
             Self::Pointer { inner, .. } => Self::Pointer { inner, is_const },
             Self::Array { .. } => self,
             Self::Function { .. } => self,
+            Self::Typedef { name, .. } => Self::Typedef { name, is_const },
         }
     }
 
@@ -465,17 +591,12 @@ impl Dtype {
         match self {
             Self::Unit { .. } => Ok((0, 1)),
             Self::Int { width, .. } | Self::Float { width, .. } => {
-                let align_of = *width / Self::WIDTH_OF_BYTE;
-                let size_of = align_of;
+                let size_of = (*width + Self::BITS_OF_BYTE - 1) / Self::BITS_OF_BYTE;
+                let align_of = size_of;
 
                 Ok((size_of, align_of))
             }
-            Self::Pointer { .. } => {
-                let align_of = Self::WIDTH_OF_POINTER / Self::WIDTH_OF_BYTE;
-                let size_of = align_of;
-
-                Ok((size_of, align_of))
-            }
+            Self::Pointer { .. } => Ok((Self::SIZE_OF_POINTER, Self::SIZE_OF_POINTER)),
             Self::Array { inner, size, .. } => {
                 let (size_of_inner, align_of_inner) = inner.size_align_of()?;
 
@@ -484,9 +605,8 @@ impl Dtype {
                     align_of_inner,
                 ))
             }
-            Self::Function { .. } => Err(DtypeError::Misc {
-                message: "`size_align_of` cannot be used with function types".to_string(),
-            }),
+            Self::Function { .. } => Ok((0, 1)),
+            Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
     }
 
@@ -506,22 +626,26 @@ impl Dtype {
     /// Derive a data type from declaration specifiers.
     pub fn try_from_ast_declaration_specifiers(
         specifiers: &[Node<ast::DeclarationSpecifier>],
-    ) -> Result<Self, DtypeError> {
+    ) -> Result<(Self, bool), DtypeError> {
         let mut spec = BaseDtype::default();
         BaseDtype::apply_declaration_specifiers(&mut spec, specifiers)?;
-        Self::try_from(spec)
+        let is_typedef = spec.is_typedef;
+        let dtype = Self::try_from(spec)?;
+
+        Ok((dtype, is_typedef))
     }
 
-    /// Generate `Dtype` based on declarator and `base_dtype` which has scalar type.
+    /// Generate `Dtype` based on declarator and `self` which has scalar type.
     ///
     /// let's say declaration is `const int * const * const a;`.
-    /// In general `base_dtype` start with `const int` which has scalar type and
+    /// In general `self` start with `const int` which has scalar type and
     /// `declarator` represents `* const * const` with `ast::Declarator`
     ///
     /// # Arguments
     ///
     /// * `declarator` - Parts requiring conversion to 'Dtype' on the declaration
-    /// * `base_dtype` - Part that has been converted to 'Dtype' on the declaration
+    /// * `decl_spec`  - Containing information that should be referenced
+    ///                  when creating `Dtype` from `Declarator`.
     ///
     pub fn with_ast_declarator(mut self, declarator: &ast::Declarator) -> Result<Self, DtypeError> {
         for derived_decl in &declarator.derived {
@@ -533,7 +657,10 @@ impl Dtype {
                     }
                     Self::pointer(self).set_const(specifier.is_const)
                 }
-                ast::DerivedDeclarator::Array(_array_decl) => todo!(),
+                ast::DerivedDeclarator::Array(array_decl) => {
+                    assert!(array_decl.node.qualifiers.is_empty());
+                    self.with_ast_array_size(&array_decl.node.size)?
+                }
                 ast::DerivedDeclarator::Function(func_decl) => {
                     let params = func_decl
                         .node
@@ -561,37 +688,81 @@ impl Dtype {
         }
     }
 
-    /// Check whether type conflict exists between the two `Dtype` objects.
+    /// Generates `Dtype` based on declarator and `self` which has scalar type.
     ///
-    /// let's say expression is `const int a = 0; int b = 0; int c = a + b`.
-    /// Although `const int` of `a` and `int` of `b` looks different, `Plus`(+) operations between
-    /// these two types are possible without any type-casting. There is no conflict between
-    /// `const int` and `int`.
+    /// Let's say the AST declaration is `int a[2][3]`; `self` represents `int [2]`; and
+    /// `array_size` is `[3]`. Then this function should return `int [2][3]`.
     ///
-    /// However, only the outermost const is ignored.
-    /// If check equivalence between `const int *const` and `int *`, result is false. Because
-    /// the second `const` (means left most `const`) of the `const int *const` is missed in `int *`.
-    /// By the way, outermost `const` (means right most `const`) is not a consideration here.
-    pub fn is_compatible(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Unit { .. }, Self::Unit { .. })
-            | (Self::Int { .. }, Self::Int { .. })
-            | (Self::Float { .. }, Self::Float { .. })
-            | (Self::Pointer { .. }, Self::Pointer { .. }) => {
-                self.clone().set_const(false) == other.clone().set_const(false)
+    /// # Arguments
+    ///
+    /// * `array_size` - the array size to add to the dtype `self`
+    ///
+    pub fn with_ast_array_size(self, array_size: &ast::ArraySize) -> Result<Self, DtypeError> {
+        let expr = if let ast::ArraySize::VariableExpression(expr) = array_size {
+            &expr.node
+        } else {
+            panic!("`ArraySize` is unsupported except `ArraySize::VariableExpression`")
+        };
+
+        let constant = Constant::try_from(expr)
+            .expect("expression of `ArraySize::VariableExpression` must be constant value");
+
+        let (value, _, is_signed) = constant.get_int().ok_or_else(|| DtypeError::Misc {
+            message: "expression is not an integer constant expression".to_string(),
+        })?;
+
+        if is_signed && (value as i128) < 0 {
+            return Err(DtypeError::Misc {
+                message: "declared as an array with a negative size".to_string(),
+            });
+        }
+
+        Ok(Self::array(self, value as usize))
+    }
+
+    pub fn resolve_typedefs(self, typedefs: &HashMap<String, Dtype>) -> Result<Self, DtypeError> {
+        let dtype = match &self {
+            Self::Unit { .. } | Self::Int { .. } | Self::Float { .. } => self,
+            Self::Pointer { inner, is_const } => {
+                let inner = inner.deref().clone().resolve_typedefs(typedefs)?;
+                Dtype::pointer(inner).set_const(*is_const)
             }
-            (
-                Self::Function { ret, params },
-                Self::Function {
-                    ret: other_ret,
-                    params: other_params,
-                },
-            ) => {
-                ret == other_ret
-                    && params.len() == other_params.len()
-                    && izip!(params, other_params).all(|(l, r)| l.is_compatible(r))
+            Self::Array { inner, size } => {
+                let inner = inner.deref().clone().resolve_typedefs(typedefs)?;
+                Dtype::array(inner, *size)
             }
-            _ => false,
+            Self::Function { ret, params } => {
+                let ret = ret.deref().clone().resolve_typedefs(typedefs)?;
+                let params = params
+                    .iter()
+                    .map(|p| p.clone().resolve_typedefs(typedefs))
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Dtype::function(ret, params)
+            }
+            Self::Typedef { name, is_const } => {
+                let dtype = typedefs
+                    .get(name)
+                    .ok_or_else(|| DtypeError::Misc {
+                        message: format!("unknown type name `{}`", name),
+                    })?
+                    .clone();
+                let is_const = dtype.is_const() || *is_const;
+
+                dtype.set_const(is_const)
+            }
+        };
+
+        Ok(dtype)
+    }
+
+    pub fn merge(self, other: Self) -> Result<Self, DtypeError> {
+        if self == other {
+            Ok(self)
+        } else {
+            Err(DtypeError::Misc {
+                message: format!("Dtype::merge({:?}, {:?}) failed", self, other),
+            })
         }
     }
 }
@@ -615,7 +786,7 @@ impl fmt::Display for Dtype {
                 write!(f, "{}f{}", if *is_const { "const " } else { "" }, width)
             }
             Self::Pointer { inner, is_const } => {
-                write!(f, "{}* {}", inner, if *is_const { "const" } else { "" })
+                write!(f, "{}*{}", inner, if *is_const { "const" } else { "" })
             }
             Self::Array { inner, size, .. } => write!(f, "[{} x {}]", size, inner,),
             Self::Function { ret, params } => write!(
@@ -628,6 +799,9 @@ impl fmt::Display for Dtype {
                     .collect::<Vec<_>>()
                     .join(", ")
             ),
+            Self::Typedef { name, is_const } => {
+                write!(f, "{}{}", if *is_const { "const " } else { "" }, name)
+            }
         }
     }
 }

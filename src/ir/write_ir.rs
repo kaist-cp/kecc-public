@@ -58,25 +58,33 @@ impl WriteLine for (&String, &Declaration) {
 
                 match definition.as_ref() {
                     Some(defintion) => {
+                        // print function definition
+                        writeln!(write, "define {} {{", declaration)?;
                         // print meta data for function
                         writeln!(
                             write,
-                            "; function meta data:\n;   bid_init: {}\n;   allocations: {}",
+                            "init:\n  bid: {}\n  allocations: \n{}\n",
                             defintion.bid_init,
                             defintion
                                 .allocations
                                 .iter()
                                 .enumerate()
-                                .map(|(i, a)| format!("{}:{}", i, a))
+                                .map(|(i, a)| format!(
+                                    "    %l{}:{}{}",
+                                    i,
+                                    a.deref(),
+                                    if let Some(name) = a.name() {
+                                        format!(":{}", name)
+                                    } else {
+                                        "".into()
+                                    }
+                                ))
                                 .collect::<Vec<_>>()
-                                .join(", ")
+                                .join("\n")
                         )?;
 
-                        // print function definition
-                        writeln!(write, "define {} {{", declaration)?;
-
                         for (id, block) in &defintion.blocks {
-                            writeln!(write, "; <BoxId> {}", id)?;
+                            writeln!(write, "block {}", id)?;
                             (id, block).write_line(indent + 1, write)?;
                             writeln!(write)?;
                         }
@@ -99,13 +107,33 @@ impl WriteLine for (&String, &Declaration) {
 
 impl WriteLine for (&BlockId, &Block) {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
+        for (i, phi) in self.1.phinodes.iter().enumerate() {
+            write_indent(indent, write)?;
+            writeln!(
+                write,
+                "{}:{}{}",
+                RegisterId::arg(*self.0, i),
+                phi.deref(),
+                if let Some(name) = phi.name() {
+                    format!(":{}", name)
+                } else {
+                    "".into()
+                }
+            )?;
+        }
+
         for (i, instr) in self.1.instructions.iter().enumerate() {
             write_indent(indent, write)?;
             writeln!(
                 write,
-                "{}:{} = {}",
+                "{}:{}{} = {}",
                 RegisterId::temp(*self.0, i),
                 instr.dtype(),
+                if let Some(name) = instr.name() {
+                    format!(":{}", name)
+                } else {
+                    "".into()
+                },
                 instr.write_string()
             )?;
         }

@@ -4,8 +4,9 @@ mod write_ir;
 
 use core::convert::TryFrom;
 use core::fmt;
-use core::ops::Deref;
+use core::ops::{Deref, DerefMut};
 use lang_c::ast;
+use ordered_float::OrderedFloat;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
@@ -60,6 +61,7 @@ impl TryFrom<Dtype> for Declaration {
                 signature: FunctionSignature::new(dtype),
                 definition: None,
             }),
+            Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
     }
 }
@@ -100,10 +102,6 @@ impl Declaration {
     }
 
     /// Check if type is conflicting for pre-declared one
-    ///
-    /// In case of `Variable`, need to check if the two types are exactly the same.
-    /// On the other hand, in the case of `Function`, outermost `const` of return type and
-    /// parameters one is not an issue of concern.
     pub fn is_compatible(&self, other: &Declaration) -> bool {
         match (self, other) {
             (Self::Variable { dtype, .. }, Self::Variable { dtype: other, .. }) => dtype == other,
@@ -112,7 +110,7 @@ impl Declaration {
                 Self::Function {
                     signature: other, ..
                 },
-            ) => signature.dtype().is_compatible(&other.dtype()),
+            ) => signature.dtype() == other.dtype(),
             _ => false,
         }
     }
@@ -125,19 +123,6 @@ impl HasDtype for Declaration {
             Self::Function { signature, .. } => signature.dtype(),
         }
     }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct FunctionDefinition {
-    /// Memory allocations for local variables.  The allocation is performed at the beginning of a
-    /// function invocation.
-    pub allocations: Vec<Dtype>,
-
-    /// Basic blocks.
-    pub blocks: HashMap<BlockId, Block>,
-
-    /// The initial block id.
-    pub bid_init: BlockId,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -164,15 +149,229 @@ impl HasDtype for FunctionSignature {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct FunctionDefinition {
+    /// Memory allocations for local variables.  The allocation is performed at the beginning of a
+    /// function invocation.
+    pub allocations: Vec<Named<Dtype>>,
+
+    /// Basic blocks.
+    pub blocks: HashMap<BlockId, Block>,
+
+    /// The initial block id.
+    pub bid_init: BlockId,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+pub struct BlockId(pub usize);
+
+impl fmt::Display for BlockId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "b{}", self.0)
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Block {
+    pub phinodes: Vec<Named<Dtype>>,
+    pub instructions: Vec<Named<Instruction>>,
+    pub exit: BlockExit,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+#[allow(clippy::large_enum_variant)]
+pub enum Instruction {
+    // TODO: the variants of Instruction will be added in the future
+    Nop,
+    BinOp {
+        op: ast::BinaryOperator,
+        lhs: Operand,
+        rhs: Operand,
+        dtype: Dtype,
+    },
+    UnaryOp {
+        op: ast::UnaryOperator,
+        operand: Operand,
+        dtype: Dtype,
+    },
+    Store {
+        ptr: Operand,
+        value: Operand,
+    },
+    Load {
+        ptr: Operand,
+    },
+    Call {
+        callee: Operand,
+        args: Vec<Operand>,
+        return_type: Dtype,
+    },
+    TypeCast {
+        value: Operand,
+        target_dtype: Dtype,
+    },
+}
+
+impl HasDtype for Instruction {
+    fn dtype(&self) -> Dtype {
+        match self {
+            Self::Nop => Dtype::unit(),
+            Self::BinOp { dtype, .. } => dtype.clone(),
+            Self::UnaryOp { dtype, .. } => dtype.clone(),
+            Self::Store { .. } => Dtype::unit(),
+            Self::Load { ptr } => ptr
+                .dtype()
+                .get_pointer_inner()
+                .expect("Load instruction must have pointer value as operand")
+                .deref()
+                .clone()
+                .set_const(false),
+            Self::Call { return_type, .. } => return_type.clone(),
+            Self::TypeCast { target_dtype, .. } => target_dtype.clone(),
+        }
+    }
+}
+
+impl Instruction {
+    pub fn is_pure(&self) -> bool {
+        match self {
+            Self::Store { .. } => false,
+            Self::Call { .. } => false,
+            _ => true,
+        }
+    }
+}
+
+// TODO
+#[derive(Debug, PartialEq, Clone)]
+pub enum BlockExit {
+    Jump {
+        arg: JumpArg,
+    },
+    ConditionalJump {
+        condition: Operand,
+        arg_then: JumpArg,
+        arg_else: JumpArg,
+    },
+    Switch {
+        value: Operand,
+        default: JumpArg,
+        cases: Vec<(Constant, JumpArg)>,
+    },
+    Return {
+        value: Operand,
+    },
+    Unreachable,
+}
+
+impl BlockExit {
+    pub fn walk_jump_args<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut JumpArg),
+    {
+        match self {
+            Self::Jump { arg } => f(arg),
+            Self::ConditionalJump {
+                arg_then, arg_else, ..
+            } => {
+                f(arg_then);
+                f(arg_else);
+            }
+            Self::Switch { default, cases, .. } => {
+                f(default);
+                for (_, arg) in cases {
+                    f(arg);
+                }
+            }
+            Self::Return { .. } | Self::Unreachable => {}
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct JumpArg {
+    pub bid: BlockId,
+    pub args: Vec<Operand>,
+}
+
+impl JumpArg {
+    pub fn new(bid: BlockId, args: Vec<Operand>) -> Self {
+        Self { bid, args }
+    }
+}
+
+impl fmt::Display for JumpArg {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}({:?})", self.bid, self.args)
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Operand {
+    Constant(Constant),
+    Register { rid: RegisterId, dtype: Dtype },
+}
+
+impl Operand {
+    pub fn constant(value: Constant) -> Self {
+        Self::Constant(value)
+    }
+
+    pub fn register(rid: RegisterId, dtype: Dtype) -> Self {
+        Self::Register { rid, dtype }
+    }
+
+    pub fn get_constant(&self) -> Option<&Constant> {
+        if let Self::Constant(constant) = self {
+            Some(constant)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_register(&self) -> Option<(&RegisterId, &Dtype)> {
+        if let Self::Register { rid, dtype } = self {
+            Some((rid, dtype))
+        } else {
+            None
+        }
+    }
+
+    pub fn get_register_mut(&mut self) -> Option<(&mut RegisterId, &mut Dtype)> {
+        if let Self::Register { rid, dtype } = self {
+            Some((rid, dtype))
+        } else {
+            None
+        }
+    }
+}
+
+impl fmt::Display for Operand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Constant(value) => write!(f, "{}", value),
+            Self::Register { rid, .. } => write!(f, "{}", rid),
+        }
+    }
+}
+
+impl HasDtype for Operand {
+    fn dtype(&self) -> Dtype {
+        match self {
+            Self::Constant(value) => value.dtype(),
+            Self::Register { dtype, .. } => dtype.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Eq, Clone)]
 pub enum RegisterId {
     /// Registers holding pointers to local allocations.
     ///
     /// # Fields
     ///
-    /// - `name`: only for debugging purposes.
-    /// - `id`: local allocation id.
-    Local { name: String, id: usize },
+    /// - `aid`: local allocation id.
+    Local { aid: usize },
 
     /// Registers holding block arguments.
     ///
@@ -193,8 +392,8 @@ pub enum RegisterId {
 }
 
 impl RegisterId {
-    pub fn local(name: String, id: usize) -> Self {
-        Self::Local { name, id }
+    pub fn local(aid: usize) -> Self {
+        Self::Local { aid }
     }
 
     pub fn arg(bid: BlockId, aid: usize) -> Self {
@@ -209,9 +408,9 @@ impl RegisterId {
 impl fmt::Display for RegisterId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Local { name, id } => write!(f, "%(local:{}:{})", name, id),
-            Self::Arg { bid, aid } => write!(f, "%(arg:{}:{})", bid, aid),
-            Self::Temp { bid, iid } => write!(f, "%({}:{})", bid, iid),
+            Self::Local { aid } => write!(f, "%l{}", aid),
+            Self::Arg { bid, aid } => write!(f, "%{}:p{}", bid, aid),
+            Self::Temp { bid, iid } => write!(f, "%{}:i{}", bid, iid),
         }
     }
 }
@@ -219,7 +418,7 @@ impl fmt::Display for RegisterId {
 impl PartialEq<RegisterId> for RegisterId {
     fn eq(&self, other: &RegisterId) -> bool {
         match (self, other) {
-            (Self::Local { id, .. }, Self::Local { id: other_id, .. }) => id == other_id,
+            (Self::Local { aid }, Self::Local { aid: other_aid }) => aid == other_aid,
             (
                 Self::Arg { bid, aid },
                 Self::Arg {
@@ -242,7 +441,7 @@ impl PartialEq<RegisterId> for RegisterId {
 impl Hash for RegisterId {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
-            Self::Local { id, .. } => id.hash(state),
+            Self::Local { aid } => aid.hash(state),
             Self::Arg { bid, aid } => {
                 // TODO: needs to distinguish arg/temp?
                 bid.hash(state);
@@ -256,7 +455,7 @@ impl Hash for RegisterId {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Constant {
     Undef {
         dtype: Dtype,
@@ -273,7 +472,7 @@ pub enum Constant {
         /// * Casting from an f32 to an f64 is perfect and lossless (f32 -> f64)
         /// * Casting from an f64 to an f32 will produce the closest possible value (f64 -> f32)
         /// https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#type-cast-expressions
-        value: f64,
+        value: OrderedFloat<f64>,
         width: usize,
     },
     GlobalVariable {
@@ -397,12 +596,29 @@ impl Constant {
             .get_float_width()
             .expect("`dtype` must be `Dtype::Float`");
 
-        Self::Float { value, width }
+        Self::Float {
+            value: value.into(),
+            width,
+        }
     }
 
     #[inline]
     pub fn global_variable(name: String, dtype: Dtype) -> Self {
         Self::GlobalVariable { name, dtype }
+    }
+
+    #[inline]
+    pub fn get_int(&self) -> Option<(u128, usize, bool)> {
+        if let Self::Int {
+            value,
+            width,
+            is_signed,
+        } = self
+        {
+            Some((*value, *width, *is_signed))
+        } else {
+            None
+        }
     }
 
     pub fn is_undef(&self) -> bool {
@@ -441,179 +657,30 @@ impl HasDtype for Constant {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Operand {
-    Constant(Constant),
-    Register { rid: RegisterId, dtype: Dtype },
+pub struct Named<T> {
+    name: Option<String>,
+    inner: T,
 }
 
-impl Operand {
-    pub fn constant(value: Constant) -> Self {
-        Self::Constant(value)
-    }
+impl<T> Deref for Named<T> {
+    type Target = T;
 
-    pub fn register(rid: RegisterId, dtype: Dtype) -> Self {
-        Self::Register { rid, dtype }
+    fn deref(&self) -> &Self::Target {
+        &self.inner
     }
-
-    pub fn get_constant(&self) -> Option<&Constant> {
-        if let Self::Constant(constant) = self {
-            Some(constant)
-        } else {
-            None
-        }
-    }
-
-    pub fn get_register(&self) -> Option<(&RegisterId, &Dtype)> {
-        if let Self::Register { rid, dtype } = self {
-            Some((rid, dtype))
-        } else {
-            None
-        }
-    }
-
-    pub fn get_register_mut(&mut self) -> Option<(&mut RegisterId, &mut Dtype)> {
-        if let Self::Register { rid, dtype } = self {
-            Some((rid, dtype))
-        } else {
-            None
-        }
+}
+impl<T> DerefMut for Named<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }
 
-impl fmt::Display for Operand {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Constant(value) => write!(f, "{}", value),
-            Self::Register { rid, .. } => write!(f, "{}", rid),
-        }
+impl<T> Named<T> {
+    pub fn new(name: Option<String>, inner: T) -> Self {
+        Self { name, inner }
     }
-}
 
-impl HasDtype for Operand {
-    fn dtype(&self) -> Dtype {
-        match self {
-            Self::Constant(value) => value.dtype(),
-            Self::Register { dtype, .. } => dtype.clone(),
-        }
+    pub fn name(&self) -> Option<&String> {
+        self.name.as_ref()
     }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-#[allow(clippy::large_enum_variant)]
-pub enum Instruction {
-    // TODO: the variants of Instruction will be added in the future
-    Nop,
-    BinOp {
-        op: ast::BinaryOperator,
-        lhs: Operand,
-        rhs: Operand,
-        dtype: Dtype,
-    },
-    UnaryOp {
-        op: ast::UnaryOperator,
-        operand: Operand,
-        dtype: Dtype,
-    },
-    Store {
-        ptr: Operand,
-        value: Operand,
-    },
-    Load {
-        ptr: Operand,
-    },
-    Call {
-        callee: Operand,
-        args: Vec<Operand>,
-        return_type: Dtype,
-    },
-    TypeCast {
-        value: Operand,
-        target_dtype: Dtype,
-    },
-}
-
-impl HasDtype for Instruction {
-    fn dtype(&self) -> Dtype {
-        match self {
-            Self::Nop => Dtype::unit(),
-            Self::BinOp { dtype, .. } => dtype.clone(),
-            Self::UnaryOp { dtype, .. } => dtype.clone(),
-            Self::Store { .. } => Dtype::unit(),
-            Self::Load { ptr } => ptr
-                .dtype()
-                .get_pointer_inner()
-                .expect("Load instruction must have pointer value as operand")
-                .deref()
-                .clone()
-                .set_const(false),
-            Self::Call { return_type, .. } => return_type.clone(),
-            Self::TypeCast { target_dtype, .. } => target_dtype.clone(),
-        }
-    }
-}
-
-impl Instruction {
-    pub fn is_pure(&self) -> bool {
-        match self {
-            Self::Store { .. } => false,
-            Self::Call { .. } => false,
-            _ => true,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub struct BlockId(pub usize);
-
-impl fmt::Display for BlockId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "b{}", self.0)
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct JumpArg {
-    pub bid: BlockId,
-    pub args: Vec<Operand>,
-}
-
-impl JumpArg {
-    pub fn new(bid: BlockId, args: Vec<Operand>) -> Self {
-        Self { bid, args }
-    }
-}
-
-impl fmt::Display for JumpArg {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}({:?})", self.bid, self.args)
-    }
-}
-
-// TODO
-#[derive(Debug, PartialEq, Clone)]
-pub enum BlockExit {
-    Jump {
-        arg: JumpArg,
-    },
-    ConditionalJump {
-        condition: Operand,
-        arg_then: JumpArg,
-        arg_else: JumpArg,
-    },
-    Switch {
-        value: Operand,
-        default: JumpArg,
-        cases: Vec<(Constant, JumpArg)>,
-    },
-    Return {
-        value: Operand,
-    },
-    Unreachable,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Block {
-    pub phinodes: Vec<Dtype>,
-    pub instructions: Vec<Instruction>,
-    pub exit: BlockExit,
 }
