@@ -729,7 +729,10 @@ impl Dtype {
             }
             Self::Array { inner, size } => {
                 let inner = inner.deref().clone().resolve_typedefs(typedefs)?;
-                Dtype::array(inner, *size)
+                Dtype::Array {
+                    inner: Box::new(inner),
+                    size: *size,
+                }
             }
             Self::Function { ret, params } => {
                 let ret = ret.deref().clone().resolve_typedefs(typedefs)?;

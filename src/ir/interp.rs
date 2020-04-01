@@ -950,6 +950,27 @@ impl<'i> State<'i> {
                     }
                 })?
             }
+            Instruction::GetElementPtr { ptr, offset, dtype } => {
+                let ptr = self.interp_operand(ptr.clone())?;
+
+                let (value, _, _) = self
+                    .interp_operand(offset.clone())?
+                    .get_int()
+                    .expect("`idx` must be `Value::Int`");
+
+                let (bid, prev_offset, ..) = ptr
+                    .get_pointer()
+                    .expect("`pointer` must be `Value::Pointer` to access memory");
+
+                let inner_dtype = dtype
+                    .get_pointer_inner()
+                    .expect("`dtype` must be pointer type");
+
+                let offset = prev_offset + value as isize;
+                assert!(0 <= offset);
+
+                Value::pointer(*bid, offset as isize, inner_dtype.clone())
+            }
         };
 
         let register = RegisterId::temp(self.stack_frame.pc.bid, self.stack_frame.pc.iid);

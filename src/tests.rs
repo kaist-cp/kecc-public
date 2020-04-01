@@ -1,7 +1,7 @@
 use lang_c::ast::*;
 use std::fs::{self, File};
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use tempfile::tempdir;
 
 use crate::*;
@@ -25,17 +25,27 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
 
+    // Test parse
+    c::Parse::default()
+        .translate(&path)
+        .expect("failed to parse the given program");
+
     let file_path = path.display().to_string();
     let bin_path = path.with_extension("exe").as_path().display().to_string();
 
-    // Compile c file
-    Command::new("gcc")
+    // Compile c file: If fails, test is vacuously success
+    if !Command::new("gcc")
         .args(&["-O1", &file_path, "-o", &bin_path])
-        .output()
-        .expect("failed to compile the given program");
+        .stderr(Stdio::null())
+        .status()
+        .unwrap()
+        .success()
+    {
+        return;
+    }
 
     // Execute compiled executable
-    let status = Command::new(fs::canonicalize(format!("./{}", bin_path.clone())).unwrap())
+    let status = Command::new(fs::canonicalize(bin_path.clone()).unwrap())
         .status()
         .expect("failed to execute the compiled executable")
         .code()

@@ -210,6 +210,13 @@ pub enum Instruction {
         value: Operand,
         target_dtype: Dtype,
     },
+    /// `GetElementPtr` is inspired from `getelementptr` instruction of LLVM.
+    /// https://llvm.org/docs/LangRef.html#i-getelementptr
+    GetElementPtr {
+        ptr: Operand,
+        offset: Operand,
+        dtype: Box<Dtype>,
+    },
 }
 
 impl HasDtype for Instruction {
@@ -228,6 +235,7 @@ impl HasDtype for Instruction {
                 .set_const(false),
             Self::Call { return_type, .. } => return_type.clone(),
             Self::TypeCast { target_dtype, .. } => target_dtype.clone(),
+            Self::GetElementPtr { dtype, .. } => dtype.deref().clone(),
         }
     }
 }

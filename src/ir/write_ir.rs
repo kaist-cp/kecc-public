@@ -174,6 +174,9 @@ impl WriteString for Instruction {
                 value,
                 target_dtype,
             } => format!("typecast {} to {}", value.write_string(), target_dtype),
+            Instruction::GetElementPtr { ptr, offset, .. } => {
+                format!("getelementptr {} offset {}", ptr, offset)
+            }
         }
     }
 }
