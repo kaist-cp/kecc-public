@@ -286,27 +286,31 @@ mod calculator {
                     ast::BinaryOperator::Modulo => Ok(Value::int(lhs % rhs, lhs_w, lhs_s)),
                     ast::BinaryOperator::Equals => {
                         let result = if lhs == rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, lhs_s))
+                        Ok(Value::int(result, 1, false))
                     }
                     ast::BinaryOperator::NotEquals => {
                         let result = if lhs != rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, lhs_s))
+                        Ok(Value::int(result, 1, false))
                     }
                     ast::BinaryOperator::Less => {
+                        // TODO: consider signed option
                         let result = if lhs < rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, lhs_s))
+                        Ok(Value::int(result, 1, false))
                     }
                     ast::BinaryOperator::Greater => {
+                        // TODO: consider signed option
                         let result = if lhs > rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, lhs_s))
+                        Ok(Value::int(result, 1, false))
                     }
                     ast::BinaryOperator::LessOrEqual => {
+                        // TODO: consider signed option
                         let result = if lhs <= rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, lhs_s))
+                        Ok(Value::int(result, 1, false))
                     }
                     ast::BinaryOperator::GreaterOrEqual => {
+                        // TODO: consider signed option
                         let result = if lhs >= rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, lhs_s))
+                        Ok(Value::int(result, 1, false))
                     }
                     ast::BinaryOperator::LogicalAnd => {
                         assert!(lhs < 2);

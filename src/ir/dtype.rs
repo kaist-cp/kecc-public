@@ -23,7 +23,7 @@ pub trait HasDtype {
 #[derive(Default)]
 struct BaseDtype {
     scalar: Option<ast::TypeSpecifier>,
-    size_modifiers: Option<ast::TypeSpecifier>,
+    size_modifier: Option<ast::TypeSpecifier>,
     signed_option: Option<ast::TypeSpecifier>,
     typedef_name: Option<String>,
     is_const: bool,
@@ -129,12 +129,12 @@ impl BaseDtype {
                 self.scalar = Some(type_specifier.clone());
             }
             ast::TypeSpecifier::Short | ast::TypeSpecifier::Long => {
-                if self.size_modifiers.is_some() {
+                if self.size_modifier.is_some() {
                     return Err(DtypeError::Misc {
                         message: "two or more size modifiers in declaration specifiers".to_string(),
                     });
                 }
-                self.size_modifiers = Some(type_specifier.clone());
+                self.size_modifier = Some(type_specifier.clone());
             }
             ast::TypeSpecifier::TypedefName(identifier) => {
                 if self.typedef_name.is_some() {
@@ -277,7 +277,7 @@ impl TryFrom<BaseDtype> for Dtype {
     fn try_from(spec: BaseDtype) -> Result<Self, DtypeError> {
         assert!(
             !(spec.scalar.is_none()
-                && spec.size_modifiers.is_none()
+                && spec.size_modifier.is_none()
                 && spec.signed_option.is_none()
                 && spec.typedef_name.is_none()
                 && !spec.is_const),
@@ -313,19 +313,19 @@ impl TryFrom<BaseDtype> for Dtype {
             };
 
             // Applies size modifier
-            if let Some(size_modifiers) = spec.size_modifiers {
+            if let Some(size_modifier) = spec.size_modifier {
                 if dtype != Self::INT {
                     return Err(DtypeError::Misc {
                         message: "size modifier can only be used with `int`".to_string(),
                     });
                 }
 
-                dtype = match size_modifiers {
+                dtype = match size_modifier {
                     ast::TypeSpecifier::Short => Self::SHORT,
                     ast::TypeSpecifier::Long => Self::LONG,
                     _ => panic!(
                         "Dtype::try_from::<BaseDtype>: {:?} is not a size modifier",
-                        size_modifiers
+                        size_modifier
                     ),
                 }
             }
@@ -340,6 +340,13 @@ impl TryFrom<BaseDtype> for Dtype {
                         signed_option
                     ),
                 };
+
+                if dtype.get_int_width().is_none() {
+                    return Err(DtypeError::Misc {
+                        message: "`signed` and `unsigned` only be applied to `Dtype::Int`"
+                            .to_string(),
+                    });
+                }
 
                 dtype = dtype.set_signed(is_signed);
             }
@@ -662,12 +669,18 @@ impl Dtype {
                     self.with_ast_array_size(&array_decl.node.size)?
                 }
                 ast::DerivedDeclarator::Function(func_decl) => {
-                    let params = func_decl
+                    let mut params = func_decl
                         .node
                         .parameters
                         .iter()
                         .map(|p| Self::try_from(&p.node))
                         .collect::<Result<Vec<_>, _>>()?;
+
+                    // If function parameter is (void), remove it
+                    if params.len() == 1 && params[0] == Dtype::unit() {
+                        let _ = params.pop();
+                    }
+
                     Self::function(self, params)
                 }
                 ast::DerivedDeclarator::KRFunction(kr_func_decl) => {
@@ -757,16 +770,6 @@ impl Dtype {
         };
 
         Ok(dtype)
-    }
-
-    pub fn merge(self, other: Self) -> Result<Self, DtypeError> {
-        if self == other {
-            Ok(self)
-        } else {
-            Err(DtypeError::Misc {
-                message: format!("Dtype::merge({:?}, {:?}) failed", self, other),
-            })
-        }
     }
 }
 

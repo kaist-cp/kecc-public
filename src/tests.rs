@@ -57,13 +57,21 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
         .status()
         .expect("failed to remove compiled executable");
 
-    let ir = Irgen::default()
-        .translate(unit)
-        .expect("failed to generate ir");
+    let ir = match Irgen::default().translate(unit) {
+        Ok(ir) => ir,
+        Err(irgen_error) => panic!("{}", irgen_error),
+    };
 
     let args = Vec::new();
-    assert_eq!(
-        ir::interp(&ir, args),
-        Ok(ir::Value::int(status as u128, 32, true))
-    );
+    let result = match ir::interp(&ir, args) {
+        Ok(result) => result,
+        Err(interp_error) => panic!("{}", interp_error),
+    };
+    let result = if let ir::Value::Int { .. } = &result {
+        result
+    } else {
+        panic!("non-integer value occurs")
+    };
+
+    assert_eq!(result, ir::Value::int(status as u128, 32, true));
 }

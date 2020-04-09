@@ -217,7 +217,7 @@ impl AssertSupported for Declarator {
     fn assert_supported(&self) {
         self.kind.assert_supported();
         self.derived.assert_supported();
-        self.extensions.is_empty();
+        assert!(self.extensions.is_empty());
     }
 }
 
@@ -282,7 +282,7 @@ impl AssertSupported for ParameterDeclaration {
     fn assert_supported(&self) {
         self.specifiers.assert_supported();
         self.declarator.assert_supported();
-        self.extensions.is_empty();
+        assert!(self.extensions.is_empty());
     }
 }
 

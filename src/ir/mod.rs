@@ -5,6 +5,7 @@ mod write_ir;
 use core::convert::TryFrom;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
+use hexf::{parse_hexf32, parse_hexf64};
 use lang_c::ast;
 use ordered_float::OrderedFloat;
 use std::collections::HashMap;
@@ -504,23 +505,44 @@ impl TryFrom<&ast::Constant> for Constant {
                 }
                 .set_signed(is_signed);
 
+                let pat = match integer.base {
+                    ast::IntegerBase::Decimal => Self::DECIMAL,
+                    ast::IntegerBase::Octal => Self::OCTAL,
+                    ast::IntegerBase::Hexadecimal => Self::HEXADECIMAL,
+                };
+
                 let value = if is_signed {
-                    integer.number.parse::<i128>().unwrap() as u128
+                    i128::from_str_radix(integer.number.deref(), pat).unwrap() as u128
                 } else {
-                    integer.number.parse::<u128>().unwrap()
+                    u128::from_str_radix(integer.number.deref(), pat).unwrap()
                 };
 
                 Ok(Self::int(value, dtype))
             }
             ast::Constant::Float(float) => {
+                let pat = match float.base {
+                    ast::FloatBase::Decimal => Self::DECIMAL,
+                    ast::FloatBase::Hexadecimal => Self::HEXADECIMAL,
+                };
+
                 let (dtype, value) = match float.suffix.format {
                     ast::FloatFormat::Float => {
                         // Casting from an f32 to an f64 is perfect and lossless (f32 -> f64)
                         // https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#type-cast-expressions
-                        (Dtype::FLOAT, float.number.parse::<f32>().unwrap() as f64)
+                        let value = if pat == Self::DECIMAL {
+                            float.number.parse::<f32>().unwrap() as f64
+                        } else {
+                            parse_hexf32(float.number.deref(), false).unwrap() as f64
+                        };
+                        (Dtype::FLOAT, value)
                     }
                     ast::FloatFormat::Double => {
-                        (Dtype::DOUBLE, float.number.parse::<f64>().unwrap())
+                        let value = if pat == Self::DECIMAL {
+                            float.number.parse::<f64>().unwrap()
+                        } else {
+                            parse_hexf64(float.number.deref(), false).unwrap()
+                        };
+                        (Dtype::DOUBLE, value)
                     }
                     ast::FloatFormat::LongDouble => {
                         panic!("`FloatFormat::LongDouble` is_unsupported")
@@ -567,6 +589,10 @@ impl TryFrom<&ast::Initializer> for Constant {
 }
 
 impl Constant {
+    const DECIMAL: u32 = 10;
+    const OCTAL: u32 = 8;
+    const HEXADECIMAL: u32 = 16;
+
     #[inline]
     pub fn is_integer_constant(&self) -> bool {
         if let Self::Int { .. } = self {
