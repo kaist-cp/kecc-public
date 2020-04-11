@@ -496,28 +496,30 @@ impl TryFrom<&ast::Constant> for Constant {
     fn try_from(constant: &ast::Constant) -> Result<Self, Self::Error> {
         match constant {
             ast::Constant::Integer(integer) => {
-                let is_signed = !integer.suffix.unsigned;
-
                 let dtype = match integer.suffix.size {
                     ast::IntegerSize::Int => Dtype::INT,
                     ast::IntegerSize::Long => Dtype::LONG,
                     ast::IntegerSize::LongLong => Dtype::LONGLONG,
-                }
-                .set_signed(is_signed);
+                };
 
                 let pat = match integer.base {
                     ast::IntegerBase::Decimal => Self::DECIMAL,
                     ast::IntegerBase::Octal => Self::OCTAL,
                     ast::IntegerBase::Hexadecimal => Self::HEXADECIMAL,
                 };
+                let value = u128::from_str_radix(integer.number.deref(), pat).unwrap();
 
-                let value = if is_signed {
-                    i128::from_str_radix(integer.number.deref(), pat).unwrap() as u128
-                } else {
-                    u128::from_str_radix(integer.number.deref(), pat).unwrap()
+                let is_signed = !integer.suffix.unsigned && {
+                    // Even if `suffix` represents `signed`, integer literal cannot be translated
+                    // to minus value. For this reason, if the sign bit is on, dtype automatically
+                    // transformed to `unsigned`. Let's say integer literal is `0xFFFFFFFF`,
+                    // it translated to unsigned integer even though it has no `U` suffix.
+                    let width = dtype.get_int_width().unwrap();
+                    let threshold = 1u128 << (width as u128 - 1);
+                    value < threshold
                 };
 
-                Ok(Self::int(value, dtype))
+                Ok(Self::int(value, dtype.set_signed(is_signed)))
             }
             ast::Constant::Float(float) => {
                 let pat = match float.base {
@@ -529,18 +531,34 @@ impl TryFrom<&ast::Constant> for Constant {
                     ast::FloatFormat::Float => {
                         // Casting from an f32 to an f64 is perfect and lossless (f32 -> f64)
                         // https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#type-cast-expressions
-                        let value = if pat == Self::DECIMAL {
-                            float.number.parse::<f32>().unwrap() as f64
-                        } else {
-                            parse_hexf32(float.number.deref(), false).unwrap() as f64
+                        let value = match pat {
+                            Self::DECIMAL => float.number.parse::<f32>().unwrap() as f64,
+                            Self::HEXADECIMAL => {
+                                let mut hex_number = "0x".to_string();
+                                hex_number.push_str(float.number.deref());
+                                parse_hexf32(&hex_number, true).unwrap() as f64
+                            }
+                            _ => panic!(
+                                "Constant::try_from::<&ast::Constant>: \
+                                 {:?} is not a pattern of `pat`",
+                                pat
+                            ),
                         };
                         (Dtype::FLOAT, value)
                     }
                     ast::FloatFormat::Double => {
-                        let value = if pat == Self::DECIMAL {
-                            float.number.parse::<f64>().unwrap()
-                        } else {
-                            parse_hexf64(float.number.deref(), false).unwrap()
+                        let value = match pat {
+                            Self::DECIMAL => float.number.parse::<f64>().unwrap(),
+                            Self::HEXADECIMAL => {
+                                let mut hex_number = "0x".to_string();
+                                hex_number.push_str(float.number.deref());
+                                parse_hexf64(&hex_number, true).unwrap()
+                            }
+                            _ => panic!(
+                                "Constant::try_from::<&ast::Constant>: \
+                                 {:?} is not a pattern of `pat`",
+                                pat
+                            ),
                         };
                         (Dtype::DOUBLE, value)
                     }
@@ -568,10 +586,23 @@ impl TryFrom<&ast::Expression> for Constant {
     type Error = ();
 
     fn try_from(expr: &ast::Expression) -> Result<Self, Self::Error> {
-        if let ast::Expression::Constant(constant) = expr {
-            Self::try_from(&constant.node)
-        } else {
-            Err(())
+        match expr {
+            ast::Expression::Constant(constant) => Self::try_from(&constant.node),
+            ast::Expression::UnaryOperator(unary) => {
+                let constant = Self::try_from(&unary.node.operand.node)?;
+                // When an IR is generated, there are cases where some expressions must be
+                // interpreted unconditionally as compile-time constant value. In this case,
+                // we need to translate also the expression applied `minus` unary operator
+                // to compile-time constant value directly.
+                // Let's say expression is `case -1: { .. }`,
+                // `-1` must be interpreted to compile-time constant value.
+                match &unary.node.operator.node {
+                    ast::UnaryOperator::Minus => Ok(constant.minus()),
+                    ast::UnaryOperator::Plus => Ok(constant),
+                    _ => Err(()),
+                }
+            }
+            _ => Err(()),
         }
     }
 }
@@ -655,6 +686,33 @@ impl Constant {
         }
     }
 
+    #[inline]
+    fn minus(self) -> Self {
+        match self {
+            Self::Int {
+                value,
+                width,
+                is_signed,
+            } => {
+                assert!(is_signed);
+                let minus_value = -(value as i128);
+                Self::Int {
+                    value: minus_value as u128,
+                    width,
+                    is_signed,
+                }
+            }
+            Self::Float { mut value, width } => {
+                *value.as_mut() *= -1.0f64;
+                Self::Float { value, width }
+            }
+            _ => panic!(
+                "constant value generated by `Constant::from_ast_expression` \
+                 must be `Constant{{Int, Float}}`"
+            ),
+        }
+    }
+
     pub fn is_undef(&self) -> bool {
         if let Self::Undef { .. } = self {
             true
@@ -669,7 +727,17 @@ impl fmt::Display for Constant {
         match self {
             Self::Undef { .. } => write!(f, "undef"),
             Self::Unit => write!(f, "unit"),
-            Self::Int { value, .. } => write!(f, "{}", value),
+            Self::Int {
+                value, is_signed, ..
+            } => write!(
+                f,
+                "{}",
+                if *is_signed {
+                    (*value as i128).to_string()
+                } else {
+                    value.to_string()
+                }
+            ),
             Self::Float { value, .. } => write!(f, "{}", value),
             Self::GlobalVariable { name, .. } => write!(f, "%{}", name),
         }

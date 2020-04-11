@@ -37,8 +37,18 @@ impl WriteLine for (&String, &Declaration) {
         let decl = self.1;
 
         match decl {
-            Declaration::Variable { dtype, .. } => {
-                writeln!(write, "{} = {}", name, dtype)?;
+            Declaration::Variable { dtype, initializer } => {
+                writeln!(
+                    write,
+                    "{} = {} {}",
+                    name,
+                    if let Some(init) = initializer {
+                        init.to_string()
+                    } else {
+                        "default".to_string()
+                    },
+                    dtype
+                )?;
             }
             Declaration::Function {
                 signature,
@@ -189,19 +199,28 @@ impl WriteString for Operand {
 
 impl WriteOp for ast::BinaryOperator {
     fn write_operation(&self) -> String {
+        // TODO: represent signed & unsigned if necessary
         match self {
             Self::Multiply => "mul",
             Self::Divide => "div",
             Self::Modulo => "mod",
             Self::Plus => "add",
             Self::Minus => "sub",
+            Self::ShiftLeft => "shl",
+            Self::ShiftRight => "shr",
             Self::Equals => "cmp eq",
             Self::NotEquals => "cmp ne",
             Self::Less => "cmp lt",
             Self::LessOrEqual => "cmp le",
             Self::Greater => "cmp gt",
             Self::GreaterOrEqual => "cmp ge",
-            _ => todo!(),
+            Self::BitwiseAnd => "and",
+            Self::BitwiseXor => "xor",
+            Self::BitwiseOr => "or",
+            _ => todo!(
+                "ast::BinaryOperator::WriteOp: write operation for {:?} is needed",
+                self
+            ),
         }
         .to_string()
     }
@@ -210,8 +229,13 @@ impl WriteOp for ast::BinaryOperator {
 impl WriteOp for ast::UnaryOperator {
     fn write_operation(&self) -> String {
         match self {
+            Self::Plus => "plus",
             Self::Minus => "minus",
-            _ => todo!(),
+            Self::Negate => "negate",
+            _ => todo!(
+                "ast::UnaryOperator::WriteOp: write operation for {:?} is needed",
+                self
+            ),
         }
         .to_string()
     }

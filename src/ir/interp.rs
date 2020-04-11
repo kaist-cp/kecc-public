@@ -90,6 +90,14 @@ impl Value {
     }
 
     #[inline]
+    fn array(inner_dtype: Dtype, values: Vec<Self>) -> Self {
+        Self::Array {
+            inner_dtype,
+            values,
+        }
+    }
+
+    #[inline]
     fn get_int(self) -> Option<(u128, usize, bool)> {
         if let Value::Int {
             value,
@@ -130,7 +138,12 @@ impl Value {
             } => Self::int(u128::default(), *width, *is_signed),
             ir::Dtype::Float { width, .. } => Self::float(f64::default(), *width),
             ir::Dtype::Pointer { inner, .. } => Self::nullptr(inner.deref().clone()),
-            ir::Dtype::Array { .. } => panic!("array type does not have a default value"),
+            ir::Dtype::Array { inner, size } => {
+                let values = (0..*size)
+                    .map(|_| Self::default_from_dtype(inner))
+                    .collect();
+                Self::array(inner.deref().clone(), values)
+            }
             ir::Dtype::Function { .. } => panic!("function type does not have a default value"),
             ir::Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
@@ -251,6 +264,7 @@ impl<'i> StackFrame<'i> {
 
 mod calculator {
     use super::Value;
+    use crate::ir::*;
     use lang_c::ast;
 
     // TODO: change to template function in the future
@@ -278,53 +292,126 @@ mod calculator {
                 assert_eq!(lhs_w, rhs_w);
                 assert_eq!(lhs_s, rhs_s);
 
-                match op {
-                    // TODO: consider signed value in the future
-                    ast::BinaryOperator::Plus => Ok(Value::int(lhs + rhs, lhs_w, lhs_s)),
-                    ast::BinaryOperator::Minus => Ok(Value::int(lhs - rhs, lhs_w, lhs_s)),
-                    ast::BinaryOperator::Multiply => Ok(Value::int(lhs * rhs, lhs_w, lhs_s)),
-                    ast::BinaryOperator::Modulo => Ok(Value::int(lhs % rhs, lhs_w, lhs_s)),
+                let result = match op {
+                    // TODO: explain why plus & minus do not need to consider `is_signed'
+                    ast::BinaryOperator::Plus => (lhs as i128 + rhs as i128) as u128,
+                    ast::BinaryOperator::Minus => (lhs as i128 - rhs as i128) as u128,
+                    ast::BinaryOperator::Multiply => {
+                        if lhs_s {
+                            (lhs as i128 * rhs as i128) as u128
+                        } else {
+                            lhs * rhs
+                        }
+                    }
+                    ast::BinaryOperator::Divide => {
+                        if lhs_s {
+                            (lhs as i128 / rhs as i128) as u128
+                        } else {
+                            lhs / rhs
+                        }
+                    }
+                    ast::BinaryOperator::Modulo => {
+                        if lhs_s {
+                            (lhs as i128 % rhs as i128) as u128
+                        } else {
+                            lhs % rhs
+                        }
+                    }
+                    ast::BinaryOperator::ShiftLeft => {
+                        let rhs = if lhs_s {
+                            let rhs = rhs as i128;
+                            assert!(rhs >= 0);
+                            assert!(rhs < (lhs_w as i128));
+                            rhs as u128
+                        } else {
+                            assert!(rhs < (lhs_w as u128));
+                            rhs
+                        };
+
+                        lhs << rhs
+                    }
+                    ast::BinaryOperator::ShiftRight => {
+                        if lhs_s {
+                            // arithmetic shift right
+                            let rhs = rhs as i128;
+                            assert!(rhs >= 0);
+                            assert!(rhs < (lhs_w as i128));
+                            ((lhs as i128) >> rhs) as u128
+                        } else {
+                            // logical shift right
+                            assert!(rhs < (lhs_w as u128));
+                            let bit_mask = (1u128 << lhs_w as u128) - 1;
+                            let lhs = lhs & bit_mask;
+                            lhs >> rhs
+                        }
+                    }
+                    ast::BinaryOperator::BitwiseAnd => lhs & rhs,
+                    ast::BinaryOperator::BitwiseXor => lhs ^ rhs,
+                    ast::BinaryOperator::BitwiseOr => lhs | rhs,
                     ast::BinaryOperator::Equals => {
                         let result = if lhs == rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, false))
+                        return Ok(Value::int(result, 1, false));
                     }
                     ast::BinaryOperator::NotEquals => {
                         let result = if lhs != rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, false))
+                        return Ok(Value::int(result, 1, false));
                     }
                     ast::BinaryOperator::Less => {
-                        // TODO: consider signed option
-                        let result = if lhs < rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, false))
+                        let condition = if lhs_s {
+                            (lhs as i128) < (rhs as i128)
+                        } else {
+                            lhs < rhs
+                        };
+                        let result = if condition { 1 } else { 0 };
+                        return Ok(Value::int(result, 1, false));
                     }
                     ast::BinaryOperator::Greater => {
-                        // TODO: consider signed option
-                        let result = if lhs > rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, false))
+                        let condition = if lhs_s {
+                            (lhs as i128) > (rhs as i128)
+                        } else {
+                            lhs > rhs
+                        };
+                        let result = if condition { 1 } else { 0 };
+                        return Ok(Value::int(result, 1, false));
                     }
                     ast::BinaryOperator::LessOrEqual => {
-                        // TODO: consider signed option
-                        let result = if lhs <= rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, false))
+                        let condition = if lhs_s {
+                            (lhs as i128) <= (rhs as i128)
+                        } else {
+                            lhs <= rhs
+                        };
+                        let result = if condition { 1 } else { 0 };
+                        return Ok(Value::int(result, 1, false));
                     }
                     ast::BinaryOperator::GreaterOrEqual => {
-                        // TODO: consider signed option
-                        let result = if lhs >= rhs { 1 } else { 0 };
-                        Ok(Value::int(result, 1, false))
-                    }
-                    ast::BinaryOperator::LogicalAnd => {
-                        assert!(lhs < 2);
-                        assert!(rhs < 2);
-                        let result = lhs | rhs;
-                        Ok(Value::int(result, 1, lhs_s))
+                        let condition = if lhs_s {
+                            (lhs as i128) >= (rhs as i128)
+                        } else {
+                            lhs >= rhs
+                        };
+                        let result = if condition { 1 } else { 0 };
+                        return Ok(Value::int(result, 1, false));
                     }
                     _ => todo!(
                         "calculate_binary_operator_expression: not supported operator {:?}",
                         op
                     ),
-                }
+                };
+
+                let result = if lhs_s {
+                    sign_extension(result, lhs_w as u128)
+                } else {
+                    trim_unnecessary_bits(result, lhs_w as u128)
+                };
+
+                Ok(Value::int(result, lhs_w, lhs_s))
             }
-            _ => todo!(),
+            (op, lhs, rhs) => todo!(
+                "calculate_binary_operator_expression: not supported case for {:?} {:?} {:?}",
+                op,
+                lhs,
+                rhs
+            ),
         }
     }
 
@@ -350,8 +437,14 @@ mod calculator {
                     is_signed,
                 },
             ) => {
-                assert!(is_signed);
-                let result = -(value as i128);
+                // TODO: check what is exact behavior of appling minus to unsigned value
+                let result = if is_signed {
+                    (-(value as i128)) as u128
+                } else {
+                    let result = (-(value as i128)) as u128;
+                    let bit_mask = (1u128 << (width as u128)) - 1;
+                    result & bit_mask
+                };
                 Ok(Value::int(result as u128, width, is_signed))
             }
             (
@@ -367,26 +460,94 @@ mod calculator {
                 let result = if value == 0 { 1 } else { 0 };
                 Ok(Value::int(result, width, is_signed))
             }
-            _ => todo!(),
+            (op, operand) => todo!(
+                "calculate_unary_operator_expression: not supported case for {:?} {:?}",
+                op,
+                operand,
+            ),
         }
     }
 
-    pub fn calculate_typecast(value: Value, dtype: crate::ir::Dtype) -> Result<Value, ()> {
+    pub fn calculate_typecast(value: Value, dtype: Dtype) -> Result<Value, ()> {
+        if value.dtype() == dtype {
+            return Ok(value);
+        }
+
         match (value, dtype) {
             (Value::Undef { .. }, _) => Err(()),
             // TODO: distinguish zero/signed extension in the future
             // TODO: consider truncate in the future
             (
-                Value::Int { value, .. },
-                crate::ir::Dtype::Int {
+                Value::Int { value, width, .. },
+                Dtype::Int {
+                    width: target_width,
+                    is_signed: target_signed,
+                    ..
+                },
+            ) => {
+                // Other cases
+                let result = if target_signed {
+                    if width >= target_width {
+                        // TODO: explain the logic in the future
+                        let value = trim_unnecessary_bits(value, target_width as u128);
+                        sign_extension(value, target_width as u128)
+                    } else {
+                        value
+                    }
+                } else {
+                    trim_unnecessary_bits(value, target_width as u128)
+                };
+
+                Ok(Value::int(result, target_width, target_signed))
+            }
+            (
+                Value::Int {
+                    value, is_signed, ..
+                },
+                Dtype::Float { width, .. },
+            ) => {
+                let casted_value = if is_signed {
+                    value as i128 as f64
+                } else {
+                    value as f64
+                };
+                Ok(Value::float(casted_value, width))
+            }
+            (
+                Value::Float { value, .. },
+                Dtype::Int {
                     width, is_signed, ..
                 },
-            ) => Ok(Value::int(value, width, is_signed)),
-            (Value::Float { value, .. }, crate::ir::Dtype::Float { width, .. }) => {
+            ) => {
+                let casted_value = if is_signed {
+                    value as i128 as u128
+                } else {
+                    value as u128
+                };
+                Ok(Value::int(casted_value, width, is_signed))
+            }
+            (Value::Float { value, .. }, Dtype::Float { width, .. }) => {
                 Ok(Value::float(value, width))
             }
-            (value, dtype) => todo!("calculate_typecast ({:?}) {:?}", dtype, value),
+            (value, dtype) => todo!("calculate_typecast ({:?}) {:?}", value, dtype),
         }
+    }
+
+    #[inline]
+    fn sign_extension(value: u128, width: u128) -> u128 {
+        let base = 1u128 << (width - 1);
+        if value >= base {
+            let bit_mask = -1i128 << (width as i128);
+            value | bit_mask as u128
+        } else {
+            value
+        }
+    }
+
+    #[inline]
+    fn trim_unnecessary_bits(value: u128, width: u128) -> u128 {
+        let bit_mask = (1u128 << width) - 1;
+        value & bit_mask
     }
 }
 
@@ -397,7 +558,7 @@ enum Byte {
     Undef,
     Concrete(u8),
     Pointer {
-        bid: usize,
+        bid: Option<usize>,
         offset: isize,
         index: usize,
     },
@@ -415,7 +576,7 @@ impl Byte {
     }
 
     #[inline]
-    fn pointer(bid: usize, offset: isize, index: usize) -> Self {
+    fn pointer(bid: Option<usize>, offset: isize, index: usize) -> Self {
         Self::Pointer { bid, offset, index }
     }
 
@@ -427,7 +588,7 @@ impl Byte {
         }
     }
 
-    fn get_pointer(&self) -> Option<(usize, isize, usize)> {
+    fn get_pointer(&self) -> Option<(Option<usize>, isize, usize)> {
         if let Self::Pointer { bid, offset, index } = self {
             Some((*bid, *offset, *index))
         } else {
@@ -482,6 +643,7 @@ impl Byte {
                 Ok(Value::int(value, *width, *is_signed))
             }
             ir::Dtype::Float { width, .. } => {
+                let size = (*width + Dtype::BITS_OF_BYTE - 1) / Dtype::BITS_OF_BYTE;
                 let value = some_or!(
                     bytes
                         .by_ref()
@@ -491,7 +653,7 @@ impl Byte {
                     return Ok(Value::undef(dtype.clone()))
                 );
                 let value = Self::bytes_to_u128(&value, false);
-                let value = if *width == Dtype::SIZE_OF_FLOAT {
+                let value = if size == Dtype::SIZE_OF_FLOAT {
                     f32::from_bits(value as u32) as f64
                 } else {
                     f64::from_bits(value as u64)
@@ -519,7 +681,7 @@ impl Byte {
                     {
                         Value::undef(inner.deref().clone())
                     } else {
-                        Value::pointer(Some(*bid), *offset, inner.deref().clone())
+                        Value::pointer(*bid, *offset, inner.deref().clone())
                     },
                 )
             }
@@ -556,19 +718,19 @@ impl Byte {
             }
             Value::Float { value, width } => {
                 let size = (*width + Dtype::BITS_OF_BYTE - 1) / Dtype::BITS_OF_BYTE;
-                let value: u128 = match size {
+                let value_bits: u128 = match size {
                     Dtype::SIZE_OF_FLOAT => (*value as f32).to_bits() as u128,
                     Dtype::SIZE_OF_DOUBLE => (*value as f64).to_bits() as u128,
                     _ => panic!("value_to_bytes: {} is not a valid float size", size),
                 };
 
-                Self::u128_to_bytes(value, size)
+                Self::u128_to_bytes(value_bits, size)
                     .iter()
                     .map(|b| Self::concrete(*b))
                     .collect::<Vec<_>>()
             }
             Value::Pointer { bid, offset, .. } => (0..Dtype::SIZE_OF_POINTER)
-                .map(|i| Self::pointer(bid.unwrap(), *offset, i))
+                .map(|i| Self::pointer(*bid, *offset, i))
                 .collect(),
             Value::Array {
                 inner_dtype,
@@ -698,9 +860,29 @@ impl<'i> State<'i> {
                             Value::default_from_dtype(&dtype)
                         };
 
+                        // Type cast
+                        let value =
+                            calculator::calculate_typecast(value, dtype.clone()).map_err(|_| {
+                                InterpreterError::Misc {
+                                    func_name: self.stack_frame.func_name.clone(),
+                                    pc: self.stack_frame.pc,
+                                    msg: "calculate_typecast when initialize global variable"
+                                        .into(),
+                                }
+                            })?;
+
                         self.memory.store(bid, 0, &value);
                     }
-                    ir::Dtype::Array { .. } => todo!("Initializer::List is needed"),
+                    ir::Dtype::Array { .. } => {
+                        let value = if let Some(_list_init) = initializer {
+                            // TODO: is type cast required?
+                            todo!("Initializer::List is needed")
+                        } else {
+                            Value::default_from_dtype(&dtype)
+                        };
+
+                        self.memory.store(bid, 0, &value);
+                    }
                     ir::Dtype::Function { .. } => panic!("function variable does not exist"),
                     ir::Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
                 },

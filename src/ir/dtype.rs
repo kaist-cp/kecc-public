@@ -23,7 +23,7 @@ pub trait HasDtype {
 #[derive(Default)]
 struct BaseDtype {
     scalar: Option<ast::TypeSpecifier>,
-    size_modifier: Option<ast::TypeSpecifier>,
+    size_modifiers: Vec<ast::TypeSpecifier>,
     signed_option: Option<ast::TypeSpecifier>,
     typedef_name: Option<String>,
     is_const: bool,
@@ -129,12 +129,7 @@ impl BaseDtype {
                 self.scalar = Some(type_specifier.clone());
             }
             ast::TypeSpecifier::Short | ast::TypeSpecifier::Long => {
-                if self.size_modifier.is_some() {
-                    return Err(DtypeError::Misc {
-                        message: "two or more size modifiers in declaration specifiers".to_string(),
-                    });
-                }
-                self.size_modifier = Some(type_specifier.clone());
+                self.size_modifiers.push(type_specifier.clone())
             }
             ast::TypeSpecifier::TypedefName(identifier) => {
                 if self.typedef_name.is_some() {
@@ -277,7 +272,7 @@ impl TryFrom<BaseDtype> for Dtype {
     fn try_from(spec: BaseDtype) -> Result<Self, DtypeError> {
         assert!(
             !(spec.scalar.is_none()
-                && spec.size_modifier.is_none()
+                && spec.size_modifiers.is_empty()
                 && spec.signed_option.is_none()
                 && spec.typedef_name.is_none()
                 && !spec.is_const),
@@ -303,32 +298,40 @@ impl TryFrom<BaseDtype> for Dtype {
                     ast::TypeSpecifier::Int => Self::INT,
                     ast::TypeSpecifier::Float => Self::FLOAT,
                     ast::TypeSpecifier::Double => Self::DOUBLE,
-                    ast::TypeSpecifier::Unsigned | ast::TypeSpecifier::Signed => {
-                        panic!("Signed option to scalar is not supported")
-                    }
                     _ => panic!("Dtype::try_from::<BaseDtype>: {:?} is not a scalar type", t),
                 }
             } else {
                 Self::default()
             };
 
-            // Applies size modifier
-            if let Some(size_modifier) = spec.size_modifier {
-                if dtype != Self::INT {
-                    return Err(DtypeError::Misc {
-                        message: "size modifier can only be used with `int`".to_string(),
-                    });
-                }
-
-                dtype = match size_modifier {
+            let number_of_modifier = spec.size_modifiers.len();
+            dtype = match number_of_modifier {
+                0 => dtype,
+                1 => match spec.size_modifiers[0] {
                     ast::TypeSpecifier::Short => Self::SHORT,
                     ast::TypeSpecifier::Long => Self::LONG,
                     _ => panic!(
-                        "Dtype::try_from::<BaseDtype>: {:?} is not a size modifier",
-                        size_modifier
+                        "Dtype::try_from::<BaseDtype>: {:?} is not a size modifiers",
+                        spec.size_modifiers
                     ),
+                },
+                2 => {
+                    if spec.size_modifiers[0] != ast::TypeSpecifier::Long
+                        || spec.size_modifiers[1] != ast::TypeSpecifier::Long
+                    {
+                        return Err(DtypeError::Misc {
+                            message: "two or more size modifiers in declaration specifiers"
+                                .to_string(),
+                        });
+                    }
+                    Self::LONGLONG
                 }
-            }
+                _ => {
+                    return Err(DtypeError::Misc {
+                        message: "two or more size modifiers in declaration specifiers".to_string(),
+                    })
+                }
+            };
 
             // Applies signedness.
             if let Some(signed_option) = spec.signed_option {
@@ -693,8 +696,7 @@ impl Dtype {
 
         let declarator_kind = &declarator.kind;
         match &declarator_kind.node {
-            ast::DeclaratorKind::Abstract => panic!("ast::DeclaratorKind::Abstract is unsupported"),
-            ast::DeclaratorKind::Identifier(_) => Ok(self),
+            ast::DeclaratorKind::Abstract | ast::DeclaratorKind::Identifier(_) => Ok(self),
             ast::DeclaratorKind::Declarator(declarator) => {
                 self.with_ast_declarator(&declarator.node)
             }

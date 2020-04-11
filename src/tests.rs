@@ -3,6 +3,7 @@ use std::fs::{self, File};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use tempfile::tempdir;
+use wait_timeout::ChildExt;
 
 use crate::*;
 
@@ -45,17 +46,27 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
     }
 
     // Execute compiled executable
-    let status = Command::new(fs::canonicalize(bin_path.clone()).unwrap())
-        .status()
-        .expect("failed to execute the compiled executable")
-        .code()
-        .expect("failed to return an exit code");
+    let mut child = Command::new(fs::canonicalize(bin_path.clone()).unwrap())
+        .spawn()
+        .expect("failed to execute the compiled executable");
 
-    // Remove compiled executable
     Command::new("rm")
         .arg(bin_path)
         .status()
         .expect("failed to remove compiled executable");
+
+    let status = some_or!(
+        child
+            .wait_timeout_ms(500)
+            .expect("failed to obtain exit status from child process"),
+        {
+            println!("timeout occurs");
+            child.kill().unwrap();
+            child.wait().unwrap();
+            return;
+        }
+    );
+    let status = some_or!(status.code(), return);
 
     let ir = match Irgen::default().translate(unit) {
         Ok(ir) => ir,
@@ -73,5 +84,6 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
         panic!("non-integer value occurs")
     };
 
+    println!("kecc: {:?}\ngcc: {:?}", result, status);
     assert_eq!(result, ir::Value::int(status as u128, 32, true));
 }

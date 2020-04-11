@@ -78,7 +78,7 @@ built by the test script. For more information, we refer to the
 ### Reduce
 
 When the fuzzer finds a buggy input program for your compiler, it is highly likely that the input
-program is too big to manually inspect.  We use `creduce` that reduces the buggy input program as
+program is too big to manually inspect. We use `creduce` that reduces the buggy input program as
 much as possible.
 
 Suppose `tests/test_polished.c` is the buggy input program. Then the following script reduces the
@@ -96,3 +96,6 @@ The script performs unguided test-case reduction using `creduce`: given a buggy 
 reduces the program; check if the reduced program still fails on the test, and if so, replaces the
 given program with the reduced one; repeat until you get a small enough buggy program. For more
 information, we refer to the [Creduce](https://embed.cs.utah.edu/creduce/) homepage.
+
+**[NOTICE]** The fuzzer supports Ubuntu 18.04 only. It may work for other platforms, but if it
+doesn't, please run the fuzzer in Ubuntu 18.04.
