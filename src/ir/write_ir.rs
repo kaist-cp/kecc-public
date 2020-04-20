@@ -43,7 +43,7 @@ impl WriteLine for (&String, &Declaration) {
                     "{} = {} {}",
                     name,
                     if let Some(init) = initializer {
-                        init.to_string()
+                        init.write_string()
                     } else {
                         "default".to_string()
                     },

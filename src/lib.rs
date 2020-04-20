@@ -7,7 +7,7 @@ mod write_base;
 
 mod asm;
 mod c;
-mod ir;
+pub mod ir;
 
 mod asmgen;
 mod irgen;

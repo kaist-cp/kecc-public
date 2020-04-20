@@ -78,12 +78,15 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
         Ok(result) => result,
         Err(interp_error) => panic!("{}", interp_error),
     };
-    let result = if let ir::Value::Int { .. } = &result {
-        result
-    } else {
-        panic!("non-integer value occurs")
-    };
+    // We only allow main function whose return type is `int`
+    let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
+    assert_eq!(width, 32);
+    assert!(is_signed);
 
-    println!("kecc: {:?}\ngcc: {:?}", result, status);
-    assert_eq!(result, ir::Value::int(status as u128, 32, true));
+    // When obtain status from `gcc` executable process, value is truncated to byte size.
+    // For this reason, we make `fuzzer` generate the C source code which returns value
+    // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
+    // may be deleted. So, we truncate result value to byte size one more time here.
+    println!("gcc: {}, kecc: {}", status as i8, value as i8);
+    assert_eq!(status as i8, value as i8);
 }

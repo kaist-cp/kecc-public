@@ -21,7 +21,7 @@ REPLACE_DICT = {
     "extern ": "",
     "__restrict": "",
     "long __undefined;": "",
-    "return 0;": "return crc32_context % 128;",
+    "return 0;": "return (unsigned char)(crc32_context);",
     r"__attribute__\s*\(\(.*\)\)": "",
     "_Float128": "double",
     "long double": "double",

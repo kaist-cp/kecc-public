@@ -4,8 +4,10 @@ use core::ops::Deref;
 use failure::Fail;
 use lang_c::ast;
 use lang_c::span::Node;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
+
+use itertools::izip;
 
 use crate::ir::*;
 
@@ -26,6 +28,7 @@ struct BaseDtype {
     size_modifiers: Vec<ast::TypeSpecifier>,
     signed_option: Option<ast::TypeSpecifier>,
     typedef_name: Option<String>,
+    struct_type: Option<ast::StructType>,
     is_const: bool,
     is_typedef: bool,
 }
@@ -51,6 +54,11 @@ pub enum Dtype {
     Array {
         inner: Box<Dtype>,
         size: usize,
+    },
+    Struct {
+        name: Option<String>,
+        fields: Vec<Named<Dtype>>,
+        is_const: bool,
     },
     Function {
         ret: Box<Dtype>,
@@ -139,6 +147,14 @@ impl BaseDtype {
                 }
                 self.typedef_name = Some(identifier.node.name.clone());
             }
+            ast::TypeSpecifier::Struct(struct_type) => {
+                if self.struct_type.is_some() {
+                    return Err(DtypeError::Misc {
+                        message: "two or more struct type in declaration specifiers".to_string(),
+                    });
+                }
+                self.struct_type = Some(struct_type.node.clone());
+            }
             _ => todo!("apply_type_specifier: support {:?}", type_specifier),
         }
 
@@ -172,7 +188,7 @@ impl BaseDtype {
         Ok(())
     }
 
-    pub fn apply_typename_specifier(
+    pub fn apply_specifier_qualifier(
         &mut self,
         typename_specifier: &ast::SpecifierQualifier,
     ) -> Result<(), DtypeError> {
@@ -237,12 +253,12 @@ impl BaseDtype {
         Ok(())
     }
 
-    pub fn apply_typename_specifiers(
+    pub fn apply_specifier_qualifiers(
         &mut self,
         typename_specifiers: &[Node<ast::SpecifierQualifier>],
     ) -> Result<(), DtypeError> {
         for ast_spec in typename_specifiers {
-            self.apply_typename_specifier(&ast_spec.node)?;
+            self.apply_specifier_qualifier(&ast_spec.node)?;
         }
 
         Ok(())
@@ -275,87 +291,128 @@ impl TryFrom<BaseDtype> for Dtype {
                 && spec.size_modifiers.is_empty()
                 && spec.signed_option.is_none()
                 && spec.typedef_name.is_none()
+                && spec.struct_type.is_none()
                 && !spec.is_const),
             "BaseDtype is empty"
         );
 
-        let mut dtype = if let Some(name) = spec.typedef_name {
-            if spec.scalar.is_some() || spec.signed_option.is_some() {
+        if let Some(name) = spec.typedef_name {
+            if !(spec.scalar.is_none()
+                && spec.size_modifiers.is_empty()
+                && spec.signed_option.is_none()
+                && spec.struct_type.is_none())
+            {
                 return Err(DtypeError::Misc {
-                    message: "typedef' cannot be used with scalar type or signed option"
-                        .to_string(),
+                    message: "`typedef` can only be used with `const`".to_string(),
                 });
             }
 
-            Self::typedef(name)
-        } else {
-            // Creates `dtype` from scalar.
-            let mut dtype = if let Some(t) = spec.scalar {
-                match t {
-                    ast::TypeSpecifier::Void => Self::unit(),
-                    ast::TypeSpecifier::Bool => Self::BOOL,
-                    ast::TypeSpecifier::Char => Self::CHAR,
-                    ast::TypeSpecifier::Int => Self::INT,
-                    ast::TypeSpecifier::Float => Self::FLOAT,
-                    ast::TypeSpecifier::Double => Self::DOUBLE,
-                    _ => panic!("Dtype::try_from::<BaseDtype>: {:?} is not a scalar type", t),
-                }
-            } else {
-                Self::default()
-            };
+            let dtype = Self::typedef(name).set_const(spec.is_const);
 
-            let number_of_modifier = spec.size_modifiers.len();
-            dtype = match number_of_modifier {
-                0 => dtype,
-                1 => match spec.size_modifiers[0] {
-                    ast::TypeSpecifier::Short => Self::SHORT,
-                    ast::TypeSpecifier::Long => Self::LONG,
-                    _ => panic!(
-                        "Dtype::try_from::<BaseDtype>: {:?} is not a size modifiers",
-                        spec.size_modifiers
-                    ),
-                },
-                2 => {
-                    if spec.size_modifiers[0] != ast::TypeSpecifier::Long
-                        || spec.size_modifiers[1] != ast::TypeSpecifier::Long
-                    {
-                        return Err(DtypeError::Misc {
-                            message: "two or more size modifiers in declaration specifiers"
-                                .to_string(),
-                        });
-                    }
-                    Self::LONGLONG
-                }
-                _ => {
-                    return Err(DtypeError::Misc {
-                        message: "two or more size modifiers in declaration specifiers".to_string(),
-                    })
-                }
-            };
+            return Ok(dtype);
+        }
 
-            // Applies signedness.
-            if let Some(signed_option) = spec.signed_option {
-                let is_signed = match signed_option {
-                    ast::TypeSpecifier::Signed => true,
-                    ast::TypeSpecifier::Unsigned => false,
-                    _ => panic!(
-                        "Dtype::try_from::<BaseDtype>: {:?} is not a signed option",
-                        signed_option
-                    ),
-                };
-
-                if dtype.get_int_width().is_none() {
-                    return Err(DtypeError::Misc {
-                        message: "`signed` and `unsigned` only be applied to `Dtype::Int`"
-                            .to_string(),
-                    });
-                }
-
-                dtype = dtype.set_signed(is_signed);
+        if let Some(struct_type) = spec.struct_type {
+            if !(spec.scalar.is_none()
+                && spec.size_modifiers.is_empty()
+                && spec.signed_option.is_none()
+                && spec.typedef_name.is_none())
+            {
+                return Err(DtypeError::Misc {
+                    message: "`struct` can only be used with `const`".to_string(),
+                });
             }
 
-            dtype
+            assert_eq!(struct_type.kind.node, ast::StructKind::Struct);
+            let struct_name = struct_type.identifier.map(|i| i.node.name);
+            let fields = if let Some(declarations) = struct_type.declarations {
+                declarations
+                    .iter()
+                    .map(|d| Self::try_from_ast_struct_declaration(&d.node))
+                    .collect::<Result<Vec<_>, _>>()?
+                    .concat()
+            } else {
+                Vec::new()
+            };
+
+            let mut field_names = HashSet::new();
+            for field in &fields {
+                if let Some(name) = field.name() {
+                    if !field_names.insert(name.clone()) {
+                        return Err(DtypeError::Misc {
+                            message: format!("`{}` is arleady used in struct", name),
+                        });
+                    }
+                }
+            }
+
+            let dtype = Self::structure(struct_name, fields).set_const(spec.is_const);
+
+            return Ok(dtype);
+        }
+
+        // Creates `dtype` from scalar.
+        let mut dtype = if let Some(t) = spec.scalar {
+            match t {
+                ast::TypeSpecifier::Void => Self::unit(),
+                ast::TypeSpecifier::Bool => Self::BOOL,
+                ast::TypeSpecifier::Char => Self::CHAR,
+                ast::TypeSpecifier::Int => Self::INT,
+                ast::TypeSpecifier::Float => Self::FLOAT,
+                ast::TypeSpecifier::Double => Self::DOUBLE,
+                _ => panic!("Dtype::try_from::<BaseDtype>: {:?} is not a scalar type", t),
+            }
+        } else {
+            Self::default()
         };
+
+        let number_of_modifier = spec.size_modifiers.len();
+        dtype = match number_of_modifier {
+            0 => dtype,
+            1 => match spec.size_modifiers[0] {
+                ast::TypeSpecifier::Short => Self::SHORT,
+                ast::TypeSpecifier::Long => Self::LONG,
+                _ => panic!(
+                    "Dtype::try_from::<BaseDtype>: {:?} is not a size modifiers",
+                    spec.size_modifiers
+                ),
+            },
+            2 => {
+                if spec.size_modifiers[0] != ast::TypeSpecifier::Long
+                    || spec.size_modifiers[1] != ast::TypeSpecifier::Long
+                {
+                    return Err(DtypeError::Misc {
+                        message: "two or more size modifiers in declaration specifiers".to_string(),
+                    });
+                }
+                Self::LONGLONG
+            }
+            _ => {
+                return Err(DtypeError::Misc {
+                    message: "two or more size modifiers in declaration specifiers".to_string(),
+                })
+            }
+        };
+
+        // Applies signedness.
+        if let Some(signed_option) = spec.signed_option {
+            let is_signed = match signed_option {
+                ast::TypeSpecifier::Signed => true,
+                ast::TypeSpecifier::Unsigned => false,
+                _ => panic!(
+                    "Dtype::try_from::<BaseDtype>: {:?} is not a signed option",
+                    signed_option
+                ),
+            };
+
+            if dtype.get_int_width().is_none() {
+                return Err(DtypeError::Misc {
+                    message: "`signed` and `unsigned` only be applied to `Dtype::Int`".to_string(),
+                });
+            }
+
+            dtype = dtype.set_signed(is_signed);
+        }
 
         dtype = dtype.set_const(spec.is_const);
 
@@ -369,11 +426,11 @@ impl TryFrom<&ast::TypeName> for Dtype {
     /// Derive a data type from typename.
     fn try_from(type_name: &ast::TypeName) -> Result<Self, Self::Error> {
         let mut spec = BaseDtype::default();
-        BaseDtype::apply_typename_specifiers(&mut spec, &type_name.specifiers)?;
+        BaseDtype::apply_specifier_qualifiers(&mut spec, &type_name.specifiers)?;
         let mut dtype = Self::try_from(spec)?;
 
         if let Some(declarator) = &type_name.declarator {
-            dtype = dtype.with_ast_declarator(&declarator.node)?;
+            dtype = dtype.with_ast_declarator(&declarator.node)?.deref().clone();
         }
         Ok(dtype)
     }
@@ -389,7 +446,7 @@ impl TryFrom<&ast::ParameterDeclaration> for Dtype {
         let mut dtype = Self::try_from(spec)?;
 
         if let Some(declarator) = &parameter_decl.declarator {
-            dtype = dtype.with_ast_declarator(&declarator.node)?;
+            dtype = dtype.with_ast_declarator(&declarator.node)?.deref().clone();
 
             // A function call with an array argument performs array-to-pointer conversion.
             // For this reason, when `declarator` is from function parameter declaration
@@ -488,6 +545,15 @@ impl Dtype {
     }
 
     #[inline]
+    pub fn structure(name: Option<String>, fields: Vec<Named<Self>>) -> Self {
+        Self::Struct {
+            name,
+            fields,
+            is_const: false,
+        }
+    }
+
+    #[inline]
     pub fn function(ret: Dtype, params: Vec<Dtype>) -> Self {
         Self::Function {
             ret: Box::new(ret),
@@ -522,7 +588,7 @@ impl Dtype {
     }
 
     #[inline]
-    pub fn get_pointer_inner(&self) -> Option<&Dtype> {
+    pub fn get_pointer_inner(&self) -> Option<&Self> {
         if let Self::Pointer { inner, .. } = self {
             Some(inner.deref())
         } else {
@@ -531,7 +597,7 @@ impl Dtype {
     }
 
     #[inline]
-    pub fn get_array_inner(&self) -> Option<&Dtype> {
+    pub fn get_array_inner(&self) -> Option<&Self> {
         if let Self::Array { inner, .. } = self {
             Some(inner.deref())
         } else {
@@ -540,7 +606,16 @@ impl Dtype {
     }
 
     #[inline]
-    pub fn get_function_inner(&self) -> Option<(&Dtype, &Vec<Dtype>)> {
+    pub fn get_struct_fields(&self) -> Option<&Vec<Named<Self>>> {
+        if let Self::Struct { fields, .. } = self {
+            Some(fields)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn get_function_inner(&self) -> Option<(&Self, &Vec<Self>)> {
         if let Self::Function { ret, params } = self {
             Some((ret.deref(), params))
         } else {
@@ -567,6 +642,7 @@ impl Dtype {
     }
 
     #[inline]
+    /// Check if `Dtype` is constant. if it is constant, the variable of `Dtype` is not assignable.
     pub fn is_const(&self) -> bool {
         match self {
             Self::Unit { is_const } => *is_const,
@@ -574,6 +650,21 @@ impl Dtype {
             Self::Float { is_const, .. } => *is_const,
             Self::Pointer { is_const, .. } => *is_const,
             Self::Array { .. } => true,
+            Self::Struct {
+                fields, is_const, ..
+            } => {
+                *is_const
+                    // If any of the fields in the structure type is constant, return `true`.
+                    || fields.iter().any(|f| {
+                        // If an array is wrapped in a struct and the array's inner type is not 
+                        // constant, it is assignable to another object of the same struct type.
+                        if let Self::Array { inner, .. } = f.deref() {
+                            inner.is_const()
+                        } else {
+                            f.deref().is_const()
+                        }
+                    })
+            }
             Self::Function { .. } => true,
             Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
@@ -592,6 +683,11 @@ impl Dtype {
             Self::Float { width, .. } => Self::Float { width, is_const },
             Self::Pointer { inner, .. } => Self::Pointer { inner, is_const },
             Self::Array { .. } => self,
+            Self::Struct { name, fields, .. } => Self::Struct {
+                name,
+                fields,
+                is_const,
+            },
             Self::Function { .. } => self,
             Self::Typedef { name, .. } => Self::Typedef { name, is_const },
         }
@@ -615,6 +711,7 @@ impl Dtype {
                     align_of_inner,
                 ))
             }
+            Self::Struct { .. } => todo!(),
             Self::Function { .. } => Ok((0, 1)),
             Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
@@ -645,6 +742,38 @@ impl Dtype {
         Ok((dtype, is_typedef))
     }
 
+    /// Derive a data type and its name from struct declaration
+    pub fn try_from_ast_struct_declaration(
+        declaration: &ast::StructDeclaration,
+    ) -> Result<Vec<Named<Self>>, DtypeError> {
+        let field_decl = if let ast::StructDeclaration::Field(field_decl) = declaration {
+            &field_decl.node
+        } else {
+            panic!("ast::StructDeclaration::StaticAssert is unsupported")
+        };
+
+        let mut spec = BaseDtype::default();
+        BaseDtype::apply_specifier_qualifiers(&mut spec, &field_decl.specifiers)?;
+        let dtype = Self::try_from(spec)?;
+
+        let fields = field_decl
+            .declarators
+            .iter()
+            .map(|d| {
+                dtype
+                    .clone()
+                    .with_ast_declarator(&d.node.declarator.as_ref().unwrap().node)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        if fields.is_empty() {
+            // Add anonymous field
+            Ok(vec![Named::new(None, dtype)])
+        } else {
+            Ok(fields)
+        }
+    }
+
     /// Generate `Dtype` based on declarator and `self` which has scalar type.
     ///
     /// let's say declaration is `const int * const * const a;`.
@@ -657,7 +786,10 @@ impl Dtype {
     /// * `decl_spec`  - Containing information that should be referenced
     ///                  when creating `Dtype` from `Declarator`.
     ///
-    pub fn with_ast_declarator(mut self, declarator: &ast::Declarator) -> Result<Self, DtypeError> {
+    pub fn with_ast_declarator(
+        mut self,
+        declarator: &ast::Declarator,
+    ) -> Result<Named<Self>, DtypeError> {
         for derived_decl in &declarator.derived {
             self = match &derived_decl.node {
                 ast::DerivedDeclarator::Pointer(pointer_qualifiers) => {
@@ -696,7 +828,10 @@ impl Dtype {
 
         let declarator_kind = &declarator.kind;
         match &declarator_kind.node {
-            ast::DeclaratorKind::Abstract | ast::DeclaratorKind::Identifier(_) => Ok(self),
+            ast::DeclaratorKind::Abstract => Ok(Named::new(None, self)),
+            ast::DeclaratorKind::Identifier(identifier) => {
+                Ok(Named::new(Some(identifier.node.name.clone()), self))
+            }
             ast::DeclaratorKind::Declarator(declarator) => {
                 self.with_ast_declarator(&declarator.node)
             }
@@ -740,14 +875,31 @@ impl Dtype {
             Self::Unit { .. } | Self::Int { .. } | Self::Float { .. } => self,
             Self::Pointer { inner, is_const } => {
                 let inner = inner.deref().clone().resolve_typedefs(typedefs)?;
-                Dtype::pointer(inner).set_const(*is_const)
+                Self::pointer(inner).set_const(*is_const)
             }
             Self::Array { inner, size } => {
                 let inner = inner.deref().clone().resolve_typedefs(typedefs)?;
-                Dtype::Array {
+                Self::Array {
                     inner: Box::new(inner),
                     size: *size,
                 }
+            }
+            Self::Struct {
+                name,
+                fields,
+                is_const,
+            } => {
+                let resolved_dtypes = fields
+                    .iter()
+                    .map(|f| f.deref().clone().resolve_typedefs(typedefs))
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                assert_eq!(fields.len(), resolved_dtypes.len());
+                let fields = izip!(fields, resolved_dtypes)
+                    .map(|(f, d)| Named::new(f.name().cloned(), d))
+                    .collect::<Vec<_>>();
+
+                Self::structure(name.clone(), fields).set_const(*is_const)
             }
             Self::Function { ret, params } => {
                 let ret = ret.deref().clone().resolve_typedefs(typedefs)?;
@@ -756,7 +908,7 @@ impl Dtype {
                     .map(|p| p.clone().resolve_typedefs(typedefs))
                     .collect::<Result<Vec<_>, _>>()?;
 
-                Dtype::function(ret, params)
+                Self::function(ret, params)
             }
             Self::Typedef { name, is_const } => {
                 let dtype = typedefs
@@ -797,6 +949,38 @@ impl fmt::Display for Dtype {
                 write!(f, "{}*{}", inner, if *is_const { "const" } else { "" })
             }
             Self::Array { inner, size, .. } => write!(f, "[{} x {}]", size, inner,),
+            Self::Struct {
+                name,
+                fields,
+                is_const,
+            } => {
+                let fields = fields
+                    .iter()
+                    .map(|f| {
+                        format!(
+                            "{}:{}",
+                            if let Some(name) = f.name() {
+                                name
+                            } else {
+                                "%anonymous"
+                            },
+                            f.deref()
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                write!(
+                    f,
+                    "{} struct {}:<{}>",
+                    if *is_const { "const" } else { "" },
+                    if let Some(name) = name {
+                        name
+                    } else {
+                        "%anonymous"
+                    },
+                    fields
+                )
+            }
             Self::Function { ret, params } => write!(
                 f,
                 "{} ({})",

@@ -9,18 +9,24 @@ use itertools::izip;
 use crate::ir::*;
 use crate::*;
 
-// TODO: the variants of Value will be added in the future
+// TODO: delete `allow(dead_code)`
+/// Even though `Undef`, `Int`, `Float` are constructed and actively used at run-time,
+/// the rust compiler analyzes these elements are dead code.
+/// For this reason, we add `allow(dead_code)` mark above these elements respectively.
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
+    #[allow(dead_code)]
     Undef {
         dtype: Dtype,
     },
     Unit,
+    #[allow(dead_code)]
     Int {
         value: u128,
         width: usize,
         is_signed: bool,
     },
+    #[allow(dead_code)]
     Float {
         /// `value` may be `f32`, but it is possible to consider it as `f64`.
         ///
@@ -39,6 +45,70 @@ pub enum Value {
         inner_dtype: Dtype,
         values: Vec<Value>,
     },
+}
+
+impl TryFrom<Constant> for Value {
+    type Error = ();
+
+    fn try_from(constant: Constant) -> Result<Self, Self::Error> {
+        let value = match constant {
+            Constant::Undef { dtype } => Self::Undef { dtype },
+            Constant::Unit => Self::Unit,
+            Constant::Int {
+                value,
+                width,
+                is_signed,
+            } => Self::Int {
+                value,
+                width,
+                is_signed,
+            },
+            Constant::Float { value, width } => Self::Float {
+                value: value.into_inner(),
+                width,
+            },
+            _ => panic!(),
+        };
+
+        Ok(value)
+    }
+}
+
+impl TryFrom<(&ast::Initializer, &Dtype)> for Value {
+    type Error = ();
+
+    fn try_from((initializer, dtype): (&ast::Initializer, &Dtype)) -> Result<Self, Self::Error> {
+        match initializer {
+            ast::Initializer::Expression(expr) => match dtype {
+                Dtype::Int { .. } | Dtype::Float { .. } | Dtype::Pointer { .. } => {
+                    let constant = Constant::try_from(&expr.node)?;
+                    let value = Self::try_from(constant)?;
+
+                    calculator::calculate_typecast(value, dtype.clone())
+                }
+                _ => Err(()),
+            },
+            ast::Initializer::List(items) => match dtype {
+                Dtype::Array { inner, size } => {
+                    let inner_dtype = inner.deref().clone();
+                    let num_of_items = items.len();
+                    let values = (0..*size)
+                        .map(|i| {
+                            if i < num_of_items {
+                                Self::try_from((&items[i].node.initializer.node, &inner_dtype))
+                            } else {
+                                Self::default_from_dtype(&inner_dtype)
+                            }
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
+
+                    Ok(Self::array(inner_dtype, values))
+                }
+                Dtype::Struct { .. } => todo!(),
+                _ => todo!(),
+            },
+        }
+    }
 }
 
 impl HasDtype for Value {
@@ -71,7 +141,7 @@ impl Value {
     }
 
     #[inline]
-    pub fn int(value: u128, width: usize, is_signed: bool) -> Self {
+    fn int(value: u128, width: usize, is_signed: bool) -> Self {
         Self::Int {
             value,
             width,
@@ -98,7 +168,7 @@ impl Value {
     }
 
     #[inline]
-    fn get_int(self) -> Option<(u128, usize, bool)> {
+    pub fn get_int(self) -> Option<(u128, usize, bool)> {
         if let Value::Int {
             value,
             width,
@@ -130,23 +200,26 @@ impl Value {
     }
 
     #[inline]
-    fn default_from_dtype(dtype: &Dtype) -> Self {
-        match dtype {
-            ir::Dtype::Unit { .. } => Self::unit(),
-            ir::Dtype::Int {
+    fn default_from_dtype(dtype: &Dtype) -> Result<Self, ()> {
+        let value = match dtype {
+            Dtype::Unit { .. } => Self::unit(),
+            Dtype::Int {
                 width, is_signed, ..
             } => Self::int(u128::default(), *width, *is_signed),
-            ir::Dtype::Float { width, .. } => Self::float(f64::default(), *width),
-            ir::Dtype::Pointer { inner, .. } => Self::nullptr(inner.deref().clone()),
-            ir::Dtype::Array { inner, size } => {
-                let values = (0..*size)
-                    .map(|_| Self::default_from_dtype(inner))
-                    .collect();
+            Dtype::Float { width, .. } => Self::float(f64::default(), *width),
+            Dtype::Pointer { inner, .. } => Self::nullptr(inner.deref().clone()),
+            Dtype::Array { inner, size } => {
+                let values = iter::repeat(Self::default_from_dtype(inner))
+                    .take(*size)
+                    .collect::<Result<Vec<_>, _>>()?;
                 Self::array(inner.deref().clone(), values)
             }
-            ir::Dtype::Function { .. } => panic!("function type does not have a default value"),
-            ir::Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
-        }
+            Dtype::Struct { .. } => todo!(),
+            Dtype::Function { .. } => panic!("function type does not have a default value"),
+            Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
+        };
+
+        Ok(value)
     }
 }
 
@@ -627,8 +700,8 @@ impl Byte {
         I: Iterator<Item = &'b Self>,
     {
         match dtype {
-            ir::Dtype::Unit { .. } => Ok(Value::Unit),
-            ir::Dtype::Int {
+            Dtype::Unit { .. } => Ok(Value::Unit),
+            Dtype::Int {
                 width, is_signed, ..
             } => {
                 let value = some_or!(
@@ -642,7 +715,7 @@ impl Byte {
                 let value = Self::bytes_to_u128(&value, *is_signed);
                 Ok(Value::int(value, *width, *is_signed))
             }
-            ir::Dtype::Float { width, .. } => {
+            Dtype::Float { width, .. } => {
                 let size = (*width + Dtype::BITS_OF_BYTE - 1) / Dtype::BITS_OF_BYTE;
                 let value = some_or!(
                     bytes
@@ -661,7 +734,7 @@ impl Byte {
 
                 Ok(Value::float(value, *width))
             }
-            ir::Dtype::Pointer { inner, .. } => {
+            Dtype::Pointer { inner, .. } => {
                 let value = some_or!(
                     bytes
                         .by_ref()
@@ -685,7 +758,7 @@ impl Byte {
                     },
                 )
             }
-            ir::Dtype::Array { inner, size } => {
+            Dtype::Array { inner, size } => {
                 let (inner_size, inner_align) = inner.size_align_of().unwrap();
                 let padding = std::cmp::max(inner_size, inner_align) - inner_size;
                 let values = (0..*size)
@@ -700,8 +773,9 @@ impl Byte {
                     values,
                 })
             }
-            ir::Dtype::Function { .. } => panic!("function value cannot be constructed from bytes"),
-            ir::Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
+            Dtype::Struct { .. } => todo!(),
+            Dtype::Function { .. } => panic!("function value cannot be constructed from bytes"),
+            Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
     }
 
@@ -776,22 +850,30 @@ impl Memory {
     }
 
     fn load(&self, bid: usize, offset: isize, dtype: &Dtype) -> Result<Value, InterpreterError> {
-        assert!(0 <= offset);
-        let offset = offset as usize;
         let size = dtype.size_align_of().unwrap().0;
-        let mut iter = self.inner[bid].as_ref().unwrap()[offset..(offset + size)].iter();
-        Byte::bytes_to_value(&mut iter, dtype)
+        let end = offset as usize + size;
+        let block = self.inner[bid].as_ref().unwrap();
+
+        if 0 <= offset && end <= block.len() {
+            let mut iter = block[offset as usize..end].iter();
+            Byte::bytes_to_value(&mut iter, dtype)
+        } else {
+            Ok(Value::undef(dtype.clone()))
+        }
     }
 
-    fn store(&mut self, bid: usize, offset: isize, value: &Value) {
-        assert!(0 <= offset);
-        let offset = offset as usize;
+    fn store(&mut self, bid: usize, offset: isize, value: &Value) -> Result<(), ()> {
         let size = value.dtype().size_align_of().unwrap().0;
+        let end = offset as usize + size;
         let bytes = Byte::value_to_bytes(value);
-        self.inner[bid]
-            .as_mut()
-            .unwrap()
-            .splice(offset..(offset + size), bytes.iter().cloned());
+        let block = self.inner[bid].as_mut().unwrap();
+
+        if 0 <= offset && end <= block.len() {
+            block.splice(offset as usize..end, bytes.iter().cloned());
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
 
@@ -851,41 +933,34 @@ impl<'i> State<'i> {
 
             // Initialize allocated memory space
             match decl {
-                Declaration::Variable { dtype, initializer } => match &dtype {
-                    ir::Dtype::Unit { .. } => (),
-                    ir::Dtype::Int { .. } | ir::Dtype::Float { .. } | ir::Dtype::Pointer { .. } => {
-                        let value = if let Some(constant) = initializer {
-                            self.interp_constant(constant.clone())
-                        } else {
-                            Value::default_from_dtype(&dtype)
-                        };
+                Declaration::Variable { dtype, initializer } => {
+                    let value = if let Some(initializer) = initializer {
+                        Value::try_from((initializer, dtype)).map_err(|_| {
+                            InterpreterError::Misc {
+                                func_name: self.stack_frame.func_name.clone(),
+                                pc: self.stack_frame.pc,
+                                msg: format!(
+                                    "fail to translate `Initializer` and `{}` to `Value`",
+                                    dtype
+                                ),
+                            }
+                        })?
+                    } else {
+                        Value::default_from_dtype(&dtype)
+                            .expect("default value must be derived from `dtype`")
+                    };
 
-                        // Type cast
-                        let value =
-                            calculator::calculate_typecast(value, dtype.clone()).map_err(|_| {
-                                InterpreterError::Misc {
-                                    func_name: self.stack_frame.func_name.clone(),
-                                    pc: self.stack_frame.pc,
-                                    msg: "calculate_typecast when initialize global variable"
-                                        .into(),
-                                }
-                            })?;
-
-                        self.memory.store(bid, 0, &value);
-                    }
-                    ir::Dtype::Array { .. } => {
-                        let value = if let Some(_list_init) = initializer {
-                            // TODO: is type cast required?
-                            todo!("Initializer::List is needed")
-                        } else {
-                            Value::default_from_dtype(&dtype)
-                        };
-
-                        self.memory.store(bid, 0, &value);
-                    }
-                    ir::Dtype::Function { .. } => panic!("function variable does not exist"),
-                    ir::Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
-                },
+                    self.memory
+                        .store(bid, 0, &value)
+                        .map_err(|_| InterpreterError::Misc {
+                            func_name: self.stack_frame.func_name.clone(),
+                            pc: self.stack_frame.pc,
+                            msg: format!(
+                                "fail to store {:?} into memory with bid: {}, offset: {}",
+                                value, bid, 0,
+                            ),
+                        })?
+                }
                 // If functin declaration, skip initialization
                 Declaration::Function { .. } => (),
             }
@@ -1077,7 +1152,16 @@ impl<'i> State<'i> {
                 let ptr = self.interp_operand(ptr.clone())?;
                 let value = self.interp_operand(value.clone())?;
                 let (bid, offset, _) = self.interp_ptr(&ptr)?;
-                self.memory.store(bid, offset, &value);
+                self.memory
+                    .store(bid, offset, &value)
+                    .map_err(|_| InterpreterError::Misc {
+                        func_name: self.stack_frame.func_name.clone(),
+                        pc: self.stack_frame.pc,
+                        msg: format!(
+                            "fail to store {:?} into memory with bid: {}, offset: {}",
+                            value, bid, offset,
+                        ),
+                    })?;
                 Value::Unit
             }
             Instruction::Load { ptr, .. } => {
@@ -1177,21 +1261,6 @@ impl<'i> State<'i> {
 
     fn interp_constant(&self, value: Constant) -> Value {
         match value {
-            Constant::Undef { dtype } => Value::Undef { dtype },
-            Constant::Unit => Value::Unit,
-            Constant::Int {
-                value,
-                width,
-                is_signed,
-            } => Value::Int {
-                value,
-                width,
-                is_signed,
-            },
-            Constant::Float { value, width } => Value::Float {
-                value: value.into_inner(),
-                width,
-            },
             Constant::GlobalVariable { name, dtype } => {
                 let bid = self
                     .global_map
@@ -1205,6 +1274,7 @@ impl<'i> State<'i> {
                     dtype,
                 }
             }
+            constant => Value::try_from(constant).expect("constant must be transformed to value"),
         }
     }
 

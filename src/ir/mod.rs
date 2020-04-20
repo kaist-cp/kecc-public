@@ -23,7 +23,7 @@ pub struct TranslationUnit {
 pub enum Declaration {
     Variable {
         dtype: Dtype,
-        initializer: Option<Constant>,
+        initializer: Option<ast::Initializer>,
     },
     Function {
         signature: FunctionSignature,
@@ -54,7 +54,8 @@ impl TryFrom<Dtype> for Declaration {
             Dtype::Int { .. }
             | Dtype::Float { .. }
             | Dtype::Pointer { .. }
-            | Dtype::Array { .. } => Ok(Declaration::Variable {
+            | Dtype::Array { .. }
+            | Dtype::Struct { .. } => Ok(Declaration::Variable {
                 dtype,
                 initializer: None,
             }),
@@ -68,7 +69,7 @@ impl TryFrom<Dtype> for Declaration {
 }
 
 impl Declaration {
-    pub fn get_variable(&self) -> Option<(&Dtype, &Option<Constant>)> {
+    pub fn get_variable(&self) -> Option<(&Dtype, &Option<ast::Initializer>)> {
         if let Self::Variable { dtype, initializer } = self {
             Some((dtype, initializer))
         } else {
@@ -607,17 +608,6 @@ impl TryFrom<&ast::Expression> for Constant {
     }
 }
 
-impl TryFrom<&ast::Initializer> for Constant {
-    type Error = ();
-
-    fn try_from(initializer: &ast::Initializer) -> Result<Self, Self::Error> {
-        match initializer {
-            ast::Initializer::Expression(expr) => Self::try_from(&expr.node),
-            ast::Initializer::List(_) => todo!(),
-        }
-    }
-}
-
 impl Constant {
     const DECIMAL: u32 = 10;
     const OCTAL: u32 = 8;
@@ -757,7 +747,7 @@ impl HasDtype for Constant {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Named<T> {
     name: Option<String>,
     inner: T,

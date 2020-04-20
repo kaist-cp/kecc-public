@@ -175,7 +175,7 @@ impl AssertSupported for StructField {
 impl AssertSupported for StructDeclarator {
     fn assert_supported(&self) {
         self.declarator.assert_supported();
-        assert_eq!(true, self.bit_width.is_none());
+        assert!(self.bit_width.is_none());
     }
 }
 
