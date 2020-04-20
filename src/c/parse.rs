@@ -208,8 +208,15 @@ impl AssertSupported for Initializer {
     fn assert_supported(&self) {
         match self {
             Self::Expression(expr) => expr.assert_supported(),
-            Self::List(_) => panic!("Initializer::List"),
+            Self::List(items) => items.assert_supported(),
         }
+    }
+}
+
+impl AssertSupported for InitializerListItem {
+    fn assert_supported(&self) {
+        assert!(self.designation.is_empty());
+        self.initializer.assert_supported();
     }
 }
 

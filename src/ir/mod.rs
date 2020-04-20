@@ -611,10 +611,9 @@ impl TryFrom<&ast::Initializer> for Constant {
     type Error = ();
 
     fn try_from(initializer: &ast::Initializer) -> Result<Self, Self::Error> {
-        if let ast::Initializer::Expression(expr) = &initializer {
-            Self::try_from(&expr.node)
-        } else {
-            Err(())
+        match initializer {
+            ast::Initializer::Expression(expr) => Self::try_from(&expr.node),
+            ast::Initializer::List(_) => todo!(),
         }
     }
 }

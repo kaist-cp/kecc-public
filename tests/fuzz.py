@@ -57,6 +57,9 @@ REPLACE_DICT = {
     # "typedef struct[^\n]*\n{[^}]*}[^;]*;": "",
     # "typedef struct[^{]{[^}]*}": "typedef int",
     # "struct _IO_FILE": "int",
+    # "FILE *": "void *",
+    # "typedef __fpos_t fpos_t;": "",
+    # "fpos_t *": "void *",
 }
 CSMITH_DIR = "csmith-2.3.0"
 

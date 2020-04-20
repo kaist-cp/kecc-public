@@ -88,8 +88,17 @@ impl IsEquiv for Initializer {
     fn is_equiv(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Expression(expr), Self::Expression(other_expr)) => expr.is_equiv(other_expr),
+            (Self::List(items), Self::List(other_items)) => items.is_equiv(other_items),
             _ => false,
         }
+    }
+}
+
+impl IsEquiv for InitializerListItem {
+    fn is_equiv(&self, other: &Self) -> bool {
+        self.designation.is_empty()
+            && other.designation.is_empty()
+            && self.initializer.is_equiv(&other.initializer)
     }
 }
 
