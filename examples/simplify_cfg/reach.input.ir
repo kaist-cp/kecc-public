@@ -1,0 +1,17 @@
+fun i32 @foo {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  j b1()
+
+block b1:
+  j b0()
+
+block b2:
+  j b3()
+  
+block b3:
+  j b2()
+}

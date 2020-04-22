@@ -38,9 +38,9 @@ pipeline {
                 // When `cargo test` runs, the function `it_works()` is called in a new thread.
                 // The stack size of a new thread is `2 MiB` on Linux, and this small stack size 
                 // can cause `stack-overflow` error when testing stack-intensive code.
-                // For this reason, we need to increase the default size of stack to `4 MiB`.
-                sh "RUST_MIN_STACK=4194304 cargo test"
-                sh "RUST_MIN_STACK=4194304 cargo test --release"
+                // For this reason, we need to increase the default size of stack to `8 MiB`.
+                sh "RUST_MIN_STACK=8388608 cargo test"
+                sh "RUST_MIN_STACK=8388608 cargo test --release"
             }
         }
     }

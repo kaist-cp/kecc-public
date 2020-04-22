@@ -1,5 +1,6 @@
 mod dtype;
 mod interp;
+mod parse;
 mod write_ir;
 
 use core::convert::TryFrom;
@@ -13,13 +14,14 @@ use std::hash::{Hash, Hasher};
 
 pub use dtype::{Dtype, DtypeError, HasDtype};
 pub use interp::{interp, Value};
+pub use parse::Parse;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TranslationUnit {
     pub decls: HashMap<String, Declaration>,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Declaration {
     Variable {
         dtype: Dtype,
@@ -312,7 +314,16 @@ impl JumpArg {
 
 impl fmt::Display for JumpArg {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}({:?})", self.bid, self.args)
+        write!(
+            f,
+            "{}({})",
+            self.bid,
+            self.args
+                .iter()
+                .map(|a| a.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
     }
 }
 
@@ -728,7 +739,7 @@ impl fmt::Display for Constant {
                 }
             ),
             Self::Float { value, .. } => write!(f, "{}", value),
-            Self::GlobalVariable { name, .. } => write!(f, "%{}", name),
+            Self::GlobalVariable { name, .. } => write!(f, "@{}", name),
         }
     }
 }

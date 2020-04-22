@@ -9,21 +9,14 @@ use lang_c::ast;
 
 impl WriteLine for TranslationUnit {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
-        write_indent(indent, write)?;
-        writeln!(write, "<variable list>")?;
-        writeln!(write)?;
         for (name, decl) in &self.decls {
             let _ = some_or!(decl.get_variable(), continue);
             (name, decl).write_line(indent, write)?;
         }
 
-        writeln!(write)?;
-        writeln!(write)?;
-        write_indent(indent, write)?;
-        writeln!(write, "<function list>")?;
-        writeln!(write)?;
         for (name, decl) in &self.decls {
             let _ = some_or!(decl.get_function(), continue);
+            writeln!(write)?;
             (name, decl).write_line(indent, write)?;
         }
 
@@ -40,73 +33,56 @@ impl WriteLine for (&String, &Declaration) {
             Declaration::Variable { dtype, initializer } => {
                 writeln!(
                     write,
-                    "{} = {} {}",
+                    "var {} @{} = {}",
+                    dtype,
                     name,
                     if let Some(init) = initializer {
                         init.write_string()
                     } else {
                         "default".to_string()
-                    },
-                    dtype
+                    }
                 )?;
             }
             Declaration::Function {
                 signature,
                 definition,
             } => {
-                let declaration = format!(
-                    "{} @{}({})",
-                    signature.ret,
-                    name,
-                    signature
-                        .params
-                        .iter()
-                        .map(|d| d.to_string())
-                        .collect::<Vec<_>>()
-                        .join(", "),
-                );
+                if let Some(definition) = definition.as_ref() {
+                    // print function definition
+                    writeln!(write, "fun {} @{} {{", signature.ret, name)?;
+                    // print meta data for function
+                    writeln!(
+                        write,
+                        "init:\n  bid: {}\n  allocations: \n{}",
+                        definition.bid_init,
+                        definition
+                            .allocations
+                            .iter()
+                            .enumerate()
+                            .map(|(i, a)| format!(
+                                "    %l{}:{}{}",
+                                i,
+                                a.deref(),
+                                if let Some(name) = a.name() {
+                                    format!(":{}", name)
+                                } else {
+                                    "".into()
+                                }
+                            ))
+                            .collect::<Vec<_>>()
+                            .join("\n")
+                    )?;
 
-                match definition.as_ref() {
-                    Some(defintion) => {
-                        // print function definition
-                        writeln!(write, "define {} {{", declaration)?;
-                        // print meta data for function
-                        writeln!(
-                            write,
-                            "init:\n  bid: {}\n  allocations: \n{}\n",
-                            defintion.bid_init,
-                            defintion
-                                .allocations
-                                .iter()
-                                .enumerate()
-                                .map(|(i, a)| format!(
-                                    "    %l{}:{}{}",
-                                    i,
-                                    a.deref(),
-                                    if let Some(name) = a.name() {
-                                        format!(":{}", name)
-                                    } else {
-                                        "".into()
-                                    }
-                                ))
-                                .collect::<Vec<_>>()
-                                .join("\n")
-                        )?;
-
-                        for (id, block) in &defintion.blocks {
-                            writeln!(write, "block {}", id)?;
-                            (id, block).write_line(indent + 1, write)?;
-                            writeln!(write)?;
-                        }
-
-                        writeln!(write, "}}")?;
-                        writeln!(write)?;
+                    for (id, block) in &definition.blocks {
+                        writeln!(write, "\nblock {}:", id)?;
+                        (id, block).write_line(indent + 1, write)?;
                     }
-                    None => {
-                        // print declaration line only
-                        writeln!(write, "declare {}", declaration)?;
-                        writeln!(write)?;
-                    }
+
+                    writeln!(write, "}}")?;
+                } else {
+                    // print declaration line only
+                    writeln!(write, "fun {} @{}", signature.ret, name)?;
+                    writeln!(write)?;
                 }
             }
         }
@@ -260,7 +236,7 @@ impl WriteString for BlockExit {
                 default,
                 cases,
             } => format!(
-                "switch {}, default: {} [\n{}\n  ]",
+                "switch {} default: {} [\n{}\n  ]",
                 value.write_string(),
                 default,
                 cases

@@ -1,0 +1,98 @@
+fun i32 @const_prop_same {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  br undef:i1 b1() b1()
+
+block b1:
+  ret 0:i1
+}
+
+fun i32 @const_prop_true {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  br 1:i1 b1() b2()
+
+block b1:
+  ret 0:i1
+
+block b2:
+  ret 0:i1
+}
+
+fun i32 @const_prop_false {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  br 0:i1 b1() b2()
+
+block b1:
+  ret 0:i1
+
+block b2:
+  ret 0:i1
+}
+
+fun i32 @const_prop_switch_same {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  switch 42:i32 default b1() [
+    2:i32 b1()
+    3:i32 b1()
+  ]
+
+block b1:
+  ret 0:i1
+}
+
+fun i32 @const_prop_switch_case {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  switch 2:i32 default b1() [
+    2:i32 b2()
+    3:i32 b3()
+  ]
+
+block b1:
+  ret 0:i1
+
+block b2:
+  ret 0:i1
+
+block b3:
+  ret 0:i1
+}
+
+fun i32 @const_prop_switch_default {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  switch 42:i32 default b1() [
+    2:i32 b2()
+    3:i32 b3()
+  ]
+
+block b1:
+  ret 0:i1
+
+block b2:
+  ret 0:i1
+
+block b3:
+  ret 0:i1
+}

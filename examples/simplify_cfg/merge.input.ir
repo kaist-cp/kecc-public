@@ -1,0 +1,14 @@
+fun i32 @foo {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  j b1(42:i32, 37:i32)
+
+block b1:
+  %b1:p0:i32
+  %b1:p1:i32
+  %b1:i0:i32 = add %b1:p0:i32 %b1:p1:i32
+  ret %b1:i0:i32
+}

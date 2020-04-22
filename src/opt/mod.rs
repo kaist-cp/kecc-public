@@ -9,7 +9,9 @@ mod simplify_cfg;
 pub use deadcode::Deadcode;
 pub use gvn::Gvn;
 pub use mem2reg::Mem2reg;
-pub use simplify_cfg::SimplifyCfg;
+pub use simplify_cfg::{
+    SimplifyCfg, SimplifyCfgConstProp, SimplifyCfgEmpty, SimplifyCfgMerge, SimplifyCfgReach,
+};
 
 use crate::ir;
 
@@ -63,7 +65,10 @@ where
     T: Optimize<ir::FunctionDefinition>,
 {
     fn optimize(&mut self, code: &mut ir::TranslationUnit) -> bool {
-        code.decls.iter_mut().any(|(_, decl)| self.optimize(decl))
+        code.decls
+            .iter_mut()
+            .map(|(_, decl)| self.optimize(decl))
+            .fold(false, |l, r| l || r)
     }
 }
 

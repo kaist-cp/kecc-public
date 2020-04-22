@@ -5,7 +5,7 @@ use lang_c::ast::*;
 
 use kecc::*;
 
-fn test_dir<F>(path: &Path, f: F)
+fn test_dir<F>(path: &Path, ext: &OsStr, f: F)
 where
     F: Fn(&TranslationUnit, &Path),
 {
@@ -15,7 +15,7 @@ where
         let entry = ok_or!(entry, continue);
         let path = entry.path();
 
-        if !(path.is_file() && path.extension() == Some(&OsStr::new("c"))) {
+        if !(path.is_file() && path.extension() == Some(ext)) {
             continue;
         }
 
@@ -33,11 +33,45 @@ where
 
 #[test]
 fn test_examples_write_c() {
-    test_dir(Path::new("examples/"), test_write_c);
-    test_dir(Path::new("examples/hw1"), test_write_c);
+    test_dir(Path::new("examples/"), &OsStr::new("c"), test_write_c);
+    test_dir(Path::new("examples/hw1"), &OsStr::new("c"), test_write_c);
 }
 
 #[test]
 fn test_examples_irgen() {
-    test_dir(Path::new("examples/"), test_irgen);
+    test_dir(Path::new("examples/"), &OsStr::new("c"), test_irgen);
+}
+
+// TODO: make it work!
+#[test]
+#[ignore]
+fn test_examples_irparse() {
+    test_dir(Path::new("examples/"), &OsStr::new("c"), test_irparse);
+}
+
+#[test]
+fn test_examples_simplify_cfg() {
+    test_opt(
+        &Path::new("examples/simplify_cfg/const_prop.input.ir"),
+        &Path::new("examples/simplify_cfg/const_prop.output.ir"),
+        &mut FunctionPass::<SimplifyCfgConstProp>::default(),
+    );
+
+    test_opt(
+        &Path::new("examples/simplify_cfg/reach.input.ir"),
+        &Path::new("examples/simplify_cfg/reach.output.ir"),
+        &mut FunctionPass::<SimplifyCfgReach>::default(),
+    );
+
+    test_opt(
+        &Path::new("examples/simplify_cfg/merge.input.ir"),
+        &Path::new("examples/simplify_cfg/merge.output.ir"),
+        &mut FunctionPass::<SimplifyCfgMerge>::default(),
+    );
+
+    test_opt(
+        &Path::new("examples/simplify_cfg/empty.input.ir"),
+        &Path::new("examples/simplify_cfg/empty.output.ir"),
+        &mut FunctionPass::<SimplifyCfgEmpty>::default(),
+    );
 }

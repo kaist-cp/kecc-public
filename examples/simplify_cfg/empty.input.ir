@@ -1,0 +1,35 @@
+fun i32 @foo {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  j b1(42:i32)
+
+block b1:
+  %b1:p0:i32
+  j b3()
+
+block b3:
+  ret 37:i32
+}
+
+fun i32 @bar {
+init:
+  bid: b0
+  allocations: 
+
+block b0:
+  j b1(42:i32)
+
+block b1:
+  %b1:p0:i32
+  br 1:i1 b2() b2()
+
+block b2:
+  j b3()
+
+block b3:
+  %b3:i0:i1 = cmp eq 0:i32 0:i32
+  ret 37:i32
+}

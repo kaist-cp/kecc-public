@@ -946,7 +946,11 @@ impl fmt::Display for Dtype {
                 write!(f, "{}f{}", if *is_const { "const " } else { "" }, width)
             }
             Self::Pointer { inner, is_const } => {
-                write!(f, "{}*{}", inner, if *is_const { "const" } else { "" })
+                if *is_const {
+                    write!(f, "*const {}", inner)
+                } else {
+                    write!(f, "*{}", inner)
+                }
             }
             Self::Array { inner, size, .. } => write!(f, "[{} x {}]", size, inner,),
             Self::Struct {
