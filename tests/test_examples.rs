@@ -33,19 +33,19 @@ where
 
 #[test]
 fn test_examples_write_c() {
-    test_dir(Path::new("examples/"), &OsStr::new("c"), test_write_c);
+    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_write_c);
 }
 
 #[test]
 fn test_examples_irgen() {
-    test_dir(Path::new("examples/"), &OsStr::new("c"), test_irgen);
+    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_irgen);
 }
 
 // TODO: make it work!
 #[test]
 #[ignore]
 fn test_examples_irparse() {
-    test_dir(Path::new("examples/"), &OsStr::new("c"), test_irparse);
+    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_irparse);
 }
 
 #[test]
