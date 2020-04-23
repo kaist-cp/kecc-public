@@ -28,6 +28,7 @@ if
   grep 'pointer-bool-conversion' out.txt ||\
   grep 'non-void function does not return a value' out.txt ||\
   grep 'too many arguments in call' out.txt ||\
+  grep 'declaration does not declare anything' out.txt ||\
   ! gcc -Wall -Wextra -O2 test_reduced.c > outa.txt 2>&1 ||\
   grep 'uninitialized' outa.txt ||\
   grep 'without a cast' outa.txt ||\

@@ -28,13 +28,14 @@ cargo run --release -- examples/fibonacci.c  # compile with release build
 ## Test
 
 ```
-cargo test             # debug build test
-cargo test --release   # release build test
+RUST_MIN_STACK=8388608 cargo test             # debug build test
+RUST_MIN_STACK=8388608 cargo test --release   # release build test
 
-cargo test <test-name> # run a particular test
+RUST_MIN_STACK=8388608 cargo test <test-name> # run a particular test
 ```
 
-`<test-name>` can be `test_examples_write_c`, `test_examples_irgen`, ...
+`RUST_MIN_STACK=8388608` is necessary for deep call stack for irgen tests. `<test-name>` can be
+`test_examples_write_c`, `test_examples_irgen`, ...
 
 
 ## Fuzzing

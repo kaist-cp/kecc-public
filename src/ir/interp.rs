@@ -45,6 +45,10 @@ pub enum Value {
         inner_dtype: Dtype,
         values: Vec<Value>,
     },
+    Struct {
+        name: String,
+        fields: Vec<Named<Value>>,
+    },
 }
 
 impl TryFrom<Constant> for Value {
@@ -74,43 +78,6 @@ impl TryFrom<Constant> for Value {
     }
 }
 
-impl TryFrom<(&ast::Initializer, &Dtype)> for Value {
-    type Error = ();
-
-    fn try_from((initializer, dtype): (&ast::Initializer, &Dtype)) -> Result<Self, Self::Error> {
-        match initializer {
-            ast::Initializer::Expression(expr) => match dtype {
-                Dtype::Int { .. } | Dtype::Float { .. } | Dtype::Pointer { .. } => {
-                    let constant = Constant::try_from(&expr.node)?;
-                    let value = Self::try_from(constant)?;
-
-                    calculator::calculate_typecast(value, dtype.clone())
-                }
-                _ => Err(()),
-            },
-            ast::Initializer::List(items) => match dtype {
-                Dtype::Array { inner, size } => {
-                    let inner_dtype = inner.deref().clone();
-                    let num_of_items = items.len();
-                    let values = (0..*size)
-                        .map(|i| {
-                            if i < num_of_items {
-                                Self::try_from((&items[i].node.initializer.node, &inner_dtype))
-                            } else {
-                                Self::default_from_dtype(&inner_dtype)
-                            }
-                        })
-                        .collect::<Result<Vec<_>, _>>()?;
-
-                    Ok(Self::array(inner_dtype, values))
-                }
-                Dtype::Struct { .. } => todo!(),
-                _ => todo!(),
-            },
-        }
-    }
-}
-
 impl HasDtype for Value {
     fn dtype(&self) -> Dtype {
         match self {
@@ -125,6 +92,13 @@ impl HasDtype for Value {
                 inner_dtype,
                 values,
             } => Dtype::array(inner_dtype.clone(), values.len()),
+            Self::Struct { name, fields } => {
+                let fields = fields
+                    .iter()
+                    .map(|f| Named::new(f.name().cloned(), f.deref().dtype()))
+                    .collect();
+                Dtype::structure(Some(name.clone()), Some(fields))
+            }
         }
     }
 }
@@ -168,6 +142,11 @@ impl Value {
     }
 
     #[inline]
+    fn structure(name: String, fields: Vec<Named<Value>>) -> Self {
+        Self::Struct { name, fields }
+    }
+
+    #[inline]
     pub fn get_int(self) -> Option<(u128, usize, bool)> {
         if let Value::Int {
             value,
@@ -200,7 +179,10 @@ impl Value {
     }
 
     #[inline]
-    fn default_from_dtype(dtype: &Dtype) -> Result<Self, ()> {
+    fn default_from_dtype(
+        dtype: &Dtype,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<Self, ()> {
         let value = match dtype {
             Dtype::Unit { .. } => Self::unit(),
             Dtype::Int {
@@ -209,17 +191,112 @@ impl Value {
             Dtype::Float { width, .. } => Self::float(f64::default(), *width),
             Dtype::Pointer { inner, .. } => Self::nullptr(inner.deref().clone()),
             Dtype::Array { inner, size } => {
-                let values = iter::repeat(Self::default_from_dtype(inner))
+                let values = iter::repeat(Self::default_from_dtype(inner, structs))
                     .take(*size)
                     .collect::<Result<Vec<_>, _>>()?;
                 Self::array(inner.deref().clone(), values)
             }
-            Dtype::Struct { .. } => todo!(),
+            Dtype::Struct { name, .. } => {
+                let name = name.as_ref().expect("struct should have its name");
+                let struct_type = structs
+                    .get(name)
+                    .expect("struct type matched with `name` must exist")
+                    .as_ref()
+                    .expect("`struct_type` must have its definition");
+                let fields = struct_type
+                    .get_struct_fields()
+                    .expect("`struct_type` must be struct type")
+                    .as_ref()
+                    .expect("`fields` must be `Some`");
+
+                let fields = fields
+                    .iter()
+                    .map(|f| {
+                        let value = Self::default_from_dtype(f.deref(), structs)?;
+                        Ok(Named::new(f.name().cloned(), value))
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Self::structure(name.clone(), fields)
+            }
             Dtype::Function { .. } => panic!("function type does not have a default value"),
             Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         };
 
         Ok(value)
+    }
+
+    fn try_from_initializer(
+        initializer: &ast::Initializer,
+        dtype: &Dtype,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<Self, ()> {
+        match initializer {
+            ast::Initializer::Expression(expr) => match dtype {
+                Dtype::Int { .. } | Dtype::Float { .. } | Dtype::Pointer { .. } => {
+                    let constant = Constant::try_from(&expr.node)?;
+                    let value = Self::try_from(constant)?;
+
+                    calculator::calculate_typecast(value, dtype.clone())
+                }
+                _ => Err(()),
+            },
+            ast::Initializer::List(items) => match dtype {
+                Dtype::Array { inner, size } => {
+                    let inner_dtype = inner.deref().clone();
+                    let num_of_items = items.len();
+                    let values = (0..*size)
+                        .map(|i| {
+                            if i < num_of_items {
+                                Self::try_from_initializer(
+                                    &items[i].node.initializer.node,
+                                    &inner_dtype,
+                                    structs,
+                                )
+                            } else {
+                                Self::default_from_dtype(&inner_dtype, structs)
+                            }
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
+
+                    Ok(Self::array(inner_dtype, values))
+                }
+                Dtype::Struct { name, .. } => {
+                    let name = name.as_ref().expect("struct should have its name");
+                    let struct_type = structs
+                        .get(name)
+                        .expect("struct type matched with `name` must exist")
+                        .as_ref()
+                        .expect("`struct_type` must have its definition");
+                    let fields = struct_type
+                        .get_struct_fields()
+                        .expect("`struct_type` must be struct type")
+                        .as_ref()
+                        .expect("`fields` must be `Some`");
+
+                    let fields = fields
+                        .iter()
+                        .enumerate()
+                        .map(|(i, f)| {
+                            let value = if let Some(item) = items.get(i) {
+                                Self::try_from_initializer(
+                                    &item.node.initializer.node,
+                                    f.deref(),
+                                    structs,
+                                )?
+                            } else {
+                                Self::default_from_dtype(f.deref(), structs)?
+                            };
+
+                            Ok(Named::new(f.name().cloned(), value))
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
+
+                    Ok(Self::structure(name.clone(), fields))
+                }
+                _ => Err(()),
+            },
+        }
     }
 }
 
@@ -231,6 +308,11 @@ pub enum InterpreterError {
     NoMainFunction,
     #[fail(display = "ir has no function definition of {} function", func_name)]
     NoFunctionDefinition { func_name: String },
+    #[fail(
+        display = "ir has no structure definition of {} structure",
+        struct_name
+    )]
+    NoStructureDefinition { struct_name: String },
     #[fail(display = "{}:{} / {}", func_name, pc, msg)]
     Misc {
         func_name: String,
@@ -669,8 +751,8 @@ impl Byte {
         }
     }
 
-    fn block_from_dtype(dtype: &Dtype) -> Vec<Self> {
-        let size = dtype.size_align_of().unwrap().0;
+    fn block_from_dtype(dtype: &Dtype, structs: &HashMap<String, Option<Dtype>>) -> Vec<Self> {
+        let size = dtype.size_align_of(structs).unwrap().0;
         iter::repeat(Self::Undef).take(size).collect()
     }
 
@@ -695,7 +777,11 @@ impl Byte {
         u128::from_le_bytes(array)
     }
 
-    fn bytes_to_value<'b, I>(bytes: &mut I, dtype: &Dtype) -> Result<Value, InterpreterError>
+    fn bytes_to_value<'b, I>(
+        bytes: &mut I,
+        dtype: &Dtype,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<Value, InterpreterError>
     where
         I: Iterator<Item = &'b Self>,
     {
@@ -704,10 +790,11 @@ impl Byte {
             Dtype::Int {
                 width, is_signed, ..
             } => {
+                let size = dtype.size_align_of(structs).unwrap().0;
+                let bytes = bytes.by_ref().take(size).collect::<Vec<_>>();
                 let value = some_or!(
                     bytes
-                        .by_ref()
-                        .take(*width)
+                        .iter()
                         .map(|b| b.get_concrete())
                         .collect::<Option<Vec<_>>>(),
                     return Ok(Value::undef(dtype.clone()))
@@ -716,11 +803,11 @@ impl Byte {
                 Ok(Value::int(value, *width, *is_signed))
             }
             Dtype::Float { width, .. } => {
-                let size = (*width + Dtype::BITS_OF_BYTE - 1) / Dtype::BITS_OF_BYTE;
+                let size = dtype.size_align_of(structs).unwrap().0;
+                let bytes = bytes.by_ref().take(size).collect::<Vec<_>>();
                 let value = some_or!(
                     bytes
-                        .by_ref()
-                        .take(*width)
+                        .iter()
                         .map(|b| b.get_concrete())
                         .collect::<Option<Vec<_>>>(),
                     return Ok(Value::undef(dtype.clone()))
@@ -735,10 +822,13 @@ impl Byte {
                 Ok(Value::float(value, *width))
             }
             Dtype::Pointer { inner, .. } => {
+                let bytes = bytes
+                    .by_ref()
+                    .take(Dtype::SIZE_OF_POINTER)
+                    .collect::<Vec<_>>();
                 let value = some_or!(
                     bytes
-                        .by_ref()
-                        .take(Dtype::SIZE_OF_POINTER)
+                        .iter()
                         .map(|b| b.get_pointer())
                         .collect::<Option<Vec<_>>>(),
                     return Ok(Value::undef(dtype.clone()))
@@ -759,12 +849,14 @@ impl Byte {
                 )
             }
             Dtype::Array { inner, size } => {
-                let (inner_size, inner_align) = inner.size_align_of().unwrap();
+                let (inner_size, inner_align) = inner.size_align_of(structs).unwrap();
                 let padding = std::cmp::max(inner_size, inner_align) - inner_size;
                 let values = (0..*size)
                     .map(|_| {
-                        let value = Self::bytes_to_value(bytes, inner)?;
-                        let _ = bytes.by_ref().take(padding);
+                        let value = Self::bytes_to_value(bytes, inner, structs)?;
+                        if padding > 0 {
+                            let _ = bytes.by_ref().nth(padding - 1);
+                        }
                         Ok(value)
                     })
                     .collect::<Result<Vec<_>, InterpreterError>>()?;
@@ -773,28 +865,64 @@ impl Byte {
                     values,
                 })
             }
-            Dtype::Struct { .. } => todo!(),
+            Dtype::Struct { name, .. } => {
+                let name = name.as_ref().expect("struct should have its name");
+                let struct_type = structs
+                    .get(name)
+                    .expect("struct type matched with `name` must exist")
+                    .as_ref()
+                    .expect("`struct_type` must have its definition");
+                let fields = struct_type
+                    .get_struct_fields()
+                    .expect("`struct_type` must be struct type")
+                    .as_ref()
+                    .expect("`fields` must be `Some`");
+                let (size, _, offsets) = struct_type
+                    .get_struct_size_align_offsets()
+                    .expect("`struct_type` must be struct type")
+                    .as_ref()
+                    .expect("`offsets` must be `Some`");
+                let bytes = bytes.by_ref().take(*size).cloned().collect::<Vec<_>>();
+
+                assert_eq!(fields.len(), offsets.len());
+                let fields = izip!(fields, offsets)
+                    .map(|(f, o)| {
+                        let mut sub_bytes = bytes[*o..].iter();
+                        let value = Self::bytes_to_value(&mut sub_bytes, f.deref(), structs)?;
+                        Ok(Named::new(f.name().cloned(), value))
+                    })
+                    .collect::<Result<Vec<_>, InterpreterError>>()?;
+
+                Ok(Value::Struct {
+                    name: name.clone(),
+                    fields,
+                })
+            }
             Dtype::Function { .. } => panic!("function value cannot be constructed from bytes"),
             Dtype::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
     }
 
-    fn value_to_bytes(value: &Value) -> Vec<Self> {
+    fn value_to_bytes(value: &Value, structs: &HashMap<String, Option<Dtype>>) -> Vec<Self> {
         match value {
-            Value::Undef { dtype } => Self::block_from_dtype(dtype),
+            Value::Undef { dtype } => Self::block_from_dtype(dtype, structs),
             Value::Unit => Vec::new(),
-            Value::Int { value, width, .. } => {
-                let size = (*width + Dtype::BITS_OF_BYTE - 1) / Dtype::BITS_OF_BYTE;
-                Self::u128_to_bytes(*value, size)
+            Value::Int {
+                value: int_value, ..
+            } => {
+                let size = value.dtype().size_align_of(structs).unwrap().0;
+                Self::u128_to_bytes(*int_value, size)
                     .iter()
                     .map(|b| Self::concrete(*b))
                     .collect::<Vec<_>>()
             }
-            Value::Float { value, width } => {
-                let size = (*width + Dtype::BITS_OF_BYTE - 1) / Dtype::BITS_OF_BYTE;
+            Value::Float {
+                value: float_value, ..
+            } => {
+                let size = value.dtype().size_align_of(structs).unwrap().0;
                 let value_bits: u128 = match size {
-                    Dtype::SIZE_OF_FLOAT => (*value as f32).to_bits() as u128,
-                    Dtype::SIZE_OF_DOUBLE => (*value as f64).to_bits() as u128,
+                    Dtype::SIZE_OF_FLOAT => (*float_value as f32).to_bits() as u128,
+                    Dtype::SIZE_OF_DOUBLE => (*float_value as f64).to_bits() as u128,
                     _ => panic!("value_to_bytes: {} is not a valid float size", size),
                 };
 
@@ -810,26 +938,53 @@ impl Byte {
                 inner_dtype,
                 values,
             } => {
-                let (inner_size, inner_align) = inner_dtype.size_align_of().unwrap();
+                let (inner_size, inner_align) = inner_dtype.size_align_of(structs).unwrap();
                 let padding = std::cmp::max(inner_size, inner_align) - inner_size;
                 values
                     .iter()
                     .map(|v| {
-                        let mut result = Self::value_to_bytes(v);
+                        let mut result = Self::value_to_bytes(v, structs);
                         result.extend(iter::repeat(Byte::Undef).take(padding));
                         result
                     })
                     .flatten()
                     .collect()
             }
+            Value::Struct { name, fields } => {
+                let struct_type = structs
+                    .get(name)
+                    .expect("struct type matched with `name` must exist")
+                    .as_ref()
+                    .expect("`struct_type` must have its definition");
+                let (size_of, _, offsets) = struct_type
+                    .get_struct_size_align_offsets()
+                    .expect("`struct_type` must be struct type")
+                    .as_ref()
+                    .expect("`offsets` must be `Some`");
+                let mut values = iter::repeat(Byte::Undef).take(*size_of).collect::<Vec<_>>();
+
+                assert_eq!(fields.len(), offsets.len());
+                izip!(fields, offsets).for_each(|(f, o)| {
+                    let result = Self::value_to_bytes(f.deref(), structs);
+                    let size_of_data = f.deref().dtype().size_align_of(structs).unwrap().0;
+                    values.splice(*o..(*o + size_of_data), result.iter().cloned());
+                });
+
+                values
+            }
         }
     }
 }
 
 impl Memory {
-    fn alloc(&mut self, dtype: &Dtype) -> Result<usize, InterpreterError> {
+    fn alloc(
+        &mut self,
+        dtype: &Dtype,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<usize, InterpreterError> {
         let bid = self.inner.len();
-        self.inner.push(Some(Byte::block_from_dtype(dtype)));
+        self.inner
+            .push(Some(Byte::block_from_dtype(dtype, structs)));
         Ok(bid)
     }
 
@@ -838,34 +993,47 @@ impl Memory {
         bid: usize,
         offset: isize,
         dtype: &Dtype,
+        structs: &HashMap<String, Option<Dtype>>,
     ) -> Result<(), InterpreterError> {
         let block = &mut self.inner[bid];
         assert_eq!(offset, 0);
         assert_eq!(
             block.as_mut().unwrap().len(),
-            dtype.size_align_of().unwrap().0
+            dtype.size_align_of(structs).unwrap().0
         );
         *block = None;
         Ok(())
     }
 
-    fn load(&self, bid: usize, offset: isize, dtype: &Dtype) -> Result<Value, InterpreterError> {
-        let size = dtype.size_align_of().unwrap().0;
+    fn load(
+        &self,
+        bid: usize,
+        offset: isize,
+        dtype: &Dtype,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<Value, InterpreterError> {
+        let size = dtype.size_align_of(structs).unwrap().0;
         let end = offset as usize + size;
         let block = self.inner[bid].as_ref().unwrap();
 
         if 0 <= offset && end <= block.len() {
             let mut iter = block[offset as usize..end].iter();
-            Byte::bytes_to_value(&mut iter, dtype)
+            Byte::bytes_to_value(&mut iter, dtype, structs)
         } else {
             Ok(Value::undef(dtype.clone()))
         }
     }
 
-    fn store(&mut self, bid: usize, offset: isize, value: &Value) -> Result<(), ()> {
-        let size = value.dtype().size_align_of().unwrap().0;
+    fn store(
+        &mut self,
+        bid: usize,
+        offset: isize,
+        value: &Value,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<(), ()> {
+        let size = value.dtype().size_align_of(structs).unwrap().0;
         let end = offset as usize + size;
-        let bytes = Byte::value_to_bytes(value);
+        let bytes = Byte::value_to_bytes(value, structs);
         let block = self.inner[bid].as_mut().unwrap();
 
         if 0 <= offset && end <= block.len() {
@@ -928,30 +1096,30 @@ impl<'i> State<'i> {
     fn alloc_global_variables(&mut self) -> Result<(), InterpreterError> {
         for (name, decl) in &self.ir.decls {
             // Memory allocation
-            let bid = self.memory.alloc(&decl.dtype())?;
+            let bid = self.memory.alloc(&decl.dtype(), &self.ir.structs)?;
             self.global_map.insert(name.clone(), bid)?;
 
             // Initialize allocated memory space
             match decl {
                 Declaration::Variable { dtype, initializer } => {
                     let value = if let Some(initializer) = initializer {
-                        Value::try_from((initializer, dtype)).map_err(|_| {
-                            InterpreterError::Misc {
+                        Value::try_from_initializer(initializer, dtype, &self.ir.structs).map_err(
+                            |_| InterpreterError::Misc {
                                 func_name: self.stack_frame.func_name.clone(),
                                 pc: self.stack_frame.pc,
                                 msg: format!(
                                     "fail to translate `Initializer` and `{}` to `Value`",
                                     dtype
                                 ),
-                            }
-                        })?
+                            },
+                        )?
                     } else {
-                        Value::default_from_dtype(&dtype)
+                        Value::default_from_dtype(&dtype, &self.ir.structs)
                             .expect("default value must be derived from `dtype`")
                     };
 
                     self.memory
-                        .store(bid, 0, &value)
+                        .store(bid, 0, &value, &self.ir.structs)
                         .map_err(|_| InterpreterError::Misc {
                             func_name: self.stack_frame.func_name.clone(),
                             pc: self.stack_frame.pc,
@@ -972,7 +1140,7 @@ impl<'i> State<'i> {
     fn alloc_local_variables(&mut self) -> Result<(), InterpreterError> {
         // add alloc register
         for (id, allocation) in self.stack_frame.func_def.allocations.iter().enumerate() {
-            let bid = self.memory.alloc(&allocation)?;
+            let bid = self.memory.alloc(&allocation, &self.ir.structs)?;
             let ptr = Value::pointer(Some(bid), 0, allocation.deref().clone());
             let rid = RegisterId::local(id);
 
@@ -1020,7 +1188,8 @@ impl<'i> State<'i> {
                 .get_pointer()
                 .unwrap();
             assert_eq!(d.deref(), dtype);
-            self.memory.dealloc(bid.unwrap(), *offset, dtype)?;
+            self.memory
+                .dealloc(bid.unwrap(), *offset, dtype, &self.ir.structs)?;
         }
 
         // restore previous state
@@ -1153,7 +1322,7 @@ impl<'i> State<'i> {
                 let value = self.interp_operand(value.clone())?;
                 let (bid, offset, _) = self.interp_ptr(&ptr)?;
                 self.memory
-                    .store(bid, offset, &value)
+                    .store(bid, offset, &value, &self.ir.structs)
                     .map_err(|_| InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
                         pc: self.stack_frame.pc,
@@ -1167,7 +1336,7 @@ impl<'i> State<'i> {
             Instruction::Load { ptr, .. } => {
                 let ptr = self.interp_operand(ptr.clone())?;
                 let (bid, offset, dtype) = self.interp_ptr(&ptr)?;
-                self.memory.load(bid, offset, &dtype)?
+                self.memory.load(bid, offset, &dtype, &self.ir.structs)?
             }
             Instruction::Call { callee, args, .. } => {
                 let ptr = self.interp_operand(callee.clone())?;

@@ -9,6 +9,29 @@ use lang_c::ast;
 
 impl WriteLine for TranslationUnit {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
+        // TODO: consider KECC IR parser in the future.
+        for (name, struct_type) in &self.structs {
+            let definition = if let Some(struct_type) = struct_type {
+                let fields = struct_type
+                    .get_struct_fields()
+                    .expect("`struct_type` must be struct type")
+                    .as_ref()
+                    .expect("`fields` must be `Some`");
+
+                let fields = fields
+                    .iter()
+                    .map(|f| f.deref().to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                format!("{{ {} }}", fields)
+            } else {
+                "opaque".to_string()
+            };
+
+            writeln!(write, "struct {} : {}", name, definition)?;
+        }
+
         for (name, decl) in &self.decls {
             let _ = some_or!(decl.get_variable(), continue);
             (name, decl).write_line(indent, write)?;

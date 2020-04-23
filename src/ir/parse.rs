@@ -21,7 +21,7 @@ peg::parser! {
                     let result = decls.insert(decl.name.unwrap(), decl.inner);
                     assert!(result.is_none());
                 }
-                TranslationUnit { decls }
+                TranslationUnit { decls, structs: HashMap::new() }
             }
 
         rule named_decl() -> Named<Declaration> =
@@ -130,12 +130,8 @@ peg::parser! {
         / expected!("instruction")
 
         rule instruction_inner() -> Instruction =
-            "call" __ callee:operand() _ "(" _ args:(operand() ** (_ "," _)) _ ")" {
-                Instruction::Call {
-                    callee,
-                    args,
-                    return_type: Dtype::unit(), // TODO
-                }
+            "nop" {
+                Instruction::Nop
             }
         /
             "load" __ ptr:operand() {
@@ -144,6 +140,14 @@ peg::parser! {
         /
             "store" __ value:operand() __ ptr:operand() {
                 Instruction::Store { ptr, value }
+            }
+        /
+            "call" __ callee:operand() _ "(" _ args:(operand() ** (_ "," _)) _ ")" {
+                Instruction::Call {
+                    callee,
+                    args,
+                    return_type: Dtype::unit(), // TODO
+                }
             }
         /
             "typecast" __ value:operand() __ "to" __ target_dtype:dtype() {
@@ -209,11 +213,11 @@ peg::parser! {
             }
         /
             "br" __ condition:operand() __ arg_then:jump_arg() __ arg_else:jump_arg() {
-                BlockExit::ConditionalJump { condition, arg_then, arg_else }
+                BlockExit::ConditionalJump { condition, arg_then: Box::new(arg_then), arg_else: Box::new(arg_else) }
             }
         /
             "switch" __ value:operand() __ "default" __ default:jump_arg() _ "[" _ cases:(switch_case() ** __) _ "]" {
-                BlockExit::Switch { value, default, cases }
+                BlockExit::Switch { value, default: Box::new(default), cases }
             }
         /
             "ret" __ value:operand() {

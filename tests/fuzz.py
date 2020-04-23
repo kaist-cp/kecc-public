@@ -43,23 +43,9 @@ REPLACE_DICT = {
     "typedef __builtin_va_list __gnuc_va_list;": "",
     "typedef __gnuc_va_list va_list;": "",
     
-    # To check fuzzer before make kecc support struct type
-    # "struct[^}]*};": "",
-    # "  struct[^{]*[^}]*}[^;]*;": "",
-    # "typedef struct _IO_FILE __FILE;": "",
-    # "struct _IO_FILE;": "",
-    # "typedef struct _IO_FILE FILE;": "typedef int FILE;",
-    # "typedef struct _IO_FILE": "typedef int",
-    # "typedef struct __locale_struct": "typedef int",
-    # "typedef __locale_t locale_t;": "typedef int locale_t;",
-    # "struct _IO_FILE_plus;": "",
-    # "typedef _G_fpos_t": "typedef int",
-    # "typedef struct[^\n]*\n{[^}]*}[^;]*;": "",
-    # "typedef struct[^{]{[^}]*}": "typedef int",
-    # "struct _IO_FILE": "int",
-    # "FILE *": "void *",
-    # "typedef __fpos_t fpos_t;": "",
-    # "fpos_t *": "void *",
+    # todo: need to consider the case below in the future:
+    # avoid compile-time constant expressed as complex expression such as `1 + 1`
+    "char _unused2[^;]*;": "char _unused2[10];", 
 }
 CSMITH_DIR = "csmith-2.3.0"
 

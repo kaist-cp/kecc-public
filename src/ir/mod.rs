@@ -19,6 +19,7 @@ pub use parse::Parse;
 #[derive(Debug, Clone, PartialEq)]
 pub struct TranslationUnit {
     pub decls: HashMap<String, Declaration>,
+    pub structs: HashMap<String, Option<Dtype>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -262,12 +263,12 @@ pub enum BlockExit {
     },
     ConditionalJump {
         condition: Operand,
-        arg_then: JumpArg,
-        arg_else: JumpArg,
+        arg_then: Box<JumpArg>,
+        arg_else: Box<JumpArg>,
     },
     Switch {
         value: Operand,
-        default: JumpArg,
+        default: Box<JumpArg>,
         cases: Vec<(Constant, JumpArg)>,
     },
     Return {

@@ -1,0 +1,50 @@
+fun unit @sink {
+init:
+  bid: b0
+  allocations:
+
+block b0:
+  %b0:p0:i32
+  ret unit:unit
+}
+
+fun i32 @single_block {
+init:
+  bid: b0
+  allocations:
+    %l0:i32:x
+
+block b0:
+  %b0:i0:unit = store 42:i32 %l0:*i32
+  %b0:i1:i32 = load %l0:*i32
+
+  %b0:i2:unit = store 37:i32 %l0:*i32
+  %b0:i3:i32 = load %l0:*i32
+
+  %b0:i4:unit = call @sink(%b0:i1:i32)
+  %b0:i5:unit = call @sink(%b0:i3:i32)
+
+  ret 0:i32
+}
+
+fun i32 @multi_block {
+init:
+  bid: b0
+  allocations:
+    %l0:i32:x
+
+block b0:
+  %b0:i0:unit = store 42:i32 %l0:*i32
+  %b0:i1:i32 = load %l0:*i32
+
+  %b0:i2:unit = store 37:i32 %l0:*i32
+  %b0:i3:i32 = load %l0:*i32
+
+  j b1()
+
+block b1:
+  %b1:i0:unit = call @sink(%b0:i1:i32)
+  %b1:i1:unit = call @sink(%b0:i3:i32)
+
+  j b0()
+}

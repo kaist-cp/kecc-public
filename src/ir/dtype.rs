@@ -10,6 +10,7 @@ use std::hash::Hash;
 use itertools::izip;
 
 use crate::ir::*;
+use crate::some_or;
 
 #[derive(Debug, PartialEq, Fail)]
 pub enum DtypeError {
@@ -57,8 +58,9 @@ pub enum Dtype {
     },
     Struct {
         name: Option<String>,
-        fields: Vec<Named<Dtype>>,
+        fields: Option<Vec<Named<Dtype>>>,
         is_const: bool,
+        size_align_offsets: Option<(usize, usize, Vec<usize>)>,
     },
     Function {
         ret: Box<Dtype>,
@@ -323,26 +325,27 @@ impl TryFrom<BaseDtype> for Dtype {
                 });
             }
 
+            assert!(struct_type.identifier.is_some() || struct_type.declarations.is_some());
             assert_eq!(struct_type.kind.node, ast::StructKind::Struct);
             let struct_name = struct_type.identifier.map(|i| i.node.name);
             let fields = if let Some(declarations) = struct_type.declarations {
-                declarations
+                let fields = declarations
                     .iter()
                     .map(|d| Self::try_from_ast_struct_declaration(&d.node))
                     .collect::<Result<Vec<_>, _>>()?
-                    .concat()
+                    .concat();
+
+                Some(fields)
             } else {
-                Vec::new()
+                None
             };
 
-            let mut field_names = HashSet::new();
-            for field in &fields {
-                if let Some(name) = field.name() {
-                    if !field_names.insert(name.clone()) {
-                        return Err(DtypeError::Misc {
-                            message: format!("`{}` is arleady used in struct", name),
-                        });
-                    }
+            if let Some(fields) = &fields {
+                let mut field_names = HashSet::new();
+                if !check_no_duplicate_field(fields, &mut field_names) {
+                    return Err(DtypeError::Misc {
+                        message: "struct has duplicate field name".to_string(),
+                    });
                 }
             }
 
@@ -545,11 +548,67 @@ impl Dtype {
     }
 
     #[inline]
-    pub fn structure(name: Option<String>, fields: Vec<Named<Self>>) -> Self {
+    pub fn structure(name: Option<String>, fields: Option<Vec<Named<Self>>>) -> Self {
         Self::Struct {
             name,
             fields,
             is_const: false,
+            size_align_offsets: None,
+        }
+    }
+
+    fn fill_size_align_offsets_of_struct(
+        self,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<Self, DtypeError> {
+        if let Self::Struct {
+            name,
+            fields,
+            is_const,
+            size_align_offsets,
+        } = self
+        {
+            assert!(
+                name.is_some() && fields.is_some() && !is_const && size_align_offsets.is_none()
+            );
+
+            let fields = fields.unwrap();
+            let align_of = fields
+                .iter()
+                .map(|f| f.deref().size_align_of(structs))
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+                .map(|(_, a)| *a)
+                .max()
+                .unwrap_or(0);
+
+            let mut offsets = Vec::new();
+            let mut offset = 0;
+            for field in &fields {
+                let (size_of_dtype, align_of_dtype) = field.deref().size_align_of(structs)?;
+
+                let pad = if (offset % align_of_dtype) != 0 {
+                    align_of_dtype - (offset % align_of_dtype)
+                } else {
+                    0
+                };
+
+                offset += pad;
+                offsets.push(offset);
+
+                offset += size_of_dtype;
+            }
+
+            let size_of = ((offset - 1) / align_of + 1) * align_of;
+
+            Ok(Self::Struct {
+                name,
+                fields: Some(fields),
+                is_const,
+                size_align_offsets: Some((size_of, align_of, offsets)),
+            })
+        } else {
+            panic!("struct type is needed")
         }
     }
 
@@ -606,9 +665,30 @@ impl Dtype {
     }
 
     #[inline]
-    pub fn get_struct_fields(&self) -> Option<&Vec<Named<Self>>> {
+    pub fn get_struct_name(&self) -> Option<&Option<String>> {
+        if let Self::Struct { name, .. } = self {
+            Some(name)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn get_struct_fields(&self) -> Option<&Option<Vec<Named<Self>>>> {
         if let Self::Struct { fields, .. } = self {
             Some(fields)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn get_struct_size_align_offsets(&self) -> Option<&Option<(usize, usize, Vec<usize>)>> {
+        if let Self::Struct {
+            size_align_offsets, ..
+        } = self
+        {
+            Some(size_align_offsets)
         } else {
             None
         }
@@ -643,30 +723,53 @@ impl Dtype {
 
     #[inline]
     /// Check if `Dtype` is constant. if it is constant, the variable of `Dtype` is not assignable.
-    pub fn is_const(&self) -> bool {
+    pub fn is_const(&self, structs: &HashMap<String, Option<Dtype>>) -> bool {
         match self {
             Self::Unit { is_const } => *is_const,
             Self::Int { is_const, .. } => *is_const,
             Self::Float { is_const, .. } => *is_const,
             Self::Pointer { is_const, .. } => *is_const,
             Self::Array { .. } => true,
-            Self::Struct {
-                fields, is_const, ..
-            } => {
+            Self::Struct { name, is_const, .. } => {
+                let name = name.as_ref().expect("`name` must be exist");
+                let struct_type = structs
+                    .get(name)
+                    .expect("struct type matched with `name` must exist")
+                    .as_ref()
+                    .expect("`struct_type` must have its definition");
+                let fields = struct_type
+                    .get_struct_fields()
+                    .expect("`struct_type` must be struct type")
+                    .as_ref()
+                    .expect("`fields` must be `Some`");
+
                 *is_const
                     // If any of the fields in the structure type is constant, return `true`.
-                    || fields.iter().any(|f| {
+                    || fields
+                        .iter()
+                        .any(|f| {
                         // If an array is wrapped in a struct and the array's inner type is not 
                         // constant, it is assignable to another object of the same struct type.
                         if let Self::Array { inner, .. } = f.deref() {
-                            inner.is_const()
+                            inner.is_const_for_array_struct_field_inner(structs)
                         } else {
-                            f.deref().is_const()
+                            f.deref().is_const(structs)
                         }
                     })
             }
             Self::Function { .. } => true,
             Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
+        }
+    }
+
+    fn is_const_for_array_struct_field_inner(
+        &self,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> bool {
+        if let Self::Array { inner, .. } = self {
+            inner.is_const_for_array_struct_field_inner(structs)
+        } else {
+            self.is_const(structs)
         }
     }
 
@@ -683,17 +786,26 @@ impl Dtype {
             Self::Float { width, .. } => Self::Float { width, is_const },
             Self::Pointer { inner, .. } => Self::Pointer { inner, is_const },
             Self::Array { .. } => self,
-            Self::Struct { name, fields, .. } => Self::Struct {
+            Self::Struct {
+                name,
+                fields,
+                size_align_offsets,
+                ..
+            } => Self::Struct {
                 name,
                 fields,
                 is_const,
+                size_align_offsets,
             },
             Self::Function { .. } => self,
             Self::Typedef { name, .. } => Self::Typedef { name, is_const },
         }
     }
 
-    pub fn size_align_of(&self) -> Result<(usize, usize), DtypeError> {
+    pub fn size_align_of(
+        &self,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<(usize, usize), DtypeError> {
         match self {
             Self::Unit { .. } => Ok((0, 1)),
             Self::Int { width, .. } | Self::Float { width, .. } => {
@@ -704,16 +816,81 @@ impl Dtype {
             }
             Self::Pointer { .. } => Ok((Self::SIZE_OF_POINTER, Self::SIZE_OF_POINTER)),
             Self::Array { inner, size, .. } => {
-                let (size_of_inner, align_of_inner) = inner.size_align_of()?;
+                let (size_of_inner, align_of_inner) = inner.size_align_of(structs)?;
 
                 Ok((
                     size * std::cmp::max(size_of_inner, align_of_inner),
                     align_of_inner,
                 ))
             }
-            Self::Struct { .. } => todo!(),
+            Self::Struct { name, .. } => {
+                let name = name.as_ref().expect("`name` must be exist");
+                let struct_type = structs
+                    .get(name)
+                    .ok_or_else(|| DtypeError::Misc {
+                        message: format!("unknown struct name `{}`", name),
+                    })?
+                    .as_ref()
+                    .expect("`struct_type` must have its definition");
+                let (size_of, align_of, _) = struct_type
+                    .get_struct_size_align_offsets()
+                    .expect("`struct_type` must be stcut type")
+                    .as_ref()
+                    .unwrap();
+
+                Ok((*size_of, *align_of))
+            }
             Self::Function { .. } => Ok((0, 1)),
             Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
+        }
+    }
+
+    pub fn get_offset_struct_field(
+        &self,
+        field_name: &str,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Option<(usize, Self)> {
+        if let Self::Struct {
+            fields,
+            size_align_offsets,
+            ..
+        } = self
+        {
+            let fields = fields.as_ref().expect("struct should have its definition");
+            let (_, _, offsets) = size_align_offsets
+                .as_ref()
+                .expect("struct should have `offsets` as `Some`");
+
+            assert_eq!(fields.len(), offsets.len());
+            for (field, offset) in izip!(fields, offsets) {
+                if let Some(name) = field.name() {
+                    if name == field_name {
+                        return Some((*offset, field.deref().clone()));
+                    }
+                } else {
+                    let field_dtype = field.deref();
+                    let struct_name = field_dtype
+                        .get_struct_name()
+                        .expect("`field_dtype` must be struct type")
+                        .as_ref()
+                        .expect("structure type must have its name");
+                    let struct_type = structs
+                        .get(struct_name)
+                        .expect("`structs` must have value matched with `struct_name`")
+                        .as_ref()
+                        .expect("`struct_type` must have its definition");
+
+                    let (offset_inner, dtype) = some_or!(
+                        struct_type.get_offset_struct_field(field_name, structs),
+                        continue
+                    );
+                    return Some((*offset + offset_inner, dtype));
+                }
+            }
+
+            None
+        } else {
+            None
         }
     }
 
@@ -767,8 +944,19 @@ impl Dtype {
             .collect::<Result<Vec<_>, _>>()?;
 
         if fields.is_empty() {
-            // Add anonymous field
-            Ok(vec![Named::new(None, dtype)])
+            // If anonymous field is `Dtype::Struct`, structure type of this field
+            // can use this field's field as its field.
+            // For exampe, let's `struct A { struct { int f; }} t;`, `t.f` is valid.
+            if let Self::Struct { name, .. } = &dtype {
+                if name.is_none() {
+                    // Note that `const` qualifier has no effect in this time.
+                    return Ok(vec![Named::new(None, dtype.set_const(false))]);
+                }
+            }
+
+            Err(DtypeError::Misc {
+                message: "declaration does not declare anything".to_string(),
+            })
         } else {
             Ok(fields)
         }
@@ -870,15 +1058,19 @@ impl Dtype {
         Ok(Self::array(self, value as usize))
     }
 
-    pub fn resolve_typedefs(self, typedefs: &HashMap<String, Dtype>) -> Result<Self, DtypeError> {
+    pub fn resolve_typedefs(
+        self,
+        typedefs: &HashMap<String, Dtype>,
+        structs: &HashMap<String, Option<Dtype>>,
+    ) -> Result<Self, DtypeError> {
         let dtype = match &self {
             Self::Unit { .. } | Self::Int { .. } | Self::Float { .. } => self,
             Self::Pointer { inner, is_const } => {
-                let inner = inner.deref().clone().resolve_typedefs(typedefs)?;
+                let inner = inner.deref().clone().resolve_typedefs(typedefs, structs)?;
                 Self::pointer(inner).set_const(*is_const)
             }
             Self::Array { inner, size } => {
-                let inner = inner.deref().clone().resolve_typedefs(typedefs)?;
+                let inner = inner.deref().clone().resolve_typedefs(typedefs, structs)?;
                 Self::Array {
                     inner: Box::new(inner),
                     size: *size,
@@ -888,24 +1080,30 @@ impl Dtype {
                 name,
                 fields,
                 is_const,
+                ..
             } => {
-                let resolved_dtypes = fields
-                    .iter()
-                    .map(|f| f.deref().clone().resolve_typedefs(typedefs))
-                    .collect::<Result<Vec<_>, _>>()?;
+                if let Some(fields) = fields {
+                    let resolved_dtypes = fields
+                        .iter()
+                        .map(|f| f.deref().clone().resolve_typedefs(typedefs, structs))
+                        .collect::<Result<Vec<_>, _>>()?;
 
-                assert_eq!(fields.len(), resolved_dtypes.len());
-                let fields = izip!(fields, resolved_dtypes)
-                    .map(|(f, d)| Named::new(f.name().cloned(), d))
-                    .collect::<Vec<_>>();
+                    assert_eq!(fields.len(), resolved_dtypes.len());
+                    let fields = izip!(fields, resolved_dtypes)
+                        .map(|(f, d)| Named::new(f.name().cloned(), d))
+                        .collect::<Vec<_>>();
 
-                Self::structure(name.clone(), fields).set_const(*is_const)
+                    Self::structure(name.clone(), Some(fields)).set_const(*is_const)
+                } else {
+                    assert!(name.is_some());
+                    self
+                }
             }
             Self::Function { ret, params } => {
-                let ret = ret.deref().clone().resolve_typedefs(typedefs)?;
+                let ret = ret.deref().clone().resolve_typedefs(typedefs, structs)?;
                 let params = params
                     .iter()
-                    .map(|p| p.clone().resolve_typedefs(typedefs))
+                    .map(|p| p.clone().resolve_typedefs(typedefs, structs))
                     .collect::<Result<Vec<_>, _>>()?;
 
                 Self::function(ret, params)
@@ -917,10 +1115,116 @@ impl Dtype {
                         message: format!("unknown type name `{}`", name),
                     })?
                     .clone();
-                let is_const = dtype.is_const() || *is_const;
+                let is_const = dtype.is_const(structs) || *is_const;
 
                 dtype.set_const(is_const)
             }
+        };
+
+        Ok(dtype)
+    }
+
+    /// If the struct type has a definition, it is saved to the struct table
+    /// and transformed to a struct type with no definition.
+    pub fn resolve_structs(
+        self,
+        structs: &mut HashMap<String, Option<Dtype>>,
+        tempid_counter: &mut usize,
+    ) -> Result<Self, DtypeError> {
+        let dtype = match &self {
+            Self::Unit { .. } | Self::Int { .. } | Self::Float { .. } => self,
+            Self::Pointer { inner, is_const } => {
+                let inner = inner.deref();
+
+                // the pointer type can have undeclared struct type as inner.
+                // For example, let's `struct A { struct B *p }`, even if `struct B` has not been
+                // declared before, it can be used as inner type of the pointer.
+                if let Self::Struct { name, fields, .. } = inner {
+                    if fields.is_none() {
+                        let name = name.as_ref().expect("`name` must be `Some`");
+                        let _ = structs.entry(name.to_string()).or_insert(None);
+                        return Ok(self.clone());
+                    }
+                }
+
+                let resolved_inner = inner.clone().resolve_structs(structs, tempid_counter)?;
+                Self::pointer(resolved_inner).set_const(*is_const)
+            }
+            Self::Array { inner, size } => {
+                let inner = inner
+                    .deref()
+                    .clone()
+                    .resolve_structs(structs, tempid_counter)?;
+                Self::Array {
+                    inner: Box::new(inner),
+                    size: *size,
+                }
+            }
+            Self::Struct {
+                name,
+                fields,
+                is_const,
+                ..
+            } => {
+                if let Some(fields) = fields {
+                    let resolved_dtypes = fields
+                        .iter()
+                        .map(|f| f.deref().clone().resolve_structs(structs, tempid_counter))
+                        .collect::<Result<Vec<_>, _>>()?;
+
+                    assert_eq!(fields.len(), resolved_dtypes.len());
+                    let fields = izip!(fields, resolved_dtypes)
+                        .map(|(f, d)| Named::new(f.name().cloned(), d))
+                        .collect::<Vec<_>>();
+
+                    let name = if let Some(name) = name {
+                        name.clone()
+                    } else {
+                        let tempid = *tempid_counter;
+                        *tempid_counter += 1;
+                        format!("%t{}", tempid)
+                    };
+                    let resolved_struct = Self::structure(Some(name.clone()), Some(fields));
+                    let filled_struct =
+                        resolved_struct.fill_size_align_offsets_of_struct(structs)?;
+
+                    let prev_dtype = structs.insert(name.clone(), Some(filled_struct));
+                    if let Some(prev_dtype) = prev_dtype {
+                        if prev_dtype.is_some() {
+                            return Err(DtypeError::Misc {
+                                message: format!("redefinition of {}", name),
+                            });
+                        }
+                    }
+
+                    Self::structure(Some(name), None).set_const(*is_const)
+                } else {
+                    let name = name.as_ref().expect("`name` must be exist");
+                    let struct_type = structs.get(name).ok_or_else(|| DtypeError::Misc {
+                        message: format!("unknown struct name `{}`", name),
+                    })?;
+                    if struct_type.is_none() {
+                        return Err(DtypeError::Misc {
+                            message: format!("variable has incomplete type 'struct {}'", name),
+                        });
+                    }
+
+                    self
+                }
+            }
+            Self::Function { ret, params } => {
+                let ret = ret
+                    .deref()
+                    .clone()
+                    .resolve_structs(structs, tempid_counter)?;
+                let params = params
+                    .iter()
+                    .map(|p| p.clone().resolve_structs(structs, tempid_counter))
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Self::function(ret, params)
+            }
+            Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         };
 
         Ok(dtype)
@@ -957,31 +1261,33 @@ impl fmt::Display for Dtype {
                 name,
                 fields,
                 is_const,
+                ..
             } => {
-                let fields = fields
-                    .iter()
-                    .map(|f| {
-                        format!(
-                            "{}:{}",
-                            if let Some(name) = f.name() {
-                                name
-                            } else {
-                                "%anonymous"
-                            },
-                            f.deref()
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let fields = if let Some(fields) = fields {
+                    let fields = fields
+                        .iter()
+                        .map(|f| {
+                            format!(
+                                "{}:{}",
+                                if let Some(name) = f.name() {
+                                    name
+                                } else {
+                                    "%anon"
+                                },
+                                f.deref()
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    format!(":<{}>", fields)
+                } else {
+                    "".to_string()
+                };
                 write!(
                     f,
-                    "{} struct {}:<{}>",
+                    "{} struct {}{}",
                     if *is_const { "const" } else { "" },
-                    if let Some(name) = name {
-                        name
-                    } else {
-                        "%anonymous"
-                    },
+                    if let Some(name) = name { name } else { "%anon" },
                     fields
                 )
             }
@@ -1007,4 +1313,27 @@ impl Default for Dtype {
         // default dtype is `int`(i32)
         Self::INT
     }
+}
+
+#[inline]
+fn check_no_duplicate_field(fields: &[Named<Dtype>], field_names: &mut HashSet<String>) -> bool {
+    for field in fields {
+        if let Some(name) = field.name() {
+            if !field_names.insert(name.clone()) {
+                return false;
+            }
+        } else {
+            let field_dtype = field.deref();
+            let fields = field_dtype
+                .get_struct_fields()
+                .expect("`field_dtype` must be struct type")
+                .as_ref()
+                .expect("struct type must have its definition");
+            if !check_no_duplicate_field(&fields, field_names) {
+                return false;
+            }
+        }
+    }
+
+    true
 }

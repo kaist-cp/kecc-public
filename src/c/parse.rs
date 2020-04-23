@@ -76,20 +76,7 @@ impl AssertSupported for TranslationUnit {
 impl AssertSupported for ExternalDeclaration {
     fn assert_supported(&self) {
         match self {
-            Self::Declaration(decl) => {
-                for spec in &decl.node.specifiers {
-                    if let DeclarationSpecifier::StorageClass(storage_class) = &spec.node {
-                        // `typedef` is allowed only when it is used in the external declaration.
-                        if StorageClassSpecifier::Typedef != storage_class.node {
-                            panic!("`StorageClassifier` other than `Typedef`")
-                        }
-                    } else {
-                        spec.assert_supported();
-                    }
-                }
-
-                decl.node.declarators.assert_supported();
-            }
+            Self::Declaration(decl) => decl.assert_supported(),
             Self::StaticAssert(_) => panic!("ExternalDeclaration::StaticAssert"),
             Self::FunctionDefinition(fdef) => fdef.assert_supported(),
         }
@@ -115,13 +102,19 @@ impl AssertSupported for FunctionDefinition {
 impl AssertSupported for DeclarationSpecifier {
     fn assert_supported(&self) {
         match self {
-            Self::StorageClass(_) => panic!("DeclarationSpecifier::StorageClass"),
+            Self::StorageClass(storage_class) => storage_class.assert_supported(),
             Self::TypeSpecifier(type_specifier) => type_specifier.assert_supported(),
             Self::TypeQualifier(type_qualifier) => type_qualifier.assert_supported(),
             Self::Function(_) => panic!("DeclarationSpecifier::Function"),
             Self::Alignment(_) => panic!("DeclarationSpecifier::Alignment"),
             Self::Extension(_) => panic!("DeclarationSpecifier::Extension"),
         }
+    }
+}
+
+impl AssertSupported for StorageClassSpecifier {
+    fn assert_supported(&self) {
+        assert_eq!(*self, Self::Typedef)
     }
 }
 
@@ -306,7 +299,36 @@ impl AssertSupported for DeclaratorKind {
 impl AssertSupported for BlockItem {
     fn assert_supported(&self) {
         match self {
-            Self::Declaration(decl) => decl.assert_supported(),
+            Self::Declaration(decl) => {
+                decl.node.declarators.assert_supported();
+
+                for spec in &decl.node.specifiers {
+                    spec.assert_supported();
+                    match &spec.node {
+                        DeclarationSpecifier::StorageClass(_) => {
+                            // In C, `typedef` can be declared within the function.
+                            // However, KECC does not allow this feature
+                            // because it complicates IR generating logic.
+                            // For example, KECC does not allow a declaration using `typedef`
+                            // such as `typedef int i32_t;` declaration in a function definition.
+                            panic!("`StorageClassifier` is not allowed at `BlockItem`")
+                        }
+                        DeclarationSpecifier::TypeSpecifier(type_specifier) => {
+                            if let TypeSpecifier::Struct(struct_type) = &type_specifier.node {
+                                struct_type.node.kind.assert_supported();
+                                // In C, `struct` can be declared within the function.
+                                // However, KECC does not allow this feature
+                                // because it complicates IR generating logic.
+                                // For example, KECC allows `struct A var;` declaration
+                                // using pre-declared `struct A`, but not `struct A { int a; } var;`
+                                // which tries to declare `struct A` newly.
+                                assert!(struct_type.node.declarations.is_none());
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+            }
             Self::StaticAssert(_) => panic!("BlockItem::StaticAssert"),
             Self::Statement(stmt) => stmt.assert_supported(),
         }

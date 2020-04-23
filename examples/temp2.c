@@ -1,10 +1,12 @@
+struct color { int number; char name; };
+
 int f(int i, int const a[i]) {
   int temp = 0;
   const float temp2 = 0.f, temp3 = 0.f;
   temp = sizeof(unsigned char);
   temp = _Alignof(unsigned char);
 
-  struct color { int number; char name; } c;
+  struct color c;
   c.name;
   struct color *cp = &c;
   cp->name;

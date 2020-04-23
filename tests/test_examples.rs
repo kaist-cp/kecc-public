@@ -34,7 +34,6 @@ where
 #[test]
 fn test_examples_write_c() {
     test_dir(Path::new("examples/"), &OsStr::new("c"), test_write_c);
-    test_dir(Path::new("examples/hw1"), &OsStr::new("c"), test_write_c);
 }
 
 #[test]
@@ -73,5 +72,14 @@ fn test_examples_simplify_cfg() {
         &Path::new("examples/simplify_cfg/empty.input.ir"),
         &Path::new("examples/simplify_cfg/empty.output.ir"),
         &mut FunctionPass::<SimplifyCfgEmpty>::default(),
+    );
+}
+
+#[test]
+fn test_examples_mem2reg() {
+    test_opt(
+        &Path::new("examples/mem2reg/mem2reg.input.ir"),
+        &Path::new("examples/mem2reg/mem2reg.output.ir"),
+        &mut Mem2reg::default(),
     );
 }
