@@ -321,7 +321,7 @@ impl fmt::Display for JumpArg {
             self.bid,
             self.args
                 .iter()
-                .map(|a| a.to_string())
+                .map(|a| format!("{}:{}", a, a.dtype()))
                 .collect::<Vec<_>>()
                 .join(", ")
         )

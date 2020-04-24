@@ -259,12 +259,12 @@ impl WriteString for BlockExit {
                 default,
                 cases,
             } => format!(
-                "switch {} default: {} [\n{}\n  ]",
+                "switch {} default {} [\n{}\n  ]",
                 value.write_string(),
                 default,
                 cases
                     .iter()
-                    .map(|(v, b)| format!("    {}:{}, {}", v, v.dtype(), b))
+                    .map(|(v, b)| format!("    {}:{} {}", v, v.dtype(), b))
                     .collect::<Vec<_>>()
                     .join("\n")
             ),
