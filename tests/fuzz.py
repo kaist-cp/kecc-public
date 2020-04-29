@@ -48,6 +48,7 @@ REPLACE_DICT = {
     "char _unused2[^;]*;": "char _unused2[10];", 
 }
 CSMITH_DIR = "csmith-2.3.0"
+SKIP_TEST = 102
 
 def install_csmith(tests_dir):
     global CSMITH_DIR
@@ -200,17 +201,20 @@ def creduce(tests_dir, fuzz_arg):
         raise e
 
 def fuzz(tests_dir, fuzz_arg, num_iter):
+    global SKIP_TEST
+
     csmith_bin, csmith_inc = install_csmith(tests_dir)
     try:
         if num_iter is None:
             print("Fuzzing with infinitely many test cases.  Please press [ctrl+C] to break.")
-            iterator = itertools.count(0)
         else:
+            assert num_iter > 0
             print("Fuzzing with {} test cases.".format(num_iter))
-            iterator = range(num_iter)
 
-        for i in iterator:
-            print("Test case #{}".format(i))
+        i = 0
+        skip = 0
+        while True:
+            print("Test case #{} (skipped: {})".format(i, skip))
             src = generate(tests_dir, csmith_bin)
             with open(os.path.join(tests_dir, "test.c"), 'w') as dst:
                 dst.write(src)
@@ -223,11 +227,20 @@ def fuzz(tests_dir, fuzz_arg, num_iter):
                 args = ["cargo", "run", "--release", "--bin", "fuzz", "--", fuzz_arg, os.path.join(tests_dir, "test_polished.c")]
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
                 proc.communicate(timeout=60)
-                if proc.returncode != 0:
+
+                # KECC sets an exit code of 102 when the test skipped.
+                if proc.returncode == SKIP_TEST:
+                    skip += 1
+                    continue
+                elif proc.returncode != 0:
                     raise Exception("Test `{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
+
+                i += 1
+                if num_iter is not None:
+                    if i > num_iter: break
             except subprocess.TimeoutExpired as e:
                 proc.kill()
-                raise e
+                skip += 1
     except KeyboardInterrupt:
         proc.terminate()
         print("\n[Ctrl+C] interrupted")

@@ -8,6 +8,10 @@ use wait_timeout::ChildExt;
 
 use crate::*;
 
+// Rust sets an exit code of 101 when the process panicked.
+// So, we decide KECC sets an exit code of 102 after 101 when the test skipped.
+pub const SKIP_TEST: i32 = 102;
+
 pub fn test_write_c(unit: &TranslationUnit, _path: &Path) {
     let temp_dir = tempdir().expect("temp dir creation failed");
     let temp_file_path = temp_dir.path().join("temp.c");
@@ -43,7 +47,7 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
         .unwrap()
         .success()
     {
-        return;
+        ::std::process::exit(SKIP_TEST);
     }
 
     // Execute compiled executable
@@ -64,10 +68,10 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
             println!("timeout occurs");
             child.kill().unwrap();
             child.wait().unwrap();
-            return;
+            ::std::process::exit(SKIP_TEST);
         }
     );
-    let status = some_or!(status.code(), return);
+    let status = some_or_exit!(status.code(), SKIP_TEST);
 
     let ir = match Irgen::default().translate(unit) {
         Ok(ir) => ir,

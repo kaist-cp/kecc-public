@@ -45,3 +45,9 @@ impl WriteLine for TranslationUnit {
         todo!("homework 1")
     }
 }
+
+impl WriteString for Initializer {
+    fn write_string(&self) -> String {
+        todo!()
+    }
+}

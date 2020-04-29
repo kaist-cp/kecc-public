@@ -186,7 +186,6 @@ pub struct Block {
 #[derive(Debug, PartialEq, Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum Instruction {
-    // TODO: the variants of Instruction will be added in the future
     Nop,
     BinOp {
         op: ast::BinaryOperator,
@@ -255,7 +254,6 @@ impl Instruction {
     }
 }
 
-// TODO
 #[derive(Debug, PartialEq, Clone)]
 pub enum BlockExit {
     Jump {

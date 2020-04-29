@@ -1,22 +1,23 @@
 struct color { int number; char name; };
 
-int f(int i, int const a[i]) {
+int main() {
   int temp = 0;
-  const float temp2 = 0.f, temp3 = 0.f;
-  temp = sizeof(unsigned char);
-  temp = _Alignof(unsigned char);
+  temp += sizeof(unsigned char);
+  temp += _Alignof(unsigned char);
 
-  struct color c;
-  c.name;
+  struct color c = {1, 2};
+  temp += c.name;
   struct color *cp = &c;
-  cp->name;
+  temp += cp->name;
 
   for(int i = 0, j = 0; i < 10; ++i) {
-    break;
+    if ( i == 2 && j == 0) break;
+    temp += i;
   }
 
   switch(temp) {
     case 1: {
+      temp = 0;
       break;
     }
     default: {

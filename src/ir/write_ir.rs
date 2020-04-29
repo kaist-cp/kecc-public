@@ -198,7 +198,6 @@ impl WriteString for Operand {
 
 impl WriteOp for ast::BinaryOperator {
     fn write_operation(&self) -> String {
-        // TODO: represent signed & unsigned if necessary
         match self {
             Self::Multiply => "mul",
             Self::Divide => "div",

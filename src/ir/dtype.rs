@@ -721,9 +721,22 @@ impl Dtype {
         }
     }
 
+    pub fn is_const(&self) -> bool {
+        match self {
+            Self::Unit { is_const } => *is_const,
+            Self::Int { is_const, .. } => *is_const,
+            Self::Float { is_const, .. } => *is_const,
+            Self::Pointer { is_const, .. } => *is_const,
+            Self::Array { .. } => true,
+            Self::Struct { is_const, .. } => *is_const,
+            Self::Function { .. } => true,
+            Self::Typedef { is_const, .. } => *is_const,
+        }
+    }
+
     #[inline]
     /// Check if `Dtype` is constant. if it is constant, the variable of `Dtype` is not assignable.
-    pub fn is_const(&self, structs: &HashMap<String, Option<Dtype>>) -> bool {
+    pub fn is_immutable(&self, structs: &HashMap<String, Option<Dtype>>) -> bool {
         match self {
             Self::Unit { is_const } => *is_const,
             Self::Int { is_const, .. } => *is_const,
@@ -751,9 +764,9 @@ impl Dtype {
                         // If an array is wrapped in a struct and the array's inner type is not 
                         // constant, it is assignable to another object of the same struct type.
                         if let Self::Array { inner, .. } = f.deref() {
-                            inner.is_const_for_array_struct_field_inner(structs)
+                            inner.is_immutable_for_array_struct_field_inner(structs)
                         } else {
-                            f.deref().is_const(structs)
+                            f.deref().is_immutable(structs)
                         }
                     })
             }
@@ -762,14 +775,14 @@ impl Dtype {
         }
     }
 
-    fn is_const_for_array_struct_field_inner(
+    fn is_immutable_for_array_struct_field_inner(
         &self,
         structs: &HashMap<String, Option<Dtype>>,
     ) -> bool {
         if let Self::Array { inner, .. } = self {
-            inner.is_const_for_array_struct_field_inner(structs)
+            inner.is_immutable_for_array_struct_field_inner(structs)
         } else {
-            self.is_const(structs)
+            self.is_immutable(structs)
         }
     }
 
@@ -850,16 +863,23 @@ impl Dtype {
         field_name: &str,
         structs: &HashMap<String, Option<Dtype>>,
     ) -> Option<(usize, Self)> {
-        if let Self::Struct {
-            fields,
-            size_align_offsets,
-            ..
-        } = self
-        {
-            let fields = fields.as_ref().expect("struct should have its definition");
-            let (_, _, offsets) = size_align_offsets
+        if let Self::Struct { name, .. } = self {
+            let struct_name = name.as_ref().expect("`self` must have its name");
+            let struct_type = structs
+                .get(struct_name)
+                .expect("`structs` must have value matched with `struct_name`")
                 .as_ref()
-                .expect("struct should have `offsets` as `Some`");
+                .expect("`struct_type` must have its definition");
+            let fields = struct_type
+                .get_struct_fields()
+                .expect("`struct_type` must be struct type")
+                .as_ref()
+                .expect("`fields` must be `Some`");
+            let (_, _, offsets) = struct_type
+                .get_struct_size_align_offsets()
+                .expect("`struct_type` must be struct type")
+                .as_ref()
+                .expect("`offsets` must be `Some`");
 
             assert_eq!(fields.len(), offsets.len());
             for (field, offset) in izip!(fields, offsets) {
@@ -869,19 +889,8 @@ impl Dtype {
                     }
                 } else {
                     let field_dtype = field.deref();
-                    let struct_name = field_dtype
-                        .get_struct_name()
-                        .expect("`field_dtype` must be struct type")
-                        .as_ref()
-                        .expect("structure type must have its name");
-                    let struct_type = structs
-                        .get(struct_name)
-                        .expect("`structs` must have value matched with `struct_name`")
-                        .as_ref()
-                        .expect("`struct_type` must have its definition");
-
                     let (offset_inner, dtype) = some_or!(
-                        struct_type.get_offset_struct_field(field_name, structs),
+                        field_dtype.get_offset_struct_field(field_name, structs),
                         continue
                     );
                     return Some((*offset + offset_inner, dtype));
@@ -1115,7 +1124,7 @@ impl Dtype {
                         message: format!("unknown type name `{}`", name),
                     })?
                     .clone();
-                let is_const = dtype.is_const(structs) || *is_const;
+                let is_const = dtype.is_const() || *is_const;
 
                 dtype.set_const(is_const)
             }
