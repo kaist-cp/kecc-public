@@ -83,3 +83,12 @@ fn test_examples_mem2reg() {
         &mut Mem2reg::default(),
     );
 }
+
+#[test]
+fn test_examples_gvn() {
+    test_opt(
+        &Path::new("examples/gvn/gvn.input.ir"),
+        &Path::new("examples/gvn/gvn.output.ir"),
+        &mut Gvn::default(),
+    );
+}

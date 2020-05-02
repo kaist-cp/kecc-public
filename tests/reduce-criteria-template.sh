@@ -30,6 +30,7 @@ if
   grep 'too many arguments in call' out.txt ||\
   grep 'declaration does not declare anything' out.txt ||\
   grep 'not equal to a null pointer is always true' out.txt ||\
+  grep 'empty struct is a GNU extension' out.txt ||\
   ! gcc -Wall -Wextra -O2 test_reduced.c > outa.txt 2>&1 ||\
   grep 'uninitialized' outa.txt ||\
   grep 'without a cast' outa.txt ||\
@@ -49,10 +50,16 @@ if
   grep 'excess elements in struct initializer' outa.txt ||\
   grep 'comparison between pointer and integer' outa.txt ||\
   ! gcc -O1 test_reduced.c > cc_out1.txt 2>&1 ||\
-  ! gcc -O2 test_reduced.c > cc_out2.txt 2>&1)
+  ! gcc -O2 test_reduced.c > cc_out2.txt 2>&1 ||\
+  ! cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release -- --parse test_reduced.c >/dev/null 2>&1)
 then
   exit 1
 fi
 
-cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release -- --parse test_reduced.c >/dev/null 2>&1 &&\
-! cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release --bin fuzz -- $FUZZ_ARG test_reduced.c
+cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release --bin fuzz -- $FUZZ_ARG test_reduced.c
+if [ "$?" = 101 ]
+then
+  exit 0
+else
+  exit 1
+fi

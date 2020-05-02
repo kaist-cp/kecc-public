@@ -1,7 +1,7 @@
 use crate::opt::FunctionPass;
 use crate::*;
 
-pub type Gvn = FunctionPass<Repeat<GvnInner>>;
+pub type Gvn = FunctionPass<GvnInner>;
 
 #[derive(Default)]
 pub struct GvnInner {}

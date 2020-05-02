@@ -1,6 +1,6 @@
 use lang_c::ast::*;
 use std::fs::{self, File};
-use std::io::{stderr, Write};
+use std::io::{stderr, Read, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use tempfile::tempdir;
@@ -41,7 +41,14 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
 
     // Compile c file: If fails, test is vacuously success
     if !Command::new("gcc")
-        .args(&["-O1", &file_path, "-o", &bin_path])
+        .args(&[
+            "-fsanitize=undefined",
+            "-fno-sanitize-recover=all",
+            "-O1",
+            &file_path,
+            "-o",
+            &bin_path,
+        ])
         .stderr(Stdio::null())
         .status()
         .unwrap()
@@ -52,6 +59,7 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
 
     // Execute compiled executable
     let mut child = Command::new(fs::canonicalize(bin_path.clone()).unwrap())
+        .stderr(Stdio::piped())
         .spawn()
         .expect("failed to execute the compiled executable");
 
@@ -71,6 +79,18 @@ pub fn test_irgen(unit: &TranslationUnit, path: &Path) {
             ::std::process::exit(SKIP_TEST);
         }
     );
+
+    if child
+        .stderr
+        .expect("`stderr` of `child` must be `Some`")
+        .bytes()
+        .next()
+        .is_some()
+    {
+        println!("error occurs");
+        ::std::process::exit(SKIP_TEST);
+    }
+
     let status = some_or_exit!(status.code(), SKIP_TEST);
 
     let ir = match Irgen::default().translate(unit) {
