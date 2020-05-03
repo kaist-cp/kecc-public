@@ -1,0 +1,35 @@
+fun unit @sink {
+init:
+  bid: b0
+  allocations:
+
+block b0:
+  %b0:p0:unit
+  ret unit:unit
+}
+
+fun i32 @deadcode {
+init:
+  bid: b0
+  allocations:
+    %l0:i32:y
+
+block b0:
+  %b0:i0:i32 = add 100:i32 200:i32
+  %b0:i1:unit = store %l0:i32 %b0:i0:i32
+
+  br undef:i1 b1() b2()
+
+block b1:
+  %b1:i0:unit = call @sink(unit:unit)
+
+  j b3()
+
+block b2:
+  %b2:i0:unit = store %l0:i32 42:i32
+
+  j b3()
+
+block b3:
+  ret 0:i32
+}

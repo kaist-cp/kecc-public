@@ -2,7 +2,7 @@ use crate::ir::*;
 use crate::opt::FunctionPass;
 use crate::*;
 
-pub type Deadcode = FunctionPass<DeadcodeInner>;
+pub type Deadcode = FunctionPass<Repeat<DeadcodeInner>>;
 
 #[derive(Default)]
 pub struct DeadcodeInner {}

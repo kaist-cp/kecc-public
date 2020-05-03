@@ -20,7 +20,7 @@ pub trait Optimize<T> {
 }
 
 pub type O0 = Null;
-pub type O1 = Repeat<(SimplifyCfg, (Mem2reg, (Deadcode, Gvn)))>;
+pub type O1 = Repeat<(SimplifyCfg, (Mem2reg, (Gvn, Deadcode)))>;
 
 #[derive(Default)]
 pub struct Null {}

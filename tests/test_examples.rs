@@ -92,3 +92,12 @@ fn test_examples_gvn() {
         &mut Gvn::default(),
     );
 }
+
+#[test]
+fn test_examples_deadcode() {
+    test_opt(
+        &Path::new("examples/deadcode/deadcode.input.ir"),
+        &Path::new("examples/deadcode/deadcode.output.ir"),
+        &mut Deadcode::default(),
+    );
+}

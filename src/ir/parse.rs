@@ -238,7 +238,7 @@ peg::parser! {
             }
         /
             "unit" {
-                Constant::undef(Dtype::unit()) // TODO
+                Constant::unit()
             }
         /
             "<constant>" {
