@@ -17,11 +17,13 @@ cargo build --release  # release build
 
 ```sh
 cargo run -- -h                       # print options
-cargo run -- -p examples/fibonacci.c  # parse
-cargo run -- -i examples/fibonacci.c  # irgen
-cargo run --    examples/fibonacci.c  # compile
+cargo run -- -p examples/c/fibonacci.c  # parse
+cargo run -- -i examples/c/fibonacci.c  # irgen
+cargo run --    examples/c/fibonacci.c  # compile
 
-cargo run --release -- examples/fibonacci.c  # compile with release build
+cargo run -- --irrun examples/c/fibonacci.c   # interprets the IR
+
+cargo run --release -- examples/c/fibonacci.c  # compile with release build
 ```
 
 

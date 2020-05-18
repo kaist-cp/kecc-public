@@ -1,0 +1,96 @@
+
+fun i32 @main {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:a
+    %l1:i32:b
+    %l2:i32:c
+    %l3:i32:d
+    %l4:u1:t0
+    %l5:u1:t1
+    %l6:u1:t2
+
+block b0:
+  %b0:i0:unit = store 0:i32 %l0:*i32
+  %b0:i1:unit = store 0:i32 %l1:*i32
+  %b0:i2:unit = store 0:i32 %l2:*i32
+  %b0:i3:unit = store 0:i32 %l3:*i32
+  %b0:i4:unit = store 1:i32 %l0:*i32
+  %b0:i5:u1 = cmp ne 1:i32 0:i32
+  br %b0:i5:u1, b4(), b5()
+
+block b1:
+  %b1:i0:i32 = load %l1:*i32
+  %b1:i1:i32 = add %b1:i0:i32 1:i32
+  %b1:i2:unit = store %b1:i1:i32 %l1:*i32
+  j b3()
+
+block b2:
+  j b3()
+
+block b3:
+  %b3:i0:unit = store 1:i32 %l2:*i32
+  %b3:i1:u1 = cmp ne 1:i32 0:i32
+  br %b3:i1:u1, b10(), b11()
+
+block b4:
+  %b4:i0:unit = store 1:u1 %l4:*u1
+  j b6()
+
+block b5:
+  %b5:i0:unit = store 1:i32 %l1:*i32
+  %b5:i1:u1 = cmp ne 1:i32 0:i32
+  %b5:i2:unit = store %b5:i1:u1 %l4:*u1
+  j b6()
+
+block b6:
+  %b6:i0:u1 = load %l4:*u1
+  br %b6:i0:u1, b1(), b2()
+
+block b7:
+  %b7:i0:i32 = load %l3:*i32
+  %b7:i1:i32 = add %b7:i0:i32 1:i32
+  %b7:i2:unit = store %b7:i1:i32 %l3:*i32
+  j b9()
+
+block b8:
+  j b9()
+
+block b9:
+  %b9:i0:i32 = load %l1:*i32
+  %b9:i1:u1 = cmp eq %b9:i0:i32 1:i32
+  br %b9:i1:u1, b13(), b14()
+
+block b10:
+  %b10:i0:unit = store 1:i32 %l3:*i32
+  %b10:i1:u1 = cmp ne 1:i32 0:i32
+  %b10:i2:unit = store %b10:i1:u1 %l5:*u1
+  j b12()
+
+block b11:
+  %b11:i0:unit = store 0:u1 %l5:*u1
+  j b12()
+
+block b12:
+  %b12:i0:u1 = load %l5:*u1
+  br %b12:i0:u1, b7(), b8()
+
+block b13:
+  %b13:i0:i32 = load %l3:*i32
+  %b13:i1:u1 = cmp eq %b13:i0:i32 2:i32
+  %b13:i2:unit = store %b13:i1:u1 %l6:*u1
+  j b15()
+
+block b14:
+  %b14:i0:unit = store 0:u1 %l6:*u1
+  j b15()
+
+block b15:
+  %b15:i0:u1 = load %l6:*u1
+  %b15:i1:i32 = typecast %b15:i0:u1 to i32
+  ret %b15:i1:i32
+
+block b16:
+  ret 0:i32
+}

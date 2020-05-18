@@ -1,0 +1,25 @@
+
+fun i32 @main {
+init:
+  bid: b0
+  allocations: 
+    %l0:i16:temp
+    %l1:u32:temp2
+
+block b0:
+  %b0:i0:i16 = typecast 0:i32 to i16
+  %b0:i1:unit = store %b0:i0:i16 %l0:*i16
+  %b0:i2:unit = store 4294967163:u32 %l1:*u32
+  %b0:i3:i16 = load %l0:*i16
+  %b0:i4:u32 = load %l1:*u32
+  %b0:i5:u32 = typecast %b0:i3:i16 to u32
+  %b0:i6:u32 = xor %b0:i5:u32 %b0:i4:u32
+  %b0:i7:i8 = typecast %b0:i6:u32 to i8
+  %b0:i8:i32 = typecast %b0:i7:i8 to i32
+  %b0:i9:u1 = cmp eq %b0:i8:i32 123:i32
+  %b0:i10:i32 = typecast %b0:i9:u1 to i32
+  ret %b0:i10:i32
+
+block b1:
+  ret 0:i32
+}

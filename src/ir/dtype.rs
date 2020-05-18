@@ -573,6 +573,15 @@ impl Dtype {
             );
 
             let fields = fields.unwrap();
+            if fields.is_empty() {
+                return Ok(Self::Struct {
+                    name,
+                    fields: Some(fields),
+                    is_const,
+                    size_align_offsets: Some((0, 1, Vec::new())),
+                });
+            }
+
             let align_of = fields
                 .iter()
                 .map(|f| f.deref().size_align_of(structs))
@@ -709,6 +718,7 @@ impl Dtype {
             Self::Unit { .. } => todo!(),
             Self::Int { .. } => true,
             Self::Float { .. } => true,
+            Self::Pointer { .. } => true,
             _ => false,
         }
     }

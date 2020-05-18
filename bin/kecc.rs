@@ -96,7 +96,7 @@ fn compile_ir(
             SimplifyCfg::default().optimize(input);
         }
 
-        if matches.is_present("mem2erg") {
+        if matches.is_present("mem2reg") {
             Mem2reg::default().optimize(input);
         }
 
@@ -111,6 +111,12 @@ fn compile_ir(
 
     if matches.is_present("iroutput") {
         write(input, output).unwrap();
+        return;
+    }
+
+    if matches.is_present("irrun") {
+        let result = ir::interp(input, Vec::new()).unwrap();
+        println!("[result] {:?}", result);
         return;
     }
 

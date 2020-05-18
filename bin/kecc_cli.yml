@@ -2,7 +2,7 @@ name: kecc
 args:
     - parse:
         long: parse
-        help: Parses the input file
+        help: Parses the input C file
     - print:
         short: p
         long: print
@@ -17,6 +17,9 @@ args:
     - irprint:
         long: irprint
         help: Prints the input IR AST
+    - irrun:
+        long: irrun
+        help: Executes the input file
     - optimize:
         short: O
         long: optimize

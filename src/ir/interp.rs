@@ -644,13 +644,28 @@ mod calculator {
 
                 calculate_float_binary_operator_expression(op, lhs, rhs, lhs_w)
             }
-            (Value::Pointer { bid, .. }, Value::Pointer { bid: other_bid, .. }) => match op {
+            (
+                Value::Pointer { bid, offset, .. },
+                Value::Pointer {
+                    bid: other_bid,
+                    offset: other_offset,
+                    ..
+                },
+            ) => match op {
                 ast::BinaryOperator::Equals => {
-                    let result = if bid == other_bid { 1 } else { 0 };
+                    let result = if bid == other_bid && offset == other_offset {
+                        1
+                    } else {
+                        0
+                    };
                     Ok(Value::int(result, 1, false))
                 }
                 ast::BinaryOperator::NotEquals => {
-                    let result = if bid != other_bid { 1 } else { 0 };
+                    let result = if !(bid == other_bid && offset == other_offset) {
+                        1
+                    } else {
+                        0
+                    };
                     Ok(Value::int(result, 1, false))
                 }
                 _ => todo!(

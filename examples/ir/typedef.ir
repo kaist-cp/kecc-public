@@ -1,0 +1,21 @@
+
+fun i32 @main {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:a
+    %l1:*const i32:b
+
+block b0:
+  %b0:i0:unit = store 0:i32 %l0:*i32
+  %b0:i1:i32 = load %l0:*i32
+  %b0:i2:unit = store %l0:*i32 %l1:**const i32
+  %b0:i3:*i32 = load %l1:**const i32
+  %b0:i4:unit = store 1:i32 %b0:i3:*i32
+  %b0:i5:*i32 = load %l1:**const i32
+  %b0:i6:i32 = load %b0:i5:*i32
+  ret %b0:i6:i32
+
+block b1:
+  ret 0:i32
+}
