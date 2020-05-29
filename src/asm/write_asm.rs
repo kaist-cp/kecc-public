@@ -137,8 +137,20 @@ impl WriteString for Instruction {
                 "{}\t{},{}({})",
                 instr.write_string(),
                 rs2.write_string(),
-                imm,
+                imm.to_string(),
                 rs1.write_string()
+            ),
+            Self::BType {
+                instr,
+                rs1,
+                rs2,
+                imm,
+            } => format!(
+                "{}\t{},{}, {}",
+                instr.write_string(),
+                rs1.write_string(),
+                rs2.write_string(),
+                imm.0,
             ),
             Self::Pseudo(pseudo) => pseudo.write_string(),
         }
@@ -149,7 +161,15 @@ impl WriteString for RType {
     fn write_string(&self) -> String {
         match self {
             Self::Add(data_size) => format!("add{}", data_size.write_string()),
+            Self::Sub(data_size) => format!("sub{}", data_size.write_string()),
             Self::Mul(data_size) => format!("mul{}", data_size.write_string()),
+            Self::Div(data_size, is_signed) => format!(
+                "div{}{}",
+                if *is_signed { "" } else { "u" },
+                data_size.write_string()
+            ),
+            Self::Slt(is_signed) => format!("slt{}", if *is_signed { "" } else { "u" }),
+            Self::Xor => "xor".to_string(),
         }
     }
 }
@@ -159,6 +179,9 @@ impl WriteString for IType {
         match self {
             Self::Load(data_size) => format!("l{}", data_size.write_string()),
             Self::Addi(data_size) => format!("addi{}", data_size.write_string()),
+            Self::Andi => "andi".to_string(),
+            Self::Slli => "slli".to_string(),
+            Self::Srli => "srli".to_string(),
         }
     }
 }
@@ -171,12 +194,32 @@ impl WriteString for SType {
     }
 }
 
+impl WriteString for BType {
+    fn write_string(&self) -> String {
+        match self {
+            Self::Beq => "beq".to_string(),
+            Self::Bne => "bne".to_string(),
+            Self::Blt(is_signed) => format!("blt{}", if *is_signed { "" } else { "u" }),
+            Self::Bge(is_signed) => format!("bge{}", if *is_signed { "" } else { "u" }),
+        }
+    }
+}
+
 impl WriteString for Pseudo {
     fn write_string(&self) -> String {
         match self {
             Self::Li { rd, imm } => format!("li\t{},{}", rd.write_string(), imm),
             Self::Mv { rs, rd } => format!("mv\t{},{}", rd.write_string(), rs.write_string()),
-            Self::SextW { .. } => todo!(),
+            Self::Neg { data_size, rs, rd } => format!(
+                "neg{}\t{},{}",
+                data_size.write_string(),
+                rd.write_string(),
+                rs.write_string()
+            ),
+            Self::SextW { rs, rd } => {
+                format!("sext.w\t{},{}", rd.write_string(), rs.write_string())
+            }
+            Self::Seqz { rs, rd } => format!("seqz\t{},{}", rd.write_string(), rs.write_string()),
             Self::J { offset } => format!("j\t{}", offset.0),
             Self::Jr { rs } => format!("jr\t{}", rs.write_string()),
             Self::Ret => "ret".to_string(),

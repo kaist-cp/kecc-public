@@ -467,7 +467,7 @@ impl Dtype {
     pub const BITS_OF_BYTE: usize = 8;
     pub const SIZE_OF_BYTE: usize = 1;
     // TODO: consider architecture dependency in the future
-    pub const SIZE_OF_POINTER: usize = 4;
+    pub const SIZE_OF_POINTER: usize = 8;
 
     pub const SIZE_OF_CHAR: usize = 1;
     pub const SIZE_OF_SHORT: usize = 2;

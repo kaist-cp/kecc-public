@@ -2,8 +2,12 @@ use crate::ir::*;
 use crate::opt::FunctionPass;
 use crate::*;
 
-pub type SimplifyCfg =
-    FunctionPass<Repeat<(SimplifyCfgConstProp, (SimplifyCfgReach, (SimplifyCfgMerge, SimplifyCfgEmpty)))>>;
+pub type SimplifyCfg = FunctionPass<
+    Repeat<(
+        SimplifyCfgConstProp,
+        (SimplifyCfgReach, (SimplifyCfgMerge, SimplifyCfgEmpty)),
+    )>,
+>;
 
 /// Simplifies block exits by propagating constants.
 #[derive(Default)]

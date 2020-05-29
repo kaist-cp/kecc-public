@@ -101,3 +101,9 @@ fn test_examples_deadcode() {
         &mut Deadcode::default(),
     );
 }
+
+#[test]
+#[ignore]
+fn test_examples_asmgen() {
+    test_dir(Path::new("examples/asm"), &OsStr::new("c"), test_asmgen);
+}

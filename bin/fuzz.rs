@@ -22,10 +22,12 @@ fn main() {
 
     if matches.is_present("print") {
         kecc::test_write_c(&unit, Path::new(&input));
+        return;
     }
 
     if matches.is_present("irgen") {
         kecc::test_irgen(&unit, Path::new(&input));
+        return;
     }
 
     if matches.is_present("simplify-cfg") {
@@ -43,4 +45,6 @@ fn main() {
     if matches.is_present("gvn") {
         todo!("test gvn");
     }
+
+    kecc::test_asmgen(&unit, Path::new(&input));
 }
