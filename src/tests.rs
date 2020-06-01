@@ -222,6 +222,17 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
 }
 
 pub fn test_asmgen(unit: &TranslationUnit, path: &Path) {
+    // TODO: delete black list in the future
+    let exclusion_list = vec![
+        "examples/c/struct.c",
+        "examples/c/struct2.c",
+        "examples/c/temp2.c",
+    ];
+    if exclusion_list.contains(&path.to_str().expect("`path` must be transformed to `&str`")) {
+        println!("skip test");
+        return;
+    }
+
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
 
@@ -231,7 +242,11 @@ pub fn test_asmgen(unit: &TranslationUnit, path: &Path) {
         .expect("failed to parse the given program");
 
     let file_path = path.display().to_string();
-    let bin_path = path.with_extension("irgen").as_path().display().to_string();
+    let bin_path = path
+        .with_extension("asmgen")
+        .as_path()
+        .display()
+        .to_string();
 
     // Compile c file: If fails, test is vacuously success
     if !Command::new("gcc")

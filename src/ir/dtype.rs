@@ -466,7 +466,7 @@ impl TryFrom<&ast::ParameterDeclaration> for Dtype {
 impl Dtype {
     pub const BITS_OF_BYTE: usize = 8;
     pub const SIZE_OF_BYTE: usize = 1;
-    // TODO: consider architecture dependency in the future
+    // TODO: consider architecture dependency (current: 64-bit architecture)
     pub const SIZE_OF_POINTER: usize = 8;
 
     pub const SIZE_OF_CHAR: usize = 1;

@@ -719,6 +719,80 @@ impl Constant {
             false
         }
     }
+
+    pub fn typecast(self, target_dtype: Dtype) -> Self {
+        if self.dtype() == target_dtype {
+            return self;
+        }
+
+        match (&self, &target_dtype) {
+            (
+                Constant::Int { value, width, .. },
+                Dtype::Int {
+                    width: target_width,
+                    is_signed: target_signed,
+                    ..
+                },
+            ) => {
+                let result = if *target_signed {
+                    if *width >= *target_width {
+                        let value = trim_unnecessary_bits(*value, *target_width as u128);
+                        sign_extension(value, *target_width as u128)
+                    } else {
+                        *value
+                    }
+                } else {
+                    trim_unnecessary_bits(*value, *target_width as u128)
+                };
+
+                Constant::int(result, target_dtype)
+            }
+            (
+                Constant::Int {
+                    value, is_signed, ..
+                },
+                Dtype::Float { .. },
+            ) => {
+                let casted_value = if *is_signed {
+                    *value as i128 as f64
+                } else {
+                    *value as f64
+                };
+
+                Constant::float(casted_value, target_dtype)
+            }
+            (Constant::Float { value, .. }, Dtype::Int { is_signed, .. }) => {
+                let casted_value = if *is_signed {
+                    value.into_inner() as i128 as u128
+                } else {
+                    value.into_inner() as u128
+                };
+
+                Constant::int(casted_value, target_dtype)
+            }
+            (Constant::Float { value, .. }, Dtype::Float { .. }) => {
+                Constant::float(value.into_inner(), target_dtype)
+            }
+            _ => todo!("typecast ({:?}) {:?}", self, target_dtype),
+        }
+    }
+}
+
+#[inline]
+pub fn sign_extension(value: u128, width: u128) -> u128 {
+    let base = 1u128 << (width - 1);
+    if value >= base {
+        let bit_mask = -1i128 << (width as i128);
+        value | bit_mask as u128
+    } else {
+        value
+    }
+}
+
+#[inline]
+pub fn trim_unnecessary_bits(value: u128, width: u128) -> u128 {
+    let bit_mask = (1u128 << width) - 1;
+    value & bit_mask
 }
 
 impl fmt::Display for Constant {

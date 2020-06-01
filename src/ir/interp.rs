@@ -807,23 +807,6 @@ mod calculator {
             (value, dtype) => todo!("calculate_typecast ({:?}) {:?}", value, dtype),
         }
     }
-
-    #[inline]
-    fn sign_extension(value: u128, width: u128) -> u128 {
-        let base = 1u128 << (width - 1);
-        if value >= base {
-            let bit_mask = -1i128 << (width as i128);
-            value | bit_mask as u128
-        } else {
-            value
-        }
-    }
-
-    #[inline]
-    fn trim_unnecessary_bits(value: u128, width: u128) -> u128 {
-        let bit_mask = (1u128 << width) - 1;
-        value & bit_mask
-    }
 }
 
 // TODO: delete `allow(dead_code)`
