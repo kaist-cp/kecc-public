@@ -93,7 +93,6 @@ fn test_examples_deadcode() {
 
 // TODO: after implementing IR parser, delete `ignore` mark
 #[test]
-#[ignore]
 fn test_examples_asmgen() {
     test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), test_asmgen);
 }
