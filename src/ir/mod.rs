@@ -686,6 +686,15 @@ impl Constant {
     }
 
     #[inline]
+    pub fn get_global_variable_name(&self) -> Option<String> {
+        if let Self::GlobalVariable { name, .. } = self {
+            Some(name.clone())
+        } else {
+            None
+        }
+    }
+
+    #[inline]
     fn minus(self) -> Self {
         match self {
             Self::Int {

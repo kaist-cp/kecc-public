@@ -1,5 +1,5 @@
 
-fun i32 @main {
+fun i32 @main () {
 init:
   bid: b0
   allocations: 

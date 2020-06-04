@@ -1,4 +1,4 @@
-fun unit @sink {
+fun unit @sink (i32) {
 init:
   bid: b0
   allocations:
@@ -8,7 +8,7 @@ block b0:
   ret unit:unit
 }
 
-fun i32 @gvn {
+fun i32 @gvn (i32) {
 init:
   bid: b0
   allocations:
@@ -16,20 +16,20 @@ init:
 block b0:
   %b0:p0:i32:a
   %b0:i0:i32:b = add %b0:p0:i32 1:i32
-  br undef:i1 b1() b2()
+  br undef:i1, b1(), b2()
 
 block b1:
   %b1:i0:i32:b = add %b0:p0:i32 1:i32
   %b1:i1:i32:c = add %b1:i0:i32 2:i32
 
-  %b1:i2:unit = call @sink(%b1:i0:i32)
+  %b1:i2:unit = call @sink:*[ret:unit params:(i32)](%b1:i0:i32)
 
   j b3()
 
 block b2:
   %b2:i0:i32:c = add %b0:i0:i32 2:i32
 
-  %b2:i1:unit = call @sink(%b2:i0:i32)
+  %b2:i1:unit = call @sink:*[ret:unit params:(i32)](%b2:i0:i32)
 
   j b3()
 
@@ -37,8 +37,8 @@ block b3:
   %b3:i0:i32:b = add %b0:p0:i32 1:i32
   %b3:i1:i32:c = add %b3:i0:i32 2:i32
 
-  %b3:i2:unit = call @sink(%b3:i0:i32)
-  %b3:i3:unit = call @sink(%b3:i1:i32)
+  %b3:i2:unit = call @sink:*[ret:unit params:(i32)](%b3:i0:i32)
+  %b3:i3:unit = call @sink:*[ret:unit params:(i32)](%b3:i1:i32)
 
   ret 0:i32
 }

@@ -32,16 +32,16 @@ peg::parser! {
                 })
             }
         /
-            "fun" __ dtype:dtype() __ var:global_variable() _ "{" _ fun_body:fun_body() _ "}" {
+            "fun" __ dtype:dtype() __ var:global_variable() _ "(" params:(dtype() ** (_ "," _)) _ ")" _ "{" _ fun_body:fun_body() _ "}" {
                 Named::new(Some(var), Declaration::Function {
-                    signature: FunctionSignature::new(Dtype::function(Dtype::int(32), Vec::new())),
+                    signature: FunctionSignature::new(Dtype::function(dtype, params)),
                     definition: Some(fun_body),
                 })
             }
         /
-            "fun" __ dtype:dtype() __ var:global_variable() {
+            "fun" __ dtype:dtype() __ var:global_variable() _ "(" params:(dtype() ** (_ "," _)) _ ")" {
                 Named::new(Some(var), Declaration::Function {
-                    signature: FunctionSignature::new(Dtype::function(Dtype::int(32), Vec::new())),
+                    signature: FunctionSignature::new(Dtype::function(dtype, params)),
                     definition: None,
                 })
             }
@@ -53,8 +53,23 @@ peg::parser! {
         /
             "i" n:number() { Dtype::int(n) }
         /
+            "f" n:number() { Dtype::float(n) }
+        /
+            "*" _ "const" _ inner:dtype() { Dtype::pointer(inner).set_const(true) }
+        /
             "*" _ inner:dtype() { Dtype::pointer(inner) }
-        / expected!("dtype")
+        /
+            "[" _ n:number() __ "x" __ inner:dtype() _ "]" {
+                Dtype::Array { inner: Box::new(inner), size: n }
+            }
+        /
+            "[ret:" _ ret:dtype() __ "params:(" params:(dtype() ** (_ "," _)) _ ")]" {
+                Dtype::Function { ret: Box::new(ret), params }
+            }
+        /
+            "const" __ dtype:dtype() { dtype.set_const(true) }
+        /
+            expected!("dtype")
 
         rule id() -> String
             = n:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) {
@@ -111,6 +126,12 @@ peg::parser! {
             }
         / expected!("number")
 
+        rule float_number() -> f64
+            = f:$(['0'..='9']+['.']['0'..='9']+) {
+                f.parse().unwrap()
+            }
+        / expected!("float_number")
+
         rule bid() -> BlockId
             = "b" n:number() {
                 BlockId(n)
@@ -125,6 +146,17 @@ peg::parser! {
 
         rule instruction() -> (BlockId, usize, Named<Instruction>)
             = "%" bid:bid() ":i" number:number() ":" dtype:dtype() name:(":" name:id() { name })? _ "=" _ instruction:instruction_inner() {
+                // TODO: The dtype of `GetElementPtr` instruction depends on the situation.
+                // Let's `ptr` has `*[5 x i32]` type, after applying `GetElementPtr` instruction,
+                // the dtype of the result can be `*i32` or `*[5 x i32]` in the current KECC.
+                // For this reason, we need to check the dtype of the result to confirm the dtype
+                // of `GetElementPtr` instruction when parsing IR.
+                let instruction = if let Instruction::GetElementPtr { ptr, offset, .. } = instruction {
+                    Instruction::GetElementPtr { ptr, offset, dtype: Box::new(dtype) }
+                } else {
+                    instruction
+                };
+
                 (bid, number, Named::new(name, instruction))
             }
         / expected!("instruction")
@@ -143,10 +175,19 @@ peg::parser! {
             }
         /
             "call" __ callee:operand() _ "(" _ args:(operand() ** (_ "," _)) _ ")" {
+                let dtype_of_callee = callee.dtype();
+                let function_type = dtype_of_callee
+                    .get_pointer_inner()
+                    .expect("`callee`'s dtype must be function pointer type");
+                let return_type = function_type
+                    .get_function_inner()
+                    .expect("`callee`'s dtype must be function pointer type")
+                    .0.clone();
+
                 Instruction::Call {
                     callee,
                     args,
-                    return_type: Dtype::unit(), // TODO
+                    return_type,
                 }
             }
         /
@@ -154,16 +195,27 @@ peg::parser! {
                 Instruction::TypeCast { value, target_dtype }
             }
         /
-            "minus" __ operand:operand() {
+            op:unary_op() __ operand:operand() {
                 let dtype = operand.dtype();
                 Instruction::UnaryOp {
-                    op: UnaryOperator::Minus,
+                    op,
                     operand,
                     dtype,
                 }
             }
         /
             op:arith_op() __ lhs:operand() __ rhs:operand() {
+                let dtype = lhs.dtype();
+                assert_eq!(&dtype, &rhs.dtype());
+                Instruction::BinOp {
+                    op,
+                    lhs,
+                    rhs,
+                    dtype,
+                }
+            }
+        /
+            op:shift_op() __ lhs:operand() __ rhs:operand() {
                 let dtype = lhs.dtype();
                 assert_eq!(&dtype, &rhs.dtype());
                 Instruction::BinOp {
@@ -184,6 +236,25 @@ peg::parser! {
                 }
             }
         /
+            op:bitwise_op() __ lhs:operand() __ rhs:operand() {
+                let dtype = lhs.dtype();
+                assert_eq!(&dtype, &rhs.dtype());
+                Instruction::BinOp {
+                    op,
+                    lhs,
+                    rhs,
+                    dtype,
+                }
+            }
+        /
+            "getelementptr" __ ptr:operand() __ "offset" __ offset:operand() {
+                Instruction::GetElementPtr{
+                    ptr,
+                    offset,
+                    dtype: Box::new(Dtype::unit()), // TODO
+                }
+            }
+        /
             "<instruction>" {
                 todo!()
             }
@@ -193,6 +264,17 @@ peg::parser! {
             "add" { BinaryOperator::Plus }
         /
             "sub" { BinaryOperator::Minus }
+        /
+            "mul" { BinaryOperator::Multiply }
+        /
+            "div" { BinaryOperator::Divide }
+        /
+            "mod" { BinaryOperator::Modulo }
+
+        rule shift_op() -> BinaryOperator =
+            "shl" { BinaryOperator::ShiftLeft }
+        /
+            "shr" { BinaryOperator::ShiftRight }
 
         rule comparison_op() -> BinaryOperator =
             "eq" { BinaryOperator::Equals }
@@ -207,12 +289,26 @@ peg::parser! {
         /
             "ge" { BinaryOperator::GreaterOrEqual }
 
+        rule bitwise_op() -> BinaryOperator =
+            "and" { BinaryOperator::BitwiseAnd }
+        /
+            "xor" { BinaryOperator::BitwiseXor }
+        /
+            "or" { BinaryOperator::BitwiseOr }
+
+        rule unary_op() -> UnaryOperator =
+            "plus" { UnaryOperator::Plus }
+        /
+            "minus" { UnaryOperator::Minus }
+        /
+            "negate" { UnaryOperator::Negate }
+
         rule exit() -> BlockExit =
             "j" __ arg:jump_arg() {
                 BlockExit::Jump { arg }
             }
         /
-            "br" __ condition:operand() __ arg_then:jump_arg() __ arg_else:jump_arg() {
+            "br" __ condition:operand() _ "," _ arg_then:jump_arg() _ "," _ arg_else:jump_arg() {
                 BlockExit::ConditionalJump { condition, arg_then: Box::new(arg_then), arg_else: Box::new(arg_else) }
             }
         /
@@ -229,6 +325,10 @@ peg::parser! {
             }
 
         rule constant() -> Constant =
+            f:float_number() {
+                Constant::float(f, Dtype::float(64)) // TODO: the right dtype
+            }
+        /
             n:number() {
                 Constant::int(n as _, Dtype::int(128)) // TODO: the right dtype
             }
@@ -239,6 +339,13 @@ peg::parser! {
         /
             "unit" {
                 Constant::unit()
+            }
+        /
+            name:global_variable() {
+                Constant::GlobalVariable {
+                    name,
+                    dtype: Dtype::unit(), // TODO
+                }
             }
         /
             "<constant>" {
@@ -260,13 +367,6 @@ peg::parser! {
             }
 
         rule operand() -> Operand =
-            name:global_variable() {
-                Operand::Constant(Constant::GlobalVariable {
-                    name,
-                    dtype: Dtype::unit(), // TODO
-                })
-            }
-        /
             constant:constant() ":" dtype:dtype() {
                 let constant = match (&constant, &dtype) {
                     (Constant::Int { value, .. }, Dtype::Int { width, is_signed, .. }) => {
@@ -276,8 +376,18 @@ peg::parser! {
                             is_signed: *is_signed,
                         }
                     }
+                    (Constant::Float { value, .. }, Dtype::Float { width, .. }) => {
+                        Constant::Float {
+                            value: *value,
+                            width: *width,
+                        }
+                    }
                     (Constant::Undef { .. }, _) => {
                         Constant::undef(dtype.clone())
+                    }
+                    (Constant::GlobalVariable { name, .. }, _) => {
+                        let dtype_of_inner = dtype.get_pointer_inner().expect("`dtype` must be pointer type");
+                        Constant::global_variable(name.clone(), dtype_of_inner.clone())
                     }
                     _ => constant.clone(),
                 };
@@ -314,6 +424,7 @@ peg::parser! {
 pub enum Error {
     IoError(std::io::Error),
     ParseError(peg::error::ParseError<peg::str::LineCol>),
+    ResolveError,
 }
 
 #[derive(Default)]

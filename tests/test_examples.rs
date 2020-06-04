@@ -1,15 +1,12 @@
 use std::ffi::OsStr;
 use std::path::Path;
 
-use lang_c::ast::*;
-
 use kecc::*;
 
 fn test_dir<F>(path: &Path, ext: &OsStr, f: F)
 where
-    F: Fn(&TranslationUnit, &Path),
+    F: Fn(&Path),
 {
-    let mut parse = Parse::default();
     let dir = path.read_dir().expect("read_dir call failed");
     for entry in dir {
         let entry = ok_or!(entry, continue);
@@ -20,14 +17,7 @@ where
         }
 
         println!("[testing {:?}]", path);
-        let test_unit = parse.translate(&path.as_path()).expect(
-            &format!(
-                "parse failed {:?}",
-                path.clone().into_os_string().to_str().unwrap()
-            )
-            .to_owned(),
-        );
-        f(&test_unit, &path);
+        f(&path);
     }
 }
 
@@ -43,7 +33,6 @@ fn test_examples_irgen() {
 
 // TODO: make it work!
 #[test]
-#[ignore]
 fn test_examples_irparse() {
     test_dir(Path::new("examples/c"), &OsStr::new("c"), test_irparse);
 }
@@ -106,5 +95,5 @@ fn test_examples_deadcode() {
 #[test]
 #[ignore]
 fn test_examples_asmgen() {
-    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_asmgen);
+    test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), test_asmgen);
 }

@@ -1,4 +1,4 @@
-fun i32 @const_prop_same {
+fun i32 @const_prop_same () {
 init:
   bid: b0
   allocations: 
@@ -11,7 +11,7 @@ block b1:
   ret 0:i1
 }
 
-fun i32 @const_prop_true {
+fun i32 @const_prop_true () {
 init:
   bid: b0
   allocations: 
@@ -27,7 +27,7 @@ block b2:
   ret 0:i1
 }
 
-fun i32 @const_prop_false {
+fun i32 @const_prop_false () {
 init:
   bid: b0
   allocations: 
@@ -43,7 +43,7 @@ block b2:
   ret 0:i1
 }
 
-fun i32 @const_prop_switch_same {
+fun i32 @const_prop_switch_same () {
 init:
   bid: b0
   allocations: 
@@ -55,7 +55,7 @@ block b1:
   ret 0:i1
 }
 
-fun i32 @const_prop_switch_case {
+fun i32 @const_prop_switch_case () {
 init:
   bid: b0
   allocations: 
@@ -74,7 +74,7 @@ block b3:
   ret 0:i1
 }
 
-fun i32 @const_prop_switch_default {
+fun i32 @const_prop_switch_default () {
 init:
   bid: b0
   allocations: 

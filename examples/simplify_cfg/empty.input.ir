@@ -1,4 +1,4 @@
-fun i32 @foo {
+fun i32 @foo () {
 init:
   bid: b0
   allocations: 
@@ -14,7 +14,7 @@ block b3:
   ret 37:i32
 }
 
-fun i32 @bar {
+fun i32 @bar () {
 init:
   bid: b0
   allocations: 
@@ -24,7 +24,7 @@ block b0:
 
 block b1:
   %b1:p0:i32
-  br 1:i1 b2() b2()
+  br 1:i1, b2(), b2()
 
 block b2:
   j b3()

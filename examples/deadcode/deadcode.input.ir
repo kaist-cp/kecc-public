@@ -1,4 +1,4 @@
-fun unit @sink {
+fun unit @sink (unit) {
 init:
   bid: b0
   allocations:
@@ -8,7 +8,7 @@ block b0:
   ret unit:unit
 }
 
-fun i32 @deadcode {
+fun i32 @deadcode () {
 init:
   bid: b0
   allocations:
@@ -21,11 +21,11 @@ block b0:
   %b0:i2:i32 = add %b0:i1:i32 400:i32
   %b0:i3:unit = store %l1:i32 %b0:i0:i32
 
-  br undef:i1 b1() b2()
+  br undef:i1, b1(), b2()
 
 block b1:
   %b1:i0:unit = nop
-  %b1:i1:unit = call @sink(%b1:i0:unit)
+  %b1:i1:unit = call @sink:*[ret:unit params:(unit)](%b1:i0:unit)
 
   j b3()
 

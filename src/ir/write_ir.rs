@@ -70,9 +70,16 @@ impl WriteLine for (&String, &Declaration) {
                 signature,
                 definition,
             } => {
+                let params = signature
+                    .params
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
                 if let Some(definition) = definition.as_ref() {
                     // print function definition
-                    writeln!(write, "fun {} @{} {{", signature.ret, name)?;
+                    writeln!(write, "fun {} @{} ({}) {{", signature.ret, name, params)?;
                     // print meta data for function
                     writeln!(
                         write,
@@ -104,7 +111,7 @@ impl WriteLine for (&String, &Declaration) {
                     writeln!(write, "}}")?;
                 } else {
                     // print declaration line only
-                    writeln!(write, "fun {} @{}", signature.ret, name)?;
+                    writeln!(write, "fun {} @{} ({})", signature.ret, name, params)?;
                     writeln!(write)?;
                 }
             }
@@ -173,7 +180,7 @@ impl WriteString for Instruction {
             Instruction::Load { ptr } => format!("load {}", ptr.write_string()),
             Instruction::Call { callee, args, .. } => format!(
                 "call {}({})",
-                callee,
+                callee.write_string(),
                 args.iter()
                     .map(WriteString::write_string)
                     .collect::<Vec<_>>()
@@ -183,9 +190,11 @@ impl WriteString for Instruction {
                 value,
                 target_dtype,
             } => format!("typecast {} to {}", value.write_string(), target_dtype),
-            Instruction::GetElementPtr { ptr, offset, .. } => {
-                format!("getelementptr {} offset {}", ptr, offset)
-            }
+            Instruction::GetElementPtr { ptr, offset, .. } => format!(
+                "getelementptr {} offset {}",
+                ptr.write_string(),
+                offset.write_string()
+            ),
         }
     }
 }

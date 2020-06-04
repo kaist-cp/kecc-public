@@ -1312,7 +1312,7 @@ impl fmt::Display for Dtype {
             }
             Self::Function { ret, params } => write!(
                 f,
-                "{} ({})",
+                "[ret:{} params:({})]",
                 ret,
                 params
                     .iter()

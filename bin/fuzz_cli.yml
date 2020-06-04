@@ -8,6 +8,9 @@ args:
         short: i
         long: irgen
         help: Fuzzes irgen
+    - irparse:
+        long: irparse
+        help: Fuzzes irparse
     - simplify-cfg:
         long: simplify-cfg
         help: Performs simplify-cfg
