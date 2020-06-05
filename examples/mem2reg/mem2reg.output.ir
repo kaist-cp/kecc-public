@@ -116,7 +116,7 @@ init:
     %l3:i8:w
 
 block b666:
-  %b666:i0:unit = store %l3:*i8 42:i8
+  %b666:i0:unit = store 42:i8 %l3:*i8
   %b666:i1:unit = call @sinkptr:*[ret:unit params:(*i8)](%l3:*i8)
   %b666:i2:i8 = load %l3:*i8
   j b0(undef:i32, undef:i16, undef:i64)
