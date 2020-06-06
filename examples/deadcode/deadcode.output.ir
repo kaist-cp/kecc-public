@@ -16,7 +16,7 @@ init:
 
 block b0:
   %b0:i0:i32 = add 100:i32 200:i32
-  %b0:i1:unit = store %l0:i32 %b0:i0:i32
+  %b0:i1:unit = store %b0:i0:i32 %l0:*i32
 
   br undef:i1, b1(), b2()
 
@@ -26,7 +26,7 @@ block b1:
   j b3()
 
 block b2:
-  %b2:i0:unit = store %l0:i32 42:i32
+  %b2:i0:unit = store 42:i32 %l0:*i32
 
   j b3()
 
