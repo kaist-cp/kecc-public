@@ -61,7 +61,20 @@ fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Pat
     }
 }
 
-const SMALL_TEST_IGNORE_LIST: [&str; 10] = [
+const IRGEN_SMALL_TEST_IGNORE_LIST: [&str; 10] = [
+    "examples/c/array.c",
+    "examples/c/array2.c",
+    "examples/c/array3.c",
+    "examples/c/array4.c",
+    "examples/c/array5.c",
+    "examples/c/float.c",
+    "examples/c/struct.c",
+    "examples/c/struct2.c",
+    "examples/c/struct3.c",
+    "examples/c/temp2.c",
+];
+
+const ASMGEN_SMALL_TEST_IGNORE_LIST: [&str; 10] = [
     "examples/asmgen/array.ir",
     "examples/asmgen/array2.ir",
     "examples/asmgen/array3.ir",
@@ -83,7 +96,7 @@ fn test_examples_write_c() {
 fn test_examples_irgen_small() {
     test_dir(Path::new("examples/c"), &OsStr::new("c"), |path| {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if SMALL_TEST_IGNORE_LIST.contains(path_str) {
+        if IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
             return;
         }
         test_irgen(path)
@@ -94,7 +107,7 @@ fn test_examples_irgen_small() {
 fn test_examples_irgen_large() {
     test_dir(Path::new("examples/c"), &OsStr::new("c"), |path| {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if SMALL_TEST_IGNORE_LIST.contains(path_str) {
+        if IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
             test_irgen(path)
         }
     });
@@ -188,7 +201,7 @@ fn test_examples_gvn() {
 fn test_examples_asmgen_small() {
     test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), |path| {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if SMALL_TEST_IGNORE_LIST.contains(path_str) {
+        if ASMGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
             return;
         }
         test_asmgen(path)
@@ -199,7 +212,7 @@ fn test_examples_asmgen_small() {
 fn test_examples_asmgen_large() {
     test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), |path| {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if SMALL_TEST_IGNORE_LIST.contains(path_str) {
+        if ASMGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
             test_asmgen(path)
         }
     });
