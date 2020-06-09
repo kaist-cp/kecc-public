@@ -1,0 +1,68 @@
+
+fun i32 @gcd (i32, i32) {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:u1 = cmp gt %b0:p0:i32 0:i32
+  br %b0:i0:u1, b1(), b2()
+
+block b1:
+  j b3(%b0:p0:i32)
+
+block b2:
+  %b2:i0:i32 = minus %b0:p0:i32
+  j b3(%b2:i0:i32)
+
+block b3:
+  %b3:p0:i32:t0
+  %b3:i0:u1 = cmp gt %b0:p1:i32 0:i32
+  br %b3:i0:u1, b4(), b5()
+
+block b4:
+  j b6(%b0:p1:i32)
+
+block b5:
+  %b5:i0:i32 = minus %b0:p1:i32
+  j b6(%b5:i0:i32)
+
+block b6:
+  %b6:p0:i32:t1
+  j b7(%b3:p0:i32, %b6:p0:i32)
+
+block b7:
+  %b7:p0:i32:a
+  %b7:p1:i32:b
+  %b7:i0:u1 = cmp ne %b7:p0:i32 %b7:p1:i32
+  br %b7:i0:u1, b8(), b9()
+
+block b8:
+  %b8:i0:u1 = cmp gt %b7:p0:i32 %b7:p1:i32
+  br %b8:i0:u1, b10(), b11()
+
+block b9:
+  ret %b7:p0:i32
+
+block b10:
+  %b10:i0:i32 = sub %b7:p0:i32 %b7:p1:i32
+  j b7(%b10:i0:i32, %b7:p1:i32)
+
+block b11:
+  %b11:i0:i32 = sub %b7:p1:i32 %b7:p0:i32
+  j b7(%b7:p0:i32, %b11:i0:i32)
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:i32 = call @gcd:*[ret:i32 params:(i32, i32)](18:i32, 21:i32)
+  %b0:i1:u1 = cmp eq %b0:i0:i32 3:i32
+  %b0:i2:i32 = typecast %b0:i1:u1 to i32
+  ret %b0:i2:i32
+}

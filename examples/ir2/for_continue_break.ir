@@ -1,0 +1,58 @@
+
+fun i32 @foo () {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:sum
+    %l1:i32:i
+
+block b0:
+  %b0:i0:unit = nop
+  %b0:i1:unit = nop
+  j b2(0:i32, 0:i32)
+
+block b2:
+  %b2:p0:i32:sum
+  %b2:p1:i32:i
+  %b2:i0:unit = nop
+  %b2:i1:u1 = cmp eq %b2:p1:i32 5:i32
+  br %b2:i1:u1, b6(), b7()
+
+block b6:
+  %b6:i0:unit = nop
+  ret %b2:p0:i32
+
+block b7:
+  %b7:i0:unit = nop
+  %b7:i1:u1 = cmp eq %b2:p1:i32 3:i32
+  br %b7:i1:u1, b10(), b11()
+
+block b10:
+  %b10:i0:unit = nop
+  %b10:i1:i32 = add %b2:p1:i32 1:i32
+  %b10:i2:unit = nop
+  j b2(%b2:p0:i32, %b10:i1:i32)
+
+block b11:
+  %b11:i0:unit = nop
+  %b11:i1:unit = nop
+  %b11:i2:i32 = add %b2:p0:i32 %b2:p1:i32
+  %b11:i3:unit = nop
+  %b11:i4:unit = nop
+  %b11:i5:i32 = add %b2:p1:i32 1:i32
+  %b11:i6:unit = nop
+  j b2(%b11:i2:i32, %b11:i5:i32)
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:i32 = call @foo:*[ret:i32 params:()]()
+  %b0:i1:u1 = cmp eq %b0:i0:i32 7:i32
+  %b0:i2:i32 = typecast %b0:i1:u1 to i32
+  ret %b0:i2:i32
+}

@@ -1,0 +1,28 @@
+
+fun i32 @fibonacci (i32) {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:i32 = add %b0:p0:i32 %b0:p0:i32
+  %b0:i1:u1 = cmp ne %b0:i0:i32 0:i32
+  br %b0:i1:u1, b2(), b3()
+
+block b2:
+  ret %b0:p0:i32
+
+block b3:
+  ret undef:i32
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  ret 1:i32
+}

@@ -1,0 +1,32 @@
+
+fun i32 @fibonacci (i32) {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:n
+
+block b0:
+  %b0:i0:unit = store %b0:p0:i32 %l0:*i32
+  %b0:i1:i32 = load %l0:*i32
+  %b0:i2:i32 = load %l0:*i32
+  %b0:i3:i32 = add %b0:i1:i32 %b0:i2:i32
+  %b0:i4:u1 = cmp ne %b0:i3:i32 0:i32
+  br %b0:i4:u1, b2(), b3()
+
+block b2:
+  %b2:i0:i32 = load %l0:*i32
+  ret %b2:i0:i32
+
+block b3:
+  ret undef:i32
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  ret 1:i32
+}

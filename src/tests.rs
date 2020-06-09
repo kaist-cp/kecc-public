@@ -120,6 +120,7 @@ pub fn test_irgen(path: &Path) {
 }
 
 pub fn test_irparse(path: &Path) {
+    // TODO: delete ignore list in the future
     let ignore_list = vec![
         "examples/c/array5.c",
         "examples/c/foo3.c",
@@ -200,7 +201,7 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
 }
 
 pub fn test_asmgen(path: &Path) {
-    // TODO: delete black list in the future
+    // TODO: delete ignore list in the future
     let ignore_list = vec![
         "examples/asmgen/array5.ir",
         "examples/asmgen/foo3.ir",
@@ -298,4 +299,104 @@ pub fn test_asmgen(path: &Path) {
 
     println!("kecc interp: {}, qemu: {}", value as i8, qemu_status as i8);
     assert_eq!(value as i8, qemu_status as i8);
+}
+
+// TODO: test all the way down to assembly
+pub fn test_end_to_end(path: &Path) {
+    // TODO: delete ignore list in the future
+    let ignore_list = vec!["examples/c/float2.c"];
+    if ignore_list.contains(&path.to_str().expect("`path` must be transformed to `&str`")) {
+        println!("skip test");
+        return;
+    }
+
+    // Check if the file has .c extension
+    assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
+    let unit = c::Parse::default()
+        .translate(&path)
+        .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
+
+    // Test parse
+    c::Parse::default()
+        .translate(&path)
+        .expect("failed to parse the given program");
+
+    let file_path = path.display().to_string();
+    let bin_path = path
+        .with_extension("endtoend")
+        .as_path()
+        .display()
+        .to_string();
+
+    // Compile c file: If fails, test is vacuously success
+    if !Command::new("gcc")
+        .args(&[
+            "-fsanitize=undefined",
+            "-fno-sanitize-recover=all",
+            "-O1",
+            &file_path,
+            "-o",
+            &bin_path,
+        ])
+        .stderr(Stdio::null())
+        .status()
+        .unwrap()
+        .success()
+    {
+        ::std::process::exit(SKIP_TEST);
+    }
+
+    // Execute compiled executable
+    let mut child = Command::new(fs::canonicalize(bin_path.clone()).unwrap())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("failed to execute the compiled executable");
+
+    Command::new("rm")
+        .arg(bin_path)
+        .status()
+        .expect("failed to remove compiled executable");
+
+    let status = some_or!(
+        child
+            .wait_timeout_ms(500)
+            .expect("failed to obtain exit status from child process"),
+        {
+            println!("timeout occurs");
+            child.kill().unwrap();
+            child.wait().unwrap();
+            ::std::process::exit(SKIP_TEST);
+        }
+    );
+
+    if child
+        .stderr
+        .expect("`stderr` of `child` must be `Some`")
+        .bytes()
+        .next()
+        .is_some()
+    {
+        println!("error occurs");
+        ::std::process::exit(SKIP_TEST);
+    }
+
+    let status = some_or_exit!(status.code(), SKIP_TEST);
+
+    let mut ir = Irgen::default()
+        .translate(&unit)
+        .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
+    O1::default().optimize(&mut ir);
+    let args = Vec::new();
+    let result = ir::interp(&ir, args).unwrap_or_else(|interp_error| panic!("{}", interp_error));
+    // We only allow main function whose return type is `int`
+    let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
+    assert_eq!(width, 32);
+    assert!(is_signed);
+
+    // When obtain status from `gcc` executable process, value is truncated to byte size.
+    // For this reason, we make `fuzzer` generate the C source code which returns value
+    // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
+    // may be deleted. So, we truncate result value to byte size one more time here.
+    println!("gcc: {}, kecc: {}", status as i8, value as i8);
+    assert_eq!(status as i8, value as i8);
 }

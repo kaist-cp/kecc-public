@@ -1,0 +1,11 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:x
+
+block b0:
+  %b0:i0:unit = nop
+  ret 1:i32
+}

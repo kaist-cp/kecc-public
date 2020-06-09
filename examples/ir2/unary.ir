@@ -1,0 +1,18 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+    %l0:u8:temp
+
+block b0:
+  %b0:i0:u8 = typecast 0:i64 to u8
+  %b0:i1:unit = nop
+  %b0:i2:unit = nop
+  %b0:i3:u8 = sub %b0:i0:u8 1:u8
+  %b0:i4:unit = nop
+  %b0:i5:i32 = typecast %b0:i3:u8 to i32
+  %b0:i6:u1 = cmp gt 1:i32 %b0:i5:i32
+  %b0:i7:i32 = typecast %b0:i6:u1 to i32
+  ret %b0:i7:i32
+}

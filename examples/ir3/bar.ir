@@ -1,0 +1,27 @@
+
+fun i32 @bar (i32, i32, i32) {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:u1 = cmp eq %b0:p0:i32 %b0:p1:i32
+  br %b0:i0:u1, b1(), b2()
+
+block b1:
+  ret %b0:p1:i32
+
+block b2:
+  ret %b0:p2:i32
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  ret 1:i32
+}

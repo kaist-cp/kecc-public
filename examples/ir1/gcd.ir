@@ -1,0 +1,94 @@
+
+fun i32 @gcd (i32, i32) {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:a
+    %l1:i32:b
+    %l2:i32:t0
+    %l3:i32:t1
+
+block b0:
+  %b0:i0:unit = store %b0:p0:i32 %l0:*i32
+  %b0:i1:unit = store %b0:p1:i32 %l1:*i32
+  %b0:i2:i32 = load %l0:*i32
+  %b0:i3:u1 = cmp gt %b0:i2:i32 0:i32
+  br %b0:i3:u1, b1(), b2()
+
+block b1:
+  %b1:i0:i32 = load %l0:*i32
+  %b1:i1:unit = store %b1:i0:i32 %l2:*i32
+  j b3()
+
+block b2:
+  %b2:i0:i32 = load %l0:*i32
+  %b2:i1:i32 = minus %b2:i0:i32
+  %b2:i2:unit = store %b2:i1:i32 %l2:*i32
+  j b3()
+
+block b3:
+  %b3:i0:i32 = load %l2:*i32
+  %b3:i1:unit = store %b3:i0:i32 %l0:*i32
+  %b3:i2:i32 = load %l1:*i32
+  %b3:i3:u1 = cmp gt %b3:i2:i32 0:i32
+  br %b3:i3:u1, b4(), b5()
+
+block b4:
+  %b4:i0:i32 = load %l1:*i32
+  %b4:i1:unit = store %b4:i0:i32 %l3:*i32
+  j b6()
+
+block b5:
+  %b5:i0:i32 = load %l1:*i32
+  %b5:i1:i32 = minus %b5:i0:i32
+  %b5:i2:unit = store %b5:i1:i32 %l3:*i32
+  j b6()
+
+block b6:
+  %b6:i0:i32 = load %l3:*i32
+  %b6:i1:unit = store %b6:i0:i32 %l1:*i32
+  j b7()
+
+block b7:
+  %b7:i0:i32 = load %l0:*i32
+  %b7:i1:i32 = load %l1:*i32
+  %b7:i2:u1 = cmp ne %b7:i0:i32 %b7:i1:i32
+  br %b7:i2:u1, b8(), b9()
+
+block b8:
+  %b8:i0:i32 = load %l0:*i32
+  %b8:i1:i32 = load %l1:*i32
+  %b8:i2:u1 = cmp gt %b8:i0:i32 %b8:i1:i32
+  br %b8:i2:u1, b10(), b11()
+
+block b9:
+  %b9:i0:i32 = load %l0:*i32
+  ret %b9:i0:i32
+
+block b10:
+  %b10:i0:i32 = load %l0:*i32
+  %b10:i1:i32 = load %l1:*i32
+  %b10:i2:i32 = sub %b10:i0:i32 %b10:i1:i32
+  %b10:i3:unit = store %b10:i2:i32 %l0:*i32
+  j b7()
+
+block b11:
+  %b11:i0:i32 = load %l1:*i32
+  %b11:i1:i32 = load %l0:*i32
+  %b11:i2:i32 = sub %b11:i0:i32 %b11:i1:i32
+  %b11:i3:unit = store %b11:i2:i32 %l1:*i32
+  j b7()
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:i32 = call @gcd:*[ret:i32 params:(i32, i32)](18:i32, 21:i32)
+  %b0:i1:u1 = cmp eq %b0:i0:i32 3:i32
+  %b0:i2:i32 = typecast %b0:i1:u1 to i32
+  ret %b0:i2:i32
+}

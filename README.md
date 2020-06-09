@@ -30,15 +30,27 @@ cargo run --release -- examples/c/fibonacci.c  # compile with release build
 
 ## Test
 
-```
+```sh
 RUST_MIN_STACK=8388608 cargo test             # debug build test
 RUST_MIN_STACK=8388608 cargo test --release   # release build test
 
-RUST_MIN_STACK=8388608 cargo test <test-name> # run a particular test
+RUST_MIN_STACK=8388608 cargo test test_examples_write_c       # run write_c test
+
+RUST_MIN_STACK=8388608 cargo test test_examples_irgen_small   # run irgen test using a small subset of examples
+RUST_MIN_STACK=8388608 cargo test test_examples_irgen         # run irgen test
+
+RUST_MIN_STACK=8388608 cargo test test_examples_simplify_cfg  # run simplify_cfg test
+RUST_MIN_STACK=8388608 cargo test test_examples_mem2reg       # run mem2reg test
+RUST_MIN_STACK=8388608 cargo test test_examples_deadcode      # run deadcode test
+RUST_MIN_STACK=8388608 cargo test test_examples_gvn           # run gvn test
+
+RUST_MIN_STACK=8388608 cargo test test_examples_asmgen_small  # run asmgen test using a small subset of examples
+RUST_MIN_STACK=8388608 cargo test test_examples_asmgen        # run asmgen test
+
+RUST_MIN_STACK=8388608 cargo test test_examples_end_to_end    # run irgen, optimize and asmgen pipeline test
 ```
 
-`RUST_MIN_STACK=8388608` is necessary for deep call stack for irgen tests. `<test-name>` can be
-`test_examples_write_c`, `test_examples_irgen`, ...
+`RUST_MIN_STACK=8388608` is necessary for deep call stack for irgen tests.
 
 
 ## Fuzzing

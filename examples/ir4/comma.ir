@@ -1,0 +1,14 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:i32 = add 2:i32 2:i32
+  %b0:i1:i32 = add %b0:i0:i32 3:i32
+  %b0:i2:u1 = cmp eq %b0:i1:i32 7:i32
+  %b0:i3:i32 = typecast %b0:i2:u1 to i32
+  ret %b0:i3:i32
+}

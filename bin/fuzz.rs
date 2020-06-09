@@ -48,6 +48,11 @@ fn main() {
         todo!("test gvn");
     }
 
+    if matches.is_present("end-to-end") {
+        kecc::test_end_to_end(Path::new(&input));
+        return;
+    }
+
     assert_eq!(
         Path::new(input).extension(),
         Some(std::ffi::OsStr::new("ir"))

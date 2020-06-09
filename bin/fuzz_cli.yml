@@ -23,6 +23,9 @@ args:
     - gvn:
         long: gvn
         help: Performs gvn
+    - end-to-end:
+        long: end-to-end
+        help: Fuzzes irgen, optimize and asmgen pipeline
     - INPUT:
         help: Sets the input file to use
         required: true

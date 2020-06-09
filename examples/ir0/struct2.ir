@@ -1,5 +1,5 @@
-struct %t0 : { [4 x i32] }
 struct %t1 : { i8,  struct %t0, i64 }
+struct %t0 : { [4 x i32] }
 
 fun i32 @main () {
 init:

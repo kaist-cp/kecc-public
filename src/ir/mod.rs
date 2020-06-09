@@ -423,6 +423,14 @@ impl RegisterId {
     pub fn temp(bid: BlockId, iid: usize) -> Self {
         Self::Temp { bid, iid }
     }
+
+    pub fn is_const(&self, bid_init: BlockId) -> bool {
+        match self {
+            Self::Local { .. } => true,
+            Self::Arg { bid, .. } => bid == &bid_init,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Display for RegisterId {

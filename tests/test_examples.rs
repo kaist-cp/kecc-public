@@ -21,14 +21,83 @@ where
     }
 }
 
+fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Path, opt: &mut O) {
+    let from_dir = from.read_dir().expect("read_dir call failed");
+
+    for entry in from_dir {
+        let entry = ok_or!(entry, continue);
+        let from_file_path = entry.path();
+        let file_name = from_file_path
+            .strip_prefix(from)
+            .expect("`from_file _path` must have file name");
+        let to_file_path = to.join(file_name);
+
+        assert_eq!(from_file_path.is_file(), true);
+        assert_eq!(to_file_path.exists(), true);
+        assert_eq!(to_file_path.is_file(), true);
+
+        // TODO: `ignore_list` is a list of examples that ir parser does not support.
+        // We will delete `ignore_list` after implementing complete ir parser.
+        let ignore_list = vec![
+            "array5.ir",
+            "foo3.ir",
+            "minus_constant.ir",
+            "struct.ir",
+            "struct2.ir",
+            "struct3.ir",
+            "temp2.ir",
+            "typecast.ir",
+        ];
+        if ignore_list.contains(
+            &file_name
+                .to_str()
+                .expect("`file_name` must be transformed to `&str`"),
+        ) {
+            return;
+        }
+
+        println!("[testing {:?} to {:?}]", from_file_path, to_file_path);
+        test_opt(&from_file_path, &to_file_path, opt);
+    }
+}
+
+const SMALL_TEST_IGNORE_LIST: [&str; 10] = [
+    "examples/asmgen/array.ir",
+    "examples/asmgen/array2.ir",
+    "examples/asmgen/array3.ir",
+    "examples/asmgen/array4.ir",
+    "examples/asmgen/array5.ir",
+    "examples/asmgen/float.ir",
+    "examples/asmgen/struct.ir",
+    "examples/asmgen/struct2.ir",
+    "examples/asmgen/struct3.ir",
+    "examples/asmgen/temp2.ir",
+];
+
 #[test]
 fn test_examples_write_c() {
     test_dir(Path::new("examples/c"), &OsStr::new("c"), test_write_c);
 }
 
 #[test]
-fn test_examples_irgen() {
-    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_irgen);
+fn test_examples_irgen_small() {
+    test_dir(Path::new("examples/c"), &OsStr::new("c"), |path| {
+        let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
+        if SMALL_TEST_IGNORE_LIST.contains(path_str) {
+            return;
+        }
+        test_irgen(path)
+    });
+}
+
+#[test]
+fn test_examples_irgen_large() {
+    test_dir(Path::new("examples/c"), &OsStr::new("c"), |path| {
+        let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
+        if SMALL_TEST_IGNORE_LIST.contains(path_str) {
+            test_irgen(path)
+        }
+    });
 }
 
 // TODO: make it work!
@@ -62,6 +131,12 @@ fn test_examples_simplify_cfg() {
         &Path::new("examples/simplify_cfg/empty.output.ir"),
         &mut FunctionPass::<SimplifyCfgEmpty>::default(),
     );
+
+    test_opt_between_dirs(
+        &Path::new("examples/ir0"),
+        &Path::new("examples/ir1"),
+        &mut SimplifyCfg::default(),
+    );
 }
 
 #[test]
@@ -71,14 +146,11 @@ fn test_examples_mem2reg() {
         &Path::new("examples/mem2reg/mem2reg.output.ir"),
         &mut Mem2reg::default(),
     );
-}
 
-#[test]
-fn test_examples_gvn() {
-    test_opt(
-        &Path::new("examples/gvn/gvn.input.ir"),
-        &Path::new("examples/gvn/gvn.output.ir"),
-        &mut Gvn::default(),
+    test_opt_between_dirs(
+        &Path::new("examples/ir1"),
+        &Path::new("examples/ir2"),
+        &mut Mem2reg::default(),
     );
 }
 
@@ -89,9 +161,51 @@ fn test_examples_deadcode() {
         &Path::new("examples/deadcode/deadcode.output.ir"),
         &mut Deadcode::default(),
     );
+
+    test_opt_between_dirs(
+        &Path::new("examples/ir2"),
+        &Path::new("examples/ir3"),
+        &mut Deadcode::default(),
+    );
 }
 
 #[test]
-fn test_examples_asmgen() {
-    test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), test_asmgen);
+fn test_examples_gvn() {
+    test_opt(
+        &Path::new("examples/gvn/gvn.input.ir"),
+        &Path::new("examples/gvn/gvn.output.ir"),
+        &mut Gvn::default(),
+    );
+
+    test_opt_between_dirs(
+        &Path::new("examples/ir3"),
+        &Path::new("examples/ir4"),
+        &mut Gvn::default(),
+    );
+}
+
+#[test]
+fn test_examples_asmgen_small() {
+    test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), |path| {
+        let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
+        if SMALL_TEST_IGNORE_LIST.contains(path_str) {
+            return;
+        }
+        test_asmgen(path)
+    });
+}
+
+#[test]
+fn test_examples_asmgen_large() {
+    test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), |path| {
+        let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
+        if SMALL_TEST_IGNORE_LIST.contains(path_str) {
+            test_asmgen(path)
+        }
+    });
+}
+
+#[test]
+fn test_examples_end_to_end() {
+    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_end_to_end);
 }

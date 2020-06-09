@@ -1,0 +1,65 @@
+
+fun i32 @f (i32) {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:x
+
+block b0:
+  %b0:i0:unit = nop
+  %b0:i1:unit = nop
+  %b0:i2:i32 = add %b0:p0:i32 8:i32
+  ret %b0:i2:i32
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:x
+    %l1:i32:y
+    %l2:i32:t0
+    %l3:i32:t1
+
+block b0:
+  %b0:i0:unit = nop
+  %b0:i1:unit = nop
+  %b0:i2:i32 = add 0:i32 1:i32
+  %b0:i3:unit = nop
+  %b0:i4:u1 = cmp eq 0:i32 1:i32
+  br %b0:i4:u1, b1(), b2()
+
+block b1:
+  %b1:i0:unit = nop
+  j b3(1:i32)
+
+block b2:
+  %b2:i0:unit = nop
+  j b3(2:i32)
+
+block b3:
+  %b3:p0:i32:t0
+  %b3:i0:unit = nop
+  %b3:i1:unit = nop
+  %b3:i2:unit = nop
+  %b3:i3:unit = nop
+  %b3:i4:u1 = cmp lt %b0:i2:i32 %b3:p0:i32
+  br %b3:i4:u1, b4(), b5()
+
+block b4:
+  %b4:i0:unit = nop
+  %b4:i1:unit = nop
+  j b6(%b0:i2:i32)
+
+block b5:
+  %b5:i0:unit = nop
+  j b6(2:i32)
+
+block b6:
+  %b6:p0:i32:t1
+  %b6:i0:unit = nop
+  %b6:i1:i32 = call @f:*[ret:i32 params:(i32)](%b6:p0:i32)
+  %b6:i2:u1 = cmp eq %b6:i1:i32 9:i32
+  %b6:i3:i32 = typecast %b6:i2:u1 to i32
+  ret %b6:i3:i32
+}

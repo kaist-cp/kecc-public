@@ -1346,12 +1346,17 @@ impl<'i> State<'i> {
             assert!(a.dtype().set_const(false) == d.deref().clone().set_const(false));
         }
 
-        for (i, a) in arg.args.iter().enumerate() {
-            let v = self.interp_operand(a.clone()).unwrap();
-            self.stack_frame
-                .registers
-                .write(RegisterId::arg(arg.bid, i), v);
-        }
+        arg.args
+            .iter()
+            .map(|a| self.interp_operand(a.clone()).unwrap())
+            .collect::<Vec<_>>()
+            .into_iter()
+            .enumerate()
+            .for_each(|(i, v)| {
+                self.stack_frame
+                    .registers
+                    .write(RegisterId::arg(arg.bid, i), v);
+            });
 
         self.stack_frame.pc = Pc::new(arg.bid);
         Ok(None)
