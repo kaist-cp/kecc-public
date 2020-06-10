@@ -178,7 +178,7 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
         .expect("parse failed while parsing the output from implemented printer");
     opt.optimize(&mut ir);
 
-    if ir != to {
+    if !ir.is_equiv(&to) {
         stderr()
             .lock()
             .write_fmt(format_args!(

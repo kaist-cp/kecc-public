@@ -1,47 +1,11 @@
-#![allow(unused_variables)]
-
 use lang_c::ast::*;
 use lang_c::span::Node;
 
-use core::ops::Deref;
-
-use itertools::izip;
-
-trait IsEquiv {
-    fn is_equiv(&self, other: &Self) -> bool;
-}
+use crate::utils::IsEquiv;
 
 impl<T: IsEquiv> IsEquiv for Node<T> {
     fn is_equiv(&self, other: &Self) -> bool {
         self.node.is_equiv(&other.node)
-    }
-}
-
-impl<T: IsEquiv> IsEquiv for Box<T> {
-    fn is_equiv(&self, other: &Self) -> bool {
-        self.deref().is_equiv(other.deref())
-    }
-}
-
-impl<T: IsEquiv> IsEquiv for &T {
-    fn is_equiv(&self, other: &Self) -> bool {
-        (*self).is_equiv(*other)
-    }
-}
-
-impl<T: IsEquiv> IsEquiv for Option<T> {
-    fn is_equiv(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Some(lhs), Some(rhs)) => lhs.is_equiv(rhs),
-            (None, None) => true,
-            _ => false,
-        }
-    }
-}
-
-impl<T: IsEquiv> IsEquiv for Vec<T> {
-    fn is_equiv(&self, other: &Self) -> bool {
-        self.len() == other.len() && izip!(self, other).all(|(lhs, rhs)| lhs.is_equiv(rhs))
     }
 }
 

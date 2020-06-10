@@ -1,3 +1,7 @@
+use itertools::izip;
+
+use core::ops::Deref;
+
 #[macro_export]
 /// Ok or executing the given expression.
 macro_rules! ok_or {
@@ -50,4 +54,36 @@ pub trait Translate<S> {
     type Error;
 
     fn translate(&mut self, source: &S) -> Result<Self::Target, Self::Error>;
+}
+
+pub trait IsEquiv {
+    fn is_equiv(&self, other: &Self) -> bool;
+}
+
+impl<T: IsEquiv> IsEquiv for Box<T> {
+    fn is_equiv(&self, other: &Self) -> bool {
+        self.deref().is_equiv(other.deref())
+    }
+}
+
+impl<T: IsEquiv> IsEquiv for &T {
+    fn is_equiv(&self, other: &Self) -> bool {
+        (*self).is_equiv(*other)
+    }
+}
+
+impl<T: IsEquiv> IsEquiv for Option<T> {
+    fn is_equiv(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Some(lhs), Some(rhs)) => lhs.is_equiv(rhs),
+            (None, None) => true,
+            _ => false,
+        }
+    }
+}
+
+impl<T: IsEquiv> IsEquiv for Vec<T> {
+    fn is_equiv(&self, other: &Self) -> bool {
+        self.len() == other.len() && izip!(self, other).all(|(lhs, rhs)| lhs.is_equiv(rhs))
+    }
 }

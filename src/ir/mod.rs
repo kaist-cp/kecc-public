@@ -1,4 +1,5 @@
 mod dtype;
+mod equiv;
 mod interp;
 mod parse;
 mod write_ir;
