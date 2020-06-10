@@ -7739,7 +7739,7 @@ block b0:
   %b0:i20:f64 = minus 0.8836803984453947:f64
   %b0:i21:f32 = typecast %b0:i20:f64 to f32
   %b0:i22:unit = store %b0:i21:f32 %l9:*f32
-  %b0:i23:unit = store 0.02298282564015198:f64 %l10:*f64
+  %b0:i23:unit = store 1.022982825640152:f64 %l10:*f64
   %b0:i24:f32 = typecast 0.768435276037987:f64 to f32
   %b0:i25:unit = store %b0:i24:f32 %l11:*f32
   %b0:i26:f64 = typecast 2.0350472927093506:f32 to f64

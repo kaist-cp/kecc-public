@@ -7818,7 +7818,7 @@ block b0:
   %b0:i99:f64 = sub %b0:i18:f64 %b0:i98:f64
   %b0:i100:f64 = typecast %b0:i21:f32 to f64
   %b0:i101:f64 = add %b0:i100:f64 %b0:i99:f64
-  %b0:i102:f64 = div 0.02298282564015198:f64 %b0:i101:f64
+  %b0:i102:f64 = div 1.022982825640152:f64 %b0:i101:f64
   %b0:i103:f64 = typecast %b0:i24:f32 to f64
   %b0:i104:f64 = div %b0:i103:f64 %b0:i102:f64
   %b0:i105:f64 = div %b0:i26:f64 %b0:i104:f64

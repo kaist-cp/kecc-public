@@ -303,13 +303,6 @@ pub fn test_asmgen(path: &Path) {
 
 // TODO: test all the way down to assembly
 pub fn test_end_to_end(path: &Path) {
-    // TODO: delete ignore list in the future
-    let ignore_list = vec!["examples/c/float2.c"];
-    if ignore_list.contains(&path.to_str().expect("`path` must be transformed to `&str`")) {
-        println!("skip test");
-        return;
-    }
-
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
     let unit = c::Parse::default()
