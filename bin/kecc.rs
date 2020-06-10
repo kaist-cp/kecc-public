@@ -116,7 +116,13 @@ fn compile_ir(
 
     if matches.is_present("irrun") {
         let result = ir::interp(input, Vec::new()).unwrap();
-        println!("[result] {:?}", result);
+        let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
+        assert_eq!(width, 32);
+        assert!(is_signed);
+
+        // When obtain status from `gcc` executable process, status value is truncated to byte size.
+        // So, we also truncate result value to byte size before printing it.
+        println!("[result] {:?}", value as u8);
         return;
     }
 

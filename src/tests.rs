@@ -115,8 +115,8 @@ pub fn test_irgen(path: &Path) {
     // For this reason, we make `fuzzer` generate the C source code which returns value
     // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
     // may be deleted. So, we truncate result value to byte size one more time here.
-    println!("gcc: {}, kecc: {}", status as i8, value as i8);
-    assert_eq!(status as i8, value as i8);
+    println!("gcc: {}, kecc: {}", status as u8, value as u8);
+    assert_eq!(status as u8, value as u8);
 }
 
 pub fn test_irparse(path: &Path) {
@@ -297,8 +297,8 @@ pub fn test_asmgen(path: &Path) {
 
     let qemu_status = some_or_exit!(status.code(), SKIP_TEST);
 
-    println!("kecc interp: {}, qemu: {}", value as i8, qemu_status as i8);
-    assert_eq!(value as i8, qemu_status as i8);
+    println!("kecc interp: {}, qemu: {}", value as u8, qemu_status as u8);
+    assert_eq!(value as u8, qemu_status as u8);
 }
 
 // TODO: test all the way down to assembly
@@ -397,6 +397,6 @@ pub fn test_end_to_end(path: &Path) {
     // For this reason, we make `fuzzer` generate the C source code which returns value
     // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
     // may be deleted. So, we truncate result value to byte size one more time here.
-    println!("gcc: {}, kecc: {}", status as i8, value as i8);
-    assert_eq!(status as i8, value as i8);
+    println!("gcc: {}, kecc: {}", status as u8, value as u8);
+    assert_eq!(status as u8, value as u8);
 }
