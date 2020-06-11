@@ -45,11 +45,11 @@ init:
 block b0:
   %b0:i0:i32 = minus 1:i32
   %b0:i1:u32 = typecast 1:i32 to u32
-  %b0:i2:i32 = call @int_greater_than:*[ret:i32 params:(i32, u32)](%b0:i0:i32, %b0:i1:u32)
+  %b0:i2:i32 = call @int_greater_than:[ret:i32 params:(i32, u32)]*(%b0:i0:i32, %b0:i1:u32)
   %b0:i3:i32 = minus 1:i32
   %b0:i4:i8 = typecast %b0:i0:i32 to i8
   %b0:i5:u8 = typecast 1:i32 to u8
-  %b0:i6:i32 = call @char_greater_than:*[ret:i32 params:(i8, u8)](%b0:i4:i8, %b0:i5:u8)
+  %b0:i6:i32 = call @char_greater_than:[ret:i32 params:(i8, u8)]*(%b0:i4:i8, %b0:i5:u8)
   %b0:i7:u1 = cmp eq %b0:i2:i32 1:i32
   br %b0:i7:u1, b1(), b2()
 

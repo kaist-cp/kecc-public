@@ -8,10 +8,10 @@ init:
 
 block b0:
   %b0:i0:i16 = typecast 0:i32 to i16
-  %b0:i1:unit = store %b0:i0:i16 %l0:*i16
-  %b0:i2:unit = store 4294967163:u32 %l1:*u32
-  %b0:i3:i16 = load %l0:*i16
-  %b0:i4:u32 = load %l1:*u32
+  %b0:i1:unit = store %b0:i0:i16 %l0:i16*
+  %b0:i2:unit = store 4294967163:u32 %l1:u32*
+  %b0:i3:i16 = load %l0:i16*
+  %b0:i4:u32 = load %l1:u32*
   %b0:i5:u32 = typecast %b0:i3:i16 to u32
   %b0:i6:u32 = xor %b0:i5:u32 %b0:i4:u32
   %b0:i7:i8 = typecast %b0:i6:u32 to i8

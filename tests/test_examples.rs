@@ -36,26 +36,6 @@ fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Pat
         assert_eq!(to_file_path.exists(), true);
         assert_eq!(to_file_path.is_file(), true);
 
-        // TODO: `ignore_list` is a list of examples that ir parser does not support.
-        // We will delete `ignore_list` after implementing complete ir parser.
-        let ignore_list = vec![
-            "array5.ir",
-            "foo3.ir",
-            "minus_constant.ir",
-            "struct.ir",
-            "struct2.ir",
-            "struct3.ir",
-            "temp2.ir",
-            "typecast.ir",
-        ];
-        if ignore_list.contains(
-            &file_name
-                .to_str()
-                .expect("`file_name` must be transformed to `&str`"),
-        ) {
-            return;
-        }
-
         println!("[testing {:?} to {:?}]", from_file_path, to_file_path);
         test_opt(&from_file_path, &to_file_path, opt);
     }
@@ -113,7 +93,6 @@ fn test_examples_irgen_large() {
     });
 }
 
-// TODO: make it work!
 #[test]
 fn test_examples_irparse() {
     test_dir(Path::new("examples/c"), &OsStr::new("c"), test_irparse);

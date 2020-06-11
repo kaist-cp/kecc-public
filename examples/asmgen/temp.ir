@@ -6,18 +6,18 @@ init:
     %l0:i32:n
 
 block b0:
-  %b0:i0:unit = store %b0:p0:i32 %l0:*i32
+  %b0:i0:unit = store %b0:p0:i32 %l0:i32*
   j b1()
 
 block b1:
-  %b1:i0:i32 = load %l0:*i32
-  %b1:i1:i32 = load %l0:*i32
+  %b1:i0:i32 = load %l0:i32*
+  %b1:i1:i32 = load %l0:i32*
   %b1:i2:i32 = add %b1:i0:i32 %b1:i1:i32
   %b1:i3:u1 = cmp ne %b1:i2:i32 0:i32
   br %b1:i3:u1, b2(), b3()
 
 block b2:
-  %b2:i0:i32 = load %l0:*i32
+  %b2:i0:i32 = load %l0:i32*
   ret %b2:i0:i32
 
 block b3:

@@ -6,7 +6,7 @@ init:
     %l0:i32:x
 
 block b0:
-  %b0:i0:unit = store 1:i32 %l0:*i32
+  %b0:i0:unit = store 1:i32 %l0:i32*
   ret 1:i32
 
 block b1:

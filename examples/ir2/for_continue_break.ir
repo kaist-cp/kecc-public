@@ -51,7 +51,7 @@ init:
 
 
 block b0:
-  %b0:i0:i32 = call @foo:*[ret:i32 params:()]()
+  %b0:i0:i32 = call @foo:[ret:i32 params:()]*()
   %b0:i1:u1 = cmp eq %b0:i0:i32 7:i32
   %b0:i2:i32 = typecast %b0:i1:u1 to i32
   ret %b0:i2:i32

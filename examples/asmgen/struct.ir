@@ -1,29 +1,29 @@
-struct %t0 : { [4 x [5 x i32]] }
-struct %t1 : { i8,  struct %t0, f64 }
+struct %t0 : { b:[4 x [5 x i32]] }
+struct %t1 : { a:i8, %anon:struct %t0, c:f64 }
 
-fun unit @init (i32, i32, *[5 x i32]) {
+fun unit @init (i32, i32, [5 x i32]*) {
 init:
   bid: b0
   allocations: 
     %l0:i32:row
     %l1:i32:col
-    %l2:*[5 x i32]:arr
+    %l2:[5 x i32]*:arr
     %l3:i32:i
     %l4:i32:j
 
 block b0:
-  %b0:i0:unit = store %b0:p0:i32 %l0:*i32
-  %b0:i1:unit = store %b0:p1:i32 %l1:*i32
-  %b0:i2:unit = store %b0:p2:*[5 x i32] %l2:**[5 x i32]
+  %b0:i0:unit = store %b0:p0:i32 %l0:i32*
+  %b0:i1:unit = store %b0:p1:i32 %l1:i32*
+  %b0:i2:unit = store %b0:p2:[5 x i32]* %l2:[5 x i32]**
   j b1()
 
 block b1:
-  %b1:i0:unit = store 0:i32 %l3:*i32
+  %b1:i0:unit = store 0:i32 %l3:i32*
   j b2()
 
 block b2:
-  %b2:i0:i32 = load %l3:*i32
-  %b2:i1:i32 = load %l0:*i32
+  %b2:i0:i32 = load %l3:i32*
+  %b2:i1:i32 = load %l0:i32*
   %b2:i2:u1 = cmp lt %b2:i0:i32 %b2:i1:i32
   br %b2:i2:u1, b3(), b5()
 
@@ -31,45 +31,45 @@ block b3:
   j b6()
 
 block b4:
-  %b4:i0:i32 = load %l3:*i32
+  %b4:i0:i32 = load %l3:i32*
   %b4:i1:i32 = add %b4:i0:i32 1:i32
-  %b4:i2:unit = store %b4:i1:i32 %l3:*i32
+  %b4:i2:unit = store %b4:i1:i32 %l3:i32*
   j b2()
 
 block b5:
   ret unit:unit
 
 block b6:
-  %b6:i0:unit = store 0:i32 %l4:*i32
+  %b6:i0:unit = store 0:i32 %l4:i32*
   j b7()
 
 block b7:
-  %b7:i0:i32 = load %l4:*i32
-  %b7:i1:i32 = load %l1:*i32
+  %b7:i0:i32 = load %l4:i32*
+  %b7:i1:i32 = load %l1:i32*
   %b7:i2:u1 = cmp lt %b7:i0:i32 %b7:i1:i32
   br %b7:i2:u1, b8(), b10()
 
 block b8:
-  %b8:i0:*[5 x i32] = load %l2:**[5 x i32]
-  %b8:i1:i32 = load %l3:*i32
+  %b8:i0:[5 x i32]* = load %l2:[5 x i32]**
+  %b8:i1:i32 = load %l3:i32*
   %b8:i2:i64 = typecast %b8:i1:i32 to i64
   %b8:i3:i64 = mul %b8:i2:i64 20:i64
-  %b8:i4:*[5 x i32] = getelementptr %b8:i0:*[5 x i32] offset %b8:i3:i64
-  %b8:i5:*i32 = getelementptr %b8:i4:*[5 x i32] offset 0:i32
-  %b8:i6:i32 = load %l4:*i32
+  %b8:i4:[5 x i32]* = getelementptr %b8:i0:[5 x i32]* offset %b8:i3:i64
+  %b8:i5:i32* = getelementptr %b8:i4:[5 x i32]* offset 0:i32
+  %b8:i6:i32 = load %l4:i32*
   %b8:i7:i64 = typecast %b8:i6:i32 to i64
   %b8:i8:i64 = mul %b8:i7:i64 4:i64
-  %b8:i9:*i32 = getelementptr %b8:i5:*i32 offset %b8:i8:i64
-  %b8:i10:i32 = load %l3:*i32
-  %b8:i11:i32 = load %l4:*i32
+  %b8:i9:i32* = getelementptr %b8:i5:i32* offset %b8:i8:i64
+  %b8:i10:i32 = load %l3:i32*
+  %b8:i11:i32 = load %l4:i32*
   %b8:i12:i32 = mul %b8:i10:i32 %b8:i11:i32
-  %b8:i13:unit = store %b8:i12:i32 %b8:i9:*i32
+  %b8:i13:unit = store %b8:i12:i32 %b8:i9:i32*
   j b9()
 
 block b9:
-  %b9:i0:i32 = load %l4:*i32
+  %b9:i0:i32 = load %l4:i32*
   %b9:i1:i32 = add %b9:i0:i32 1:i32
-  %b9:i2:unit = store %b9:i1:i32 %l4:*i32
+  %b9:i2:unit = store %b9:i1:i32 %l4:i32*
   j b7()
 
 block b10:
@@ -80,31 +80,31 @@ fun i32 @main () {
 init:
   bid: b0
   allocations: 
-    %l0: struct %t1:temp
+    %l0:struct %t1:temp
     %l1:i32:row
     %l2:i32:col
-    %l3: struct %t1:temp2
+    %l3:struct %t1:temp2
 
 block b0:
-  %b0:i0:unit = store 4:i32 %l1:*i32
-  %b0:i1:unit = store 5:i32 %l2:*i32
-  %b0:i2:i32 = load %l1:*i32
-  %b0:i3:i32 = load %l2:*i32
-  %b0:i4:*[4 x [5 x i32]] = getelementptr %l0:* struct %t1 offset 4:i64
-  %b0:i5:*[5 x i32] = getelementptr %b0:i4:*[4 x [5 x i32]] offset 0:i32
-  %b0:i6:unit = call @init:*[ret:unit params:(i32, i32, *[5 x i32])](%b0:i2:i32, %b0:i3:i32, %b0:i5:*[5 x i32])
-  %b0:i7: struct %t1 = load %l0:* struct %t1
-  %b0:i8:unit = store %b0:i7: struct %t1 %l3:* struct %t1
-  %b0:i9:*[4 x [5 x i32]] = getelementptr %l3:* struct %t1 offset 4:i64
-  %b0:i10:*[5 x i32] = getelementptr %b0:i9:*[4 x [5 x i32]] offset 0:i32
+  %b0:i0:unit = store 4:i32 %l1:i32*
+  %b0:i1:unit = store 5:i32 %l2:i32*
+  %b0:i2:i32 = load %l1:i32*
+  %b0:i3:i32 = load %l2:i32*
+  %b0:i4:[4 x [5 x i32]]* = getelementptr %l0:struct %t1* offset 4:i64
+  %b0:i5:[5 x i32]* = getelementptr %b0:i4:[4 x [5 x i32]]* offset 0:i32
+  %b0:i6:unit = call @init:[ret:unit params:(i32, i32, [5 x i32]*)]*(%b0:i2:i32, %b0:i3:i32, %b0:i5:[5 x i32]*)
+  %b0:i7:struct %t1 = load %l0:struct %t1*
+  %b0:i8:unit = store %b0:i7:struct %t1 %l3:struct %t1*
+  %b0:i9:[4 x [5 x i32]]* = getelementptr %l3:struct %t1* offset 4:i64
+  %b0:i10:[5 x i32]* = getelementptr %b0:i9:[4 x [5 x i32]]* offset 0:i32
   %b0:i11:i64 = typecast 2:i32 to i64
   %b0:i12:i64 = mul %b0:i11:i64 20:i64
-  %b0:i13:*[5 x i32] = getelementptr %b0:i10:*[5 x i32] offset %b0:i12:i64
-  %b0:i14:*i32 = getelementptr %b0:i13:*[5 x i32] offset 0:i32
+  %b0:i13:[5 x i32]* = getelementptr %b0:i10:[5 x i32]* offset %b0:i12:i64
+  %b0:i14:i32* = getelementptr %b0:i13:[5 x i32]* offset 0:i32
   %b0:i15:i64 = typecast 3:i32 to i64
   %b0:i16:i64 = mul %b0:i15:i64 4:i64
-  %b0:i17:*i32 = getelementptr %b0:i14:*i32 offset %b0:i16:i64
-  %b0:i18:i32 = load %b0:i17:*i32
+  %b0:i17:i32* = getelementptr %b0:i14:i32* offset %b0:i16:i64
+  %b0:i18:i32 = load %b0:i17:i32*
   %b0:i19:u1 = cmp eq %b0:i18:i32 6:i32
   %b0:i20:i32 = typecast %b0:i19:u1 to i32
   ret %b0:i20:i32

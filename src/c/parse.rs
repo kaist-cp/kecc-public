@@ -5,6 +5,7 @@ use lang_c::ast::*;
 use lang_c::driver::{parse, Config, Error as ParseError};
 use lang_c::span::Node;
 
+use crate::utils::AssertSupported;
 use crate::Translate;
 
 #[derive(Debug)]
@@ -29,10 +30,6 @@ impl<P: AsRef<Path>> Translate<P> for Parse {
         unit.assert_supported();
         Ok(unit)
     }
-}
-
-trait AssertSupported {
-    fn assert_supported(&self);
 }
 
 impl<T: AssertSupported> AssertSupported for Node<T> {

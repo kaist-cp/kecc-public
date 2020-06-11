@@ -22,14 +22,14 @@ block b1:
   %b1:i0:i32:b = add %b0:p0:i32 1:i32
   %b1:i1:i32:c = add %b1:i0:i32 2:i32
 
-  %b1:i2:unit = call @sink:*[ret:unit params:(i32)](%b1:i0:i32)
+  %b1:i2:unit = call @sink:[ret:unit params:(i32)]*(%b1:i0:i32)
 
   j b3()
 
 block b2:
   %b2:i0:i32:c = add %b0:i0:i32 2:i32
 
-  %b2:i1:unit = call @sink:*[ret:unit params:(i32)](%b2:i0:i32)
+  %b2:i1:unit = call @sink:[ret:unit params:(i32)]*(%b2:i0:i32)
 
   j b3()
 
@@ -37,8 +37,8 @@ block b3:
   %b3:i0:i32:b = add %b0:p0:i32 1:i32
   %b3:i1:i32:c = add %b3:i0:i32 2:i32
 
-  %b3:i2:unit = call @sink:*[ret:unit params:(i32)](%b3:i0:i32)
-  %b3:i3:unit = call @sink:*[ret:unit params:(i32)](%b3:i1:i32)
+  %b3:i2:unit = call @sink:[ret:unit params:(i32)]*(%b3:i0:i32)
+  %b3:i3:unit = call @sink:[ret:unit params:(i32)]*(%b3:i1:i32)
 
   ret 0:i32
 }

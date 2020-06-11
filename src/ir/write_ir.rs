@@ -20,7 +20,17 @@ impl WriteLine for TranslationUnit {
 
                 let fields = fields
                     .iter()
-                    .map(|f| f.deref().to_string())
+                    .map(|f| {
+                        format!(
+                            "{}:{}",
+                            if let Some(name) = f.name() {
+                                name
+                            } else {
+                                "%anon"
+                            },
+                            f.deref().to_string()
+                        )
+                    })
                     .collect::<Vec<_>>()
                     .join(", ");
 

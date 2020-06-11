@@ -7,14 +7,14 @@ init:
     %l1:i32:x
 
 block b0:
-  %b0:i0:unit = store 2:i32 %l0:*i32
-  %b0:i1:i32 = load %l0:*i32
+  %b0:i0:unit = store 2:i32 %l0:i32*
+  %b0:i1:i32 = load %l0:i32*
   %b0:i2:i32 = add %b0:i1:i32 2:i32
-  %b0:i3:unit = store %b0:i2:i32 %l0:*i32
-  %b0:i4:i32 = load %l0:*i32
+  %b0:i3:unit = store %b0:i2:i32 %l0:i32*
+  %b0:i4:i32 = load %l0:i32*
   %b0:i5:i32 = add %b0:i4:i32 3:i32
-  %b0:i6:unit = store %b0:i5:i32 %l1:*i32
-  %b0:i7:i32 = load %l1:*i32
+  %b0:i6:unit = store %b0:i5:i32 %l1:i32*
+  %b0:i7:i32 = load %l1:i32*
   %b0:i8:u1 = cmp eq %b0:i7:i32 7:i32
   %b0:i9:i32 = typecast %b0:i8:u1 to i32
   ret %b0:i9:i32

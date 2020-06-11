@@ -10,15 +10,15 @@ init:
 
 
 block b0:
-  %b0:i0:i32 = load @a:*i32
-  %b0:i1:i64 = load @b:*i64
+  %b0:i0:i32 = load @a:i32*
+  %b0:i1:i64 = load @b:i64*
   %b0:i2:i64 = typecast %b0:i0:i32 to i64
   %b0:i3:i64 = add %b0:i2:i64 %b0:i1:i64
-  %b0:i4:f32 = load @c:*f32
+  %b0:i4:f32 = load @c:f32*
   %b0:i5:i32 = typecast %b0:i4:f32 to i32
   %b0:i6:i64 = typecast %b0:i5:i32 to i64
   %b0:i7:i64 = add %b0:i3:i64 %b0:i6:i64
-  %b0:i8:f64 = load @d:*f64
+  %b0:i8:f64 = load @d:f64*
   %b0:i9:i64 = typecast %b0:i8:f64 to i64
   %b0:i10:i64 = add %b0:i7:i64 %b0:i9:i64
   %b0:i11:i32 = minus 4:i32

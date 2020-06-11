@@ -4,38 +4,38 @@ init:
   bid: b0
   allocations: 
     %l0:[10 x i32]:a
-    %l1:*i32:p
+    %l1:i32*:p
     %l2:i32:i
 
 block b0:
-  %b0:i0:*i32 = getelementptr %l0:*[10 x i32] offset 0:i32
-  %b0:i1:unit = store %b0:i0:*i32 %l1:**i32
-  %b0:i2:unit = store 0:i32 %l2:*i32
+  %b0:i0:i32* = getelementptr %l0:[10 x i32]* offset 0:i32
+  %b0:i1:unit = store %b0:i0:i32* %l1:i32**
+  %b0:i2:unit = store 0:i32 %l2:i32*
   j b2()
 
 block b2:
-  %b2:i0:i32 = load %l2:*i32
+  %b2:i0:i32 = load %l2:i32*
   %b2:i1:u1 = cmp lt %b2:i0:i32 10:i32
   br %b2:i1:u1, b3(), b5()
 
 block b3:
-  %b3:i0:*i32 = load %l1:**i32
+  %b3:i0:i32* = load %l1:i32**
   %b3:i1:i64 = mul 1:i64 4:i64
-  %b3:i2:*i32 = getelementptr %b3:i0:*i32 offset %b3:i1:i64
-  %b3:i3:unit = store %b3:i2:*i32 %l1:**i32
-  %b3:i4:i32 = load %l2:*i32
-  %b3:i5:unit = store %b3:i4:i32 %b3:i0:*i32
-  %b3:i6:i32 = load %l2:*i32
+  %b3:i2:i32* = getelementptr %b3:i0:i32* offset %b3:i1:i64
+  %b3:i3:unit = store %b3:i2:i32* %l1:i32**
+  %b3:i4:i32 = load %l2:i32*
+  %b3:i5:unit = store %b3:i4:i32 %b3:i0:i32*
+  %b3:i6:i32 = load %l2:i32*
   %b3:i7:i32 = add %b3:i6:i32 1:i32
-  %b3:i8:unit = store %b3:i7:i32 %l2:*i32
+  %b3:i8:unit = store %b3:i7:i32 %l2:i32*
   j b2()
 
 block b5:
-  %b5:i0:*i32 = getelementptr %l0:*[10 x i32] offset 0:i32
+  %b5:i0:i32* = getelementptr %l0:[10 x i32]* offset 0:i32
   %b5:i1:i64 = typecast 5:i32 to i64
   %b5:i2:i64 = mul %b5:i1:i64 4:i64
-  %b5:i3:*i32 = getelementptr %b5:i0:*i32 offset %b5:i2:i64
-  %b5:i4:i32 = load %b5:i3:*i32
+  %b5:i3:i32* = getelementptr %b5:i0:i32* offset %b5:i2:i64
+  %b5:i4:i32 = load %b5:i3:i32*
   %b5:i5:u1 = cmp eq %b5:i4:i32 5:i32
   %b5:i6:i32 = typecast %b5:i5:u1 to i32
   ret %b5:i6:i32

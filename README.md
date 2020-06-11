@@ -141,3 +141,9 @@ qemu-riscv64-static ./hello
 # Check the return value
 echo $?
 ```
+
+
+## Submission
+
+- Submit the corresponding files to [gg.kaist.ac.kr](https://gg.kaist.ac.kr).
+- Run `./scripts/make-submissions.sh` to generate `hw4.zip` and `hw5.zip`, which you should submit for homework 4 and 5.

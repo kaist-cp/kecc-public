@@ -120,22 +120,6 @@ pub fn test_irgen(path: &Path) {
 }
 
 pub fn test_irparse(path: &Path) {
-    // TODO: delete ignore list in the future
-    let ignore_list = vec![
-        "examples/c/array5.c",
-        "examples/c/foo3.c",
-        "examples/c/minus_constant.c",
-        "examples/c/struct.c",
-        "examples/c/struct2.c",
-        "examples/c/struct3.c",
-        "examples/c/temp2.c",
-        "examples/c/typecast.c",
-    ];
-    if ignore_list.contains(&path.to_str().expect("`path` must be transformed to `&str`")) {
-        println!("skip test");
-        return;
-    }
-
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
     let unit = c::Parse::default()
@@ -147,21 +131,51 @@ pub fn test_irparse(path: &Path) {
         .translate(&path)
         .expect("failed to parse the given program");
 
+    let temp_dir = tempdir().expect("temp dir creation failed");
+
+    // Test for original IR
     let ir = Irgen::default()
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
-    let temp_dir = tempdir().expect("temp dir creation failed");
-    let temp_file_path = temp_dir.path().join("temp.c");
+    let temp_file_path = temp_dir.path().join("ir0.ir");
     let mut temp_file = File::create(&temp_file_path).unwrap();
-
     crate::write(&ir, &mut temp_file).unwrap();
 
-    let new_ir = ir::Parse::default()
+    let ir0 = ir::Parse::default()
         .translate(&temp_file_path.as_path())
         .expect("parse failed while parsing the output from implemented printer");
     drop(temp_file);
-    assert_eq!(ir, new_ir);
+    assert_eq!(ir, ir0);
+
+    // Test for optimized IR
+    let ir1 =
+        test_irparse_for_optimized_ir(ir0, &temp_dir.path().join("ir1.ir"), SimplifyCfg::default());
+    let ir2 =
+        test_irparse_for_optimized_ir(ir1, &temp_dir.path().join("ir2.ir"), Mem2reg::default());
+    let ir3 =
+        test_irparse_for_optimized_ir(ir2, &temp_dir.path().join("ir3.ir"), Deadcode::default());
+    let _ = test_irparse_for_optimized_ir(ir3, &temp_dir.path().join("ir4.ir"), Gvn::default());
+
     temp_dir.close().expect("temp dir deletion failed");
+}
+
+#[inline]
+fn test_irparse_for_optimized_ir<O: Optimize<ir::TranslationUnit>>(
+    mut ir: ir::TranslationUnit,
+    temp_file_path: &Path,
+    mut opt: O,
+) -> ir::TranslationUnit {
+    opt.optimize(&mut ir);
+    let mut temp_file = File::create(temp_file_path).unwrap();
+    crate::write(&ir, &mut temp_file).unwrap();
+
+    let optimized_ir = ir::Parse::default()
+        .translate(&temp_file_path)
+        .expect("parse failed while parsing the output from implemented printer");
+    drop(temp_file);
+    assert_eq!(ir, optimized_ir);
+
+    optimized_ir
 }
 
 pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUnit>>(
@@ -203,14 +217,10 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
 pub fn test_asmgen(path: &Path) {
     // TODO: delete ignore list in the future
     let ignore_list = vec![
-        "examples/asmgen/array5.ir",
-        "examples/asmgen/foo3.ir",
-        "examples/asmgen/minus_constant.ir",
         "examples/asmgen/struct.ir",
         "examples/asmgen/struct2.ir",
         "examples/asmgen/struct3.ir",
         "examples/asmgen/temp2.ir",
-        "examples/asmgen/typecast.ir",
     ];
     if ignore_list.contains(&path.to_str().expect("`path` must be transformed to `&str`")) {
         println!("skip test");

@@ -56,6 +56,10 @@ pub trait Translate<S> {
     fn translate(&mut self, source: &S) -> Result<Self::Target, Self::Error>;
 }
 
+pub trait AssertSupported {
+    fn assert_supported(&self);
+}
+
 pub trait IsEquiv {
     fn is_equiv(&self, other: &Self) -> bool;
 }

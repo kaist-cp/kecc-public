@@ -1,10 +1,12 @@
 use std::fs;
 use std::path::Path;
 
-use lang_c::ast::{BinaryOperator, UnaryOperator};
+use lang_c::*;
 
 use crate::ir::*;
+use crate::utils::AssertSupported;
 use crate::Translate;
+use crate::*;
 
 peg::parser! {
     grammar ir_parse() for str {
@@ -15,13 +17,58 @@ peg::parser! {
         rule __() = whitespace()+
 
         pub rule translation_unit() -> TranslationUnit
-            = _ ds:(named_decl() ** __) _ {
+            = _ named_structs:(named_struct() ** __) _ ds:(named_decl() ** __) _ {
+                let mut structs = HashMap::new();
+                for named_struct in &named_structs {
+                    let name = named_struct.name.as_ref().unwrap();
+                    let struct_type = &named_struct.inner;
+                    let result = structs.insert(name.clone(), struct_type.clone());
+                    assert!(result.is_none());
+                }
+
+                // Resolve struct type in structs
+                for named_struct in named_structs {
+                    let name = named_struct.name.unwrap();
+                    let dtype = some_or!(structs.get(&name).unwrap(), continue);
+                    if dtype.get_struct_size_align_offsets().unwrap().is_none() {
+                        resolve_structs(dtype.clone(), &mut structs);
+                    }
+                }
+
                 let mut decls = BTreeMap::new();
                 for decl in ds {
                     let result = decls.insert(decl.name.unwrap(), decl.inner);
                     assert!(result.is_none());
                 }
-                TranslationUnit { decls, structs: HashMap::new() }
+
+                TranslationUnit { decls, structs }
+            }
+
+        rule named_struct() -> Named<Option<Dtype>> =
+            "struct" __ id:id() _ ":" _ "opaque" {
+                Named::new(Some(id), None)
+            }
+        /
+            "struct" __ id:id() _ ":" _ "{" _ fields:(struct_field() ** (_ "," _)) _ "}"  {
+                let struct_type = Dtype::structure(Some(id.clone()), Some(fields));
+                Named::new(Some(id), Some(struct_type))
+            }
+        /
+            "<named_struct>" {
+                todo!()
+            }
+
+        rule struct_field() -> Named<Dtype> =
+            "%anon" _ ":" _ dtype:dtype() {
+                Named::new(None, dtype)
+            }
+        /
+            id:id() _ ":" _ dtype:dtype() {
+                Named::new(Some(id), dtype)
+            }
+        /
+            "<struct_field>" {
+                todo!()
             }
 
         rule named_decl() -> Named<Declaration> =
@@ -47,6 +94,15 @@ peg::parser! {
             }
 
         rule dtype() -> Dtype =
+            inner:dtype_inner() is_consts:(is_const_of_pointer() ** _) {
+                let mut inner = inner;
+                for is_const in is_consts {
+                    inner = Dtype::pointer(inner).set_const(is_const);
+                }
+                inner
+            }
+
+        rule dtype_inner() -> Dtype =
             "unit" { Dtype::unit() }
         /
             "u" n:number() { Dtype::int(n).set_signed(false) }
@@ -54,10 +110,6 @@ peg::parser! {
             "i" n:number() { Dtype::int(n) }
         /
             "f" n:number() { Dtype::float(n) }
-        /
-            "*" _ "const" _ inner:dtype() { Dtype::pointer(inner).set_const(true) }
-        /
-            "*" _ inner:dtype() { Dtype::pointer(inner) }
         /
             "[" _ n:number() __ "x" __ inner:dtype() _ "]" {
                 Dtype::Array { inner: Box::new(inner), size: n }
@@ -67,15 +119,29 @@ peg::parser! {
                 Dtype::Function { ret: Box::new(ret), params }
             }
         /
-            "const" __ dtype:dtype() { dtype.set_const(true) }
+            "struct" __ id:id() {
+                Dtype::structure(Some(id), None)
+            }
+        /
+            "const" __ dtype:dtype_inner() { dtype.set_const(true) }
         /
             expected!("dtype")
 
-        rule id() -> String
-            = n:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) {
+        rule is_const_of_pointer() -> bool =
+            _ "*" _ "const" { true }
+        /
+            _ "*" { false }
+
+        rule id() -> String =
+            n:$(['_' | 'a'..='z' | 'A'..='Z']['_' | 'a'..='z' | 'A'..='Z' | '0'..='9']*) {
                 String::from(n)
             }
-        / expected!("id")
+        /
+            temp_id:$(['%']['t']['0'..='9']+) {
+                String::from(temp_id)
+            }
+        /
+            expected!("id")
 
         rule global_variable() -> String
             = "@" id:id() {
@@ -260,48 +326,48 @@ peg::parser! {
             }
         / expected!("instruction_inner")
 
-        rule arith_op() -> BinaryOperator =
-            "add" { BinaryOperator::Plus }
+        rule arith_op() -> ast::BinaryOperator =
+            "add" { ast::BinaryOperator::Plus }
         /
-            "sub" { BinaryOperator::Minus }
+            "sub" { ast::BinaryOperator::Minus }
         /
-            "mul" { BinaryOperator::Multiply }
+            "mul" { ast::BinaryOperator::Multiply }
         /
-            "div" { BinaryOperator::Divide }
+            "div" { ast::BinaryOperator::Divide }
         /
-            "mod" { BinaryOperator::Modulo }
+            "mod" { ast::BinaryOperator::Modulo }
 
-        rule shift_op() -> BinaryOperator =
-            "shl" { BinaryOperator::ShiftLeft }
+        rule shift_op() -> ast::BinaryOperator =
+            "shl" { ast::BinaryOperator::ShiftLeft }
         /
-            "shr" { BinaryOperator::ShiftRight }
+            "shr" { ast::BinaryOperator::ShiftRight }
 
-        rule comparison_op() -> BinaryOperator =
-            "eq" { BinaryOperator::Equals }
+        rule comparison_op() -> ast::BinaryOperator =
+            "eq" { ast::BinaryOperator::Equals }
         /
-            "ne" { BinaryOperator::NotEquals }
+            "ne" { ast::BinaryOperator::NotEquals }
         /
-            "lt" { BinaryOperator::Less }
+            "lt" { ast::BinaryOperator::Less }
         /
-            "le" { BinaryOperator::LessOrEqual }
+            "le" { ast::BinaryOperator::LessOrEqual }
         /
-            "gt" { BinaryOperator::Greater }
+            "gt" { ast::BinaryOperator::Greater }
         /
-            "ge" { BinaryOperator::GreaterOrEqual }
+            "ge" { ast::BinaryOperator::GreaterOrEqual }
 
-        rule bitwise_op() -> BinaryOperator =
-            "and" { BinaryOperator::BitwiseAnd }
+        rule bitwise_op() -> ast::BinaryOperator =
+            "and" { ast::BinaryOperator::BitwiseAnd }
         /
-            "xor" { BinaryOperator::BitwiseXor }
+            "xor" { ast::BinaryOperator::BitwiseXor }
         /
-            "or" { BinaryOperator::BitwiseOr }
+            "or" { ast::BinaryOperator::BitwiseOr }
 
-        rule unary_op() -> UnaryOperator =
-            "plus" { UnaryOperator::Plus }
+        rule unary_op() -> ast::UnaryOperator =
+            "plus" { ast::UnaryOperator::Plus }
         /
-            "minus" { UnaryOperator::Minus }
+            "minus" { ast::UnaryOperator::Minus }
         /
-            "negate" { UnaryOperator::Negate }
+            "negate" { ast::UnaryOperator::Negate }
 
         rule exit() -> BlockExit =
             "j" __ arg:jump_arg() {
@@ -409,13 +475,172 @@ peg::parser! {
                 (constant, jump_arg)
             }
 
-        rule initializer() -> Option<lang_c::ast::Initializer> =
+        rule initializer() -> Option<ast::Initializer> =
             "default" {
                 None
             }
         /
+            init:ast_initializer() {
+                init.assert_supported();
+                Some(init)
+            }
+        /
             "<initializer>" {
                 todo!()
+            }
+
+        rule ast_initializer() -> ast::Initializer =
+            expr:ast_expression() {
+                let expr = Box::new(span::Node::new(expr, span::Span::none()));
+                ast::Initializer::Expression(expr)
+            }
+        /
+            "{" _ exprs:(ast_initializer() ** (_ "," _)) _ "}" {
+                let list = exprs
+                    .iter()
+                    .map(|e| {
+                        let initializer = Box::new(span::Node::new(e.clone(), span::Span::none()));
+                        let item = ast::InitializerListItem{
+                            designation: Vec::new(),
+                            initializer,
+                        };
+                        span::Node::new(item, span::Span::none())
+                    })
+                    .collect();
+                ast::Initializer::List(list)
+            }
+        /
+            "<ast_initializer>" {
+                todo!()
+            }
+
+        rule ast_expression() -> ast::Expression =
+            constant:ast_constant() {
+                let constant = Box::new(span::Node::new(constant, span::Span::none()));
+                ast::Expression::Constant(constant)
+            }
+        /
+            operator:ast_unaryop() _ "(" _ constant:ast_constant() _ ")" {
+                let constant = Box::new(span::Node::new(constant, span::Span::none()));
+                let expr = ast::Expression::Constant(constant);
+                let operand = Box::new(span::Node::new(expr, span::Span::none()));
+
+                let unary_expr = ast::UnaryOperatorExpression{
+                    operator: span::Node::new(operator, span::Span::none()),
+                    operand,
+                };
+                let unary_expr = Box::new(span::Node::new(unary_expr, span::Span::none()));
+
+                ast::Expression::UnaryOperator(unary_expr)
+            }
+        /
+            "<ast_expression>" {
+                todo!()
+            }
+
+        rule ast_unaryop() -> ast::UnaryOperator =
+            "+" {
+                ast::UnaryOperator::Plus
+            }
+        /
+            "-" {
+                ast::UnaryOperator::Minus
+            }
+        /
+            "<ast_unaryop>" {
+                todo!()
+            }
+
+        rule ast_constant() -> ast::Constant =
+            float:ast_float() {
+                ast::Constant::Float(float)
+            }
+        /
+            integer:ast_integer() {
+                ast::Constant::Integer(integer)
+            }
+        /
+            "<ast_constant>" {
+                todo!()
+            }
+
+        rule ast_integer() -> ast::Integer =
+            number:$(['1'..='9' | 'a'..='f' | 'A'..='F']['0'..='9' | 'a'..='f' | 'A'..='F']*) suffix:ast_integer_suffix() {
+                ast::Integer {
+                    base: ast::IntegerBase::Decimal,
+                    number: Box::from(number),
+                    suffix,
+                }
+            }
+        /
+            base:ast_integer_base() number:$(['0'..='9' | 'a'..='f' | 'A'..='F']+) suffix:ast_integer_suffix() {
+                ast::Integer {
+                    base,
+                    number: Box::from(number),
+                    suffix,
+                }
+            }
+        /
+            "<ast_integer>" {
+                todo!()
+            }
+
+        rule ast_integer_base() -> ast::IntegerBase =
+            ['0']['x' | 'X'] {
+                ast::IntegerBase::Hexadecimal
+            }
+        /
+            "0" {
+                ast::IntegerBase::Octal
+            }
+        /
+            "<ast_integer_base>" {
+                todo!()
+            }
+
+        rule ast_integer_suffix() -> ast::IntegerSuffix =
+            ['l' | 'L'] {
+                ast::IntegerSuffix {
+                    size: ast::IntegerSize::Long,
+                    unsigned: false,
+                    imaginary: false,
+                }
+            }
+        /
+            "" {
+                ast::IntegerSuffix {
+                    size: ast::IntegerSize::Int,
+                    unsigned: false,
+                    imaginary: false,
+                }
+            }
+
+        rule ast_float() ->  ast::Float =
+            number:$(['0'..='9']+['.']['0'..='9']*) suffix:ast_float_suffix() {
+                ast::Float {
+                    base: ast::FloatBase::Decimal,
+                    number: Box::from(number),
+                    suffix,
+                }
+            }
+        /
+            "<ast_float>" {
+                todo!()
+            }
+
+        rule ast_float_suffix() -> ast::FloatSuffix =
+            ['f' | 'F'] {
+                ast::FloatSuffix {
+                    format: ast::FloatFormat::Float,
+                    imaginary: false,
+                }
+            }
+        /
+            "" {
+                ast::FloatSuffix {
+                    format: ast::FloatFormat::Double,
+                    imaginary: false,
+                }
             }
     }
 }
@@ -439,4 +664,46 @@ impl<P: AsRef<Path>> Translate<P> for Parse {
         let ir = ir_parse::translation_unit(&ir).map_err(Error::ParseError)?;
         Ok(ir)
     }
+}
+
+#[inline]
+fn resolve_structs(struct_type: Dtype, structs: &mut HashMap<String, Option<Dtype>>) {
+    let name = struct_type
+        .get_struct_name()
+        .expect("`struct_type` must be struct type")
+        .as_ref()
+        .expect("`struct_type` must have a name");
+    let fields = struct_type
+        .get_struct_fields()
+        .expect("`struct_type` must be struct type")
+        .as_ref()
+        .expect("`struct_type` must have fields");
+
+    for field in fields {
+        if field.deref().get_struct_name().is_some() {
+            let name = field
+                .deref()
+                .get_struct_name()
+                .expect("`field` must be struct type")
+                .as_ref()
+                .expect("`field` must have a name");
+            let field = structs
+                .get(name)
+                .expect("element matched with `name` must exist")
+                .as_ref()
+                .expect("element matched with `name` must exist");
+
+            if field.get_struct_size_align_offsets().unwrap().is_none() {
+                resolve_structs(field.clone(), structs);
+            }
+        }
+    }
+
+    let filled_struct = struct_type
+        .clone()
+        .fill_size_align_offsets_of_struct(structs)
+        .expect("`struct_type` must be struct type");
+
+    let result = structs.insert(name.clone(), Some(filled_struct));
+    assert!(result.is_some());
 }

@@ -1,5 +1,5 @@
 
-fun f64 @average (i32, *i32) {
+fun f64 @average (i32, i32*) {
 init:
   bid: b0
   allocations: 
@@ -17,8 +17,8 @@ block b2:
 block b3:
   %b3:i0:i64 = typecast %b2:p1:i32 to i64
   %b3:i1:i64 = mul %b3:i0:i64 4:i64
-  %b3:i2:*i32 = getelementptr %b0:p1:*i32 offset %b3:i1:i64
-  %b3:i3:i32 = load %b3:i2:*i32
+  %b3:i2:i32* = getelementptr %b0:p1:i32* offset %b3:i1:i64
+  %b3:i3:i32 = load %b3:i2:i32*
   %b3:i4:i32 = add %b2:p0:i32 %b3:i3:i32
   %b3:i5:i32 = add %b2:p1:i32 1:i32
   j b2(%b3:i4:i32, %b3:i5:i32)
@@ -82,12 +82,12 @@ init:
 
 block b0:
   %b0:i0:f64 = sub %b0:p0:f64 %b0:p1:f64
-  %b0:i1:f64 = call @custom_abs:*[ret:f64 params:(f64)](%b0:i0:f64)
-  %b0:i2:f64 = call @custom_abs:*[ret:f64 params:(f64)](%b0:p0:f64)
-  %b0:i3:f64 = call @custom_abs:*[ret:f64 params:(f64)](%b0:p1:f64)
-  %b0:i4:f64 = call @custom_max:*[ret:f64 params:(f64, f64)](%b0:i2:f64, %b0:i3:f64)
+  %b0:i1:f64 = call @custom_abs:[ret:f64 params:(f64)]*(%b0:i0:f64)
+  %b0:i2:f64 = call @custom_abs:[ret:f64 params:(f64)]*(%b0:p0:f64)
+  %b0:i3:f64 = call @custom_abs:[ret:f64 params:(f64)]*(%b0:p1:f64)
+  %b0:i4:f64 = call @custom_max:[ret:f64 params:(f64, f64)]*(%b0:i2:f64, %b0:i3:f64)
   %b0:i5:f64 = mul %b0:p2:f64 %b0:i4:f64
-  %b0:i6:f64 = call @custom_max:*[ret:f64 params:(f64, f64)](%b0:i5:f64, %b0:p3:f64)
+  %b0:i6:f64 = call @custom_max:[ret:f64 params:(f64, f64)]*(%b0:i5:f64, %b0:p3:f64)
   %b0:i7:u1 = cmp le %b0:i1:f64 %b0:i6:f64
   %b0:i8:i32 = typecast %b0:i7:u1 to i32
   ret %b0:i8:i32
@@ -108,19 +108,19 @@ block b2:
   br %b2:i0:u1, b3(), b5()
 
 block b3:
-  %b3:i0:*i32 = getelementptr %l0:*[10 x i32] offset 0:i32
+  %b3:i0:i32* = getelementptr %l0:[10 x i32]* offset 0:i32
   %b3:i1:i64 = typecast %b2:p0:i32 to i64
   %b3:i2:i64 = mul %b3:i1:i64 4:i64
-  %b3:i3:*i32 = getelementptr %b3:i0:*i32 offset %b3:i2:i64
-  %b3:i4:unit = store %b2:p0:i32 %b3:i3:*i32
+  %b3:i3:i32* = getelementptr %b3:i0:i32* offset %b3:i2:i64
+  %b3:i4:unit = store %b2:p0:i32 %b3:i3:i32*
   %b3:i5:i32 = add %b2:p0:i32 1:i32
   j b2(%b3:i5:i32)
 
 block b5:
-  %b5:i0:*i32 = getelementptr %l0:*[10 x i32] offset 0:i32
-  %b5:i1:f64 = call @average:*[ret:f64 params:(i32, *i32)](10:i32, %b5:i0:*i32)
+  %b5:i0:i32* = getelementptr %l0:[10 x i32]* offset 0:i32
+  %b5:i1:f64 = call @average:[ret:f64 params:(i32, i32*)]*(10:i32, %b5:i0:i32*)
   %b5:i2:f32 = typecast %b5:i1:f64 to f32
   %b5:i3:f64 = typecast %b5:i2:f32 to f64
-  %b5:i4:i32 = call @is_close:*[ret:i32 params:(f64, f64, f64, f64)](%b5:i3:f64, 4.5:f64, 0.000000001:f64, 0.1:f64)
+  %b5:i4:i32 = call @is_close:[ret:i32 params:(f64, f64, f64, f64)]*(%b5:i3:f64, 4.5:f64, 0.000000001:f64, 0.1:f64)
   ret %b5:i4:i32
 }

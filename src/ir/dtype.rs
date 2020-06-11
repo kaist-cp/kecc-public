@@ -557,7 +557,7 @@ impl Dtype {
         }
     }
 
-    fn fill_size_align_offsets_of_struct(
+    pub fn fill_size_align_offsets_of_struct(
         self,
         structs: &HashMap<String, Option<Dtype>>,
     ) -> Result<Self, DtypeError> {
@@ -1269,11 +1269,7 @@ impl fmt::Display for Dtype {
                 write!(f, "{}f{}", if *is_const { "const " } else { "" }, width)
             }
             Self::Pointer { inner, is_const } => {
-                if *is_const {
-                    write!(f, "*const {}", inner)
-                } else {
-                    write!(f, "*{}", inner)
-                }
+                write!(f, "{}*{}", inner, if *is_const { "const" } else { "" })
             }
             Self::Array { inner, size, .. } => write!(f, "[{} x {}]", size, inner,),
             Self::Struct {
@@ -1304,8 +1300,8 @@ impl fmt::Display for Dtype {
                 };
                 write!(
                     f,
-                    "{} struct {}{}",
-                    if *is_const { "const" } else { "" },
+                    "{}struct {}{}",
+                    if *is_const { "const " } else { "" },
                     if let Some(name) = name { name } else { "%anon" },
                     fields
                 )

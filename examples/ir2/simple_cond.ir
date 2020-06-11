@@ -58,7 +58,7 @@ block b5:
 block b6:
   %b6:p0:i32:t1
   %b6:i0:unit = nop
-  %b6:i1:i32 = call @f:*[ret:i32 params:(i32)](%b6:p0:i32)
+  %b6:i1:i32 = call @f:[ret:i32 params:(i32)]*(%b6:p0:i32)
   %b6:i2:u1 = cmp eq %b6:i1:i32 9:i32
   %b6:i3:i32 = typecast %b6:i2:u1 to i32
   ret %b6:i3:i32

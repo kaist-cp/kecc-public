@@ -12,108 +12,108 @@ init:
     %l6:i32:t2
 
 block b0:
-  %b0:i0:unit = store 2:i32 %l1:*i32
-  %b0:i1:unit = store 5:i32 %l2:*i32
+  %b0:i0:unit = store 2:i32 %l1:i32*
+  %b0:i1:unit = store 5:i32 %l2:i32*
   %b0:i2:u1 = cmp ne 0:i32 0:i32
   br %b0:i2:u1, b1(), b2()
 
 block b1:
-  %b1:i0:i32 = load %l1:*i32
-  %b1:i1:i32 = load %l2:*i32
+  %b1:i0:i32 = load %l1:i32*
+  %b1:i1:i32 = load %l2:i32*
   %b1:i2:u1 = cmp gt %b1:i0:i32 %b1:i1:i32
   br %b1:i2:u1, b4(), b5()
 
 block b2:
-  %b2:i0:i32 = load %l1:*i32
-  %b2:i1:i32 = load %l2:*i32
+  %b2:i0:i32 = load %l1:i32*
+  %b2:i1:i32 = load %l2:i32*
   %b2:i2:i32 = add %b2:i0:i32 %b2:i1:i32
-  %b2:i3:unit = store %b2:i2:i32 %l5:*i32
+  %b2:i3:unit = store %b2:i2:i32 %l5:i32*
   j b3()
 
 block b3:
-  %b3:i0:i32 = load %l5:*i32
-  %b3:i1:unit = store %b3:i0:i32 %l3:*i32
+  %b3:i0:i32 = load %l5:i32*
+  %b3:i1:unit = store %b3:i0:i32 %l3:i32*
   j b7()
 
 block b4:
-  %b4:i0:i32 = load %l1:*i32
+  %b4:i0:i32 = load %l1:i32*
   %b4:i1:i32 = sub %b4:i0:i32 2:i32
-  %b4:i2:unit = store %b4:i1:i32 %l1:*i32
-  %b4:i3:unit = store %b4:i1:i32 %l4:*i32
+  %b4:i2:unit = store %b4:i1:i32 %l1:i32*
+  %b4:i3:unit = store %b4:i1:i32 %l4:i32*
   j b6()
 
 block b5:
-  %b5:i0:i32 = load %l1:*i32
+  %b5:i0:i32 = load %l1:i32*
   %b5:i1:i32 = add %b5:i0:i32 2:i32
-  %b5:i2:unit = store %b5:i1:i32 %l1:*i32
-  %b5:i3:unit = store %b5:i1:i32 %l4:*i32
+  %b5:i2:unit = store %b5:i1:i32 %l1:i32*
+  %b5:i3:unit = store %b5:i1:i32 %l4:i32*
   j b6()
 
 block b6:
-  %b6:i0:i32 = load %l4:*i32
-  %b6:i1:unit = store %b6:i0:i32 %l5:*i32
+  %b6:i0:i32 = load %l4:i32*
+  %b6:i1:unit = store %b6:i0:i32 %l5:i32*
   j b3()
 
 block b7:
-  %b7:i0:unit = store 0:i32 %l0:*i32
+  %b7:i0:unit = store 0:i32 %l0:i32*
   j b8()
 
 block b8:
-  %b8:i0:i32 = load %l0:*i32
+  %b8:i0:i32 = load %l0:i32*
   %b8:i1:u1 = cmp lt %b8:i0:i32 11:i32
   br %b8:i1:u1, b9(), b11()
 
 block b9:
-  %b9:i0:i32 = load %l0:*i32
+  %b9:i0:i32 = load %l0:i32*
   %b9:i1:i32 = mod %b9:i0:i32 2:i32
   %b9:i2:u1 = cmp ne %b9:i1:i32 0:i32
   br %b9:i2:u1, b12(), b13()
 
 block b10:
-  %b10:i0:i32 = load %l0:*i32
+  %b10:i0:i32 = load %l0:i32*
   %b10:i1:i32 = mod %b10:i0:i32 2:i32
   %b10:i2:u1 = cmp ne %b10:i1:i32 0:i32
   br %b10:i2:u1, b15(), b16()
 
 block b11:
-  %b11:i0:i32 = load %l1:*i32
+  %b11:i0:i32 = load %l1:i32*
   %b11:i1:u1 = cmp eq %b11:i0:i32 34:i32
   %b11:i2:i32 = typecast %b11:i1:u1 to i32
   ret %b11:i2:i32
 
 block b12:
-  %b12:i0:i32 = load %l1:*i32
-  %b12:i1:i32 = load %l2:*i32
+  %b12:i0:i32 = load %l1:i32*
+  %b12:i1:i32 = load %l2:i32*
   %b12:i2:i32 = add %b12:i0:i32 %b12:i1:i32
-  %b12:i3:unit = store %b12:i2:i32 %l1:*i32
+  %b12:i3:unit = store %b12:i2:i32 %l1:i32*
   j b14()
 
 block b13:
-  %b13:i0:i32 = load %l1:*i32
-  %b13:i1:i32 = load %l3:*i32
+  %b13:i0:i32 = load %l1:i32*
+  %b13:i1:i32 = load %l3:i32*
   %b13:i2:i32 = add %b13:i0:i32 %b13:i1:i32
-  %b13:i3:unit = store %b13:i2:i32 %l1:*i32
+  %b13:i3:unit = store %b13:i2:i32 %l1:i32*
   j b14()
 
 block b14:
   j b10()
 
 block b15:
-  %b15:i0:i32 = load %l0:*i32
+  %b15:i0:i32 = load %l0:i32*
   %b15:i1:i32 = add %b15:i0:i32 2:i32
-  %b15:i2:unit = store %b15:i1:i32 %l0:*i32
-  %b15:i3:unit = store %b15:i1:i32 %l6:*i32
+  %b15:i2:unit = store %b15:i1:i32 %l0:i32*
+  %b15:i3:unit = store %b15:i1:i32 %l6:i32*
   j b17()
 
 block b16:
-  %b16:i0:i32 = load %l0:*i32
+  %b16:i0:i32 = load %l0:i32*
   %b16:i1:i32 = add %b16:i0:i32 1:i32
-  %b16:i2:unit = store %b16:i1:i32 %l0:*i32
-  %b16:i3:unit = store %b16:i1:i32 %l6:*i32
+  %b16:i2:unit = store %b16:i1:i32 %l0:i32*
+  %b16:i3:unit = store %b16:i1:i32 %l6:i32*
   j b17()
 
 block b17:
-  %b17:i0:i32 = load %l6:*i32
+  %b17:i0:i32 = load %l6:i32*
   j b8()
 
 block b18:

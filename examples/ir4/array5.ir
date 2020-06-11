@@ -7,23 +7,23 @@ init:
     %l0:[5 x i32]:a
 
 block b0:
-  %b0:i0:*i32 = getelementptr %l0:*[5 x i32] offset 0:i32
+  %b0:i0:i32* = getelementptr %l0:[5 x i32]* offset 0:i32
   %b0:i1:i64 = mul 0:i64 4:i64
-  %b0:i2:*i32 = getelementptr %b0:i0:*i32 offset %b0:i1:i64
-  %b0:i3:unit = store 1:i32 %b0:i2:*i32
+  %b0:i2:i32* = getelementptr %b0:i0:i32* offset %b0:i1:i64
+  %b0:i3:unit = store 1:i32 %b0:i2:i32*
   %b0:i4:i64 = mul 1:i64 4:i64
-  %b0:i5:*i32 = getelementptr %b0:i0:*i32 offset %b0:i4:i64
-  %b0:i6:unit = store 2:i32 %b0:i5:*i32
+  %b0:i5:i32* = getelementptr %b0:i0:i32* offset %b0:i4:i64
+  %b0:i6:unit = store 2:i32 %b0:i5:i32*
   %b0:i7:i64 = mul 2:i64 4:i64
-  %b0:i8:*i32 = getelementptr %b0:i0:*i32 offset %b0:i7:i64
-  %b0:i9:unit = store 3:i32 %b0:i8:*i32
+  %b0:i8:i32* = getelementptr %b0:i0:i32* offset %b0:i7:i64
+  %b0:i9:unit = store 3:i32 %b0:i8:i32*
   %b0:i10:i64 = mul 3:i64 4:i64
-  %b0:i11:*i32 = getelementptr %b0:i0:*i32 offset %b0:i10:i64
-  %b0:i12:unit = store 4:i32 %b0:i11:*i32
+  %b0:i11:i32* = getelementptr %b0:i0:i32* offset %b0:i10:i64
+  %b0:i12:unit = store 4:i32 %b0:i11:i32*
   %b0:i13:i64 = mul 4:i64 4:i64
-  %b0:i14:*i32 = getelementptr %b0:i0:*i32 offset %b0:i13:i64
+  %b0:i14:i32* = getelementptr %b0:i0:i32* offset %b0:i13:i64
   %b0:i15:i32 = minus 5:i32
-  %b0:i16:unit = store %b0:i15:i32 %b0:i14:*i32
+  %b0:i16:unit = store %b0:i15:i32 %b0:i14:i32*
   j b2(0:i32, 0:i32)
 
 block b2:
@@ -33,17 +33,17 @@ block b2:
   br %b2:i0:u1, b3(), b5()
 
 block b3:
-  %b3:i0:*i32 = getelementptr %l0:*[5 x i32] offset 0:i32
+  %b3:i0:i32* = getelementptr %l0:[5 x i32]* offset 0:i32
   %b3:i1:i64 = typecast %b2:p1:i32 to i64
   %b3:i2:i64 = mul %b3:i1:i64 4:i64
-  %b3:i3:*i32 = getelementptr %b0:i0:*i32 offset %b3:i2:i64
-  %b3:i4:i32 = load %b3:i3:*i32
+  %b3:i3:i32* = getelementptr %b0:i0:i32* offset %b3:i2:i64
+  %b3:i4:i32 = load %b3:i3:i32*
   %b3:i5:i32 = add %b2:p0:i32 %b3:i4:i32
-  %b3:i6:*i32 = getelementptr @g_a:*[5 x i32] offset 0:i32
+  %b3:i6:i32* = getelementptr @g_a:[5 x i32]* offset 0:i32
   %b3:i7:i64 = typecast %b2:p1:i32 to i64
   %b3:i8:i64 = mul %b3:i1:i64 4:i64
-  %b3:i9:*i32 = getelementptr %b3:i6:*i32 offset %b3:i2:i64
-  %b3:i10:i32 = load %b3:i9:*i32
+  %b3:i9:i32* = getelementptr %b3:i6:i32* offset %b3:i2:i64
+  %b3:i10:i32 = load %b3:i9:i32*
   %b3:i11:i32 = add %b3:i5:i32 %b3:i10:i32
   %b3:i12:i32 = add %b2:p1:i32 1:i32
   j b2(%b3:i11:i32, %b3:i12:i32)

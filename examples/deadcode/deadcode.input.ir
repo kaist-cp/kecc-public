@@ -19,18 +19,18 @@ block b0:
   %b0:i0:i32 = add 100:i32 200:i32
   %b0:i1:i32 = add %b0:i0:i32 300:i32
   %b0:i2:i32 = add %b0:i1:i32 400:i32
-  %b0:i3:unit = store %b0:i0:i32 %l1:*i32
+  %b0:i3:unit = store %b0:i0:i32 %l1:i32*
 
   br undef:i1, b1(), b2()
 
 block b1:
   %b1:i0:unit = nop
-  %b1:i1:unit = call @sink:*[ret:unit params:(unit)](%b1:i0:unit)
+  %b1:i1:unit = call @sink:[ret:unit params:(unit)]*(%b1:i0:unit)
 
   j b3()
 
 block b2:
-  %b2:i0:unit = store 42:i32 %l1:*i32
+  %b2:i0:unit = store 42:i32 %l1:i32*
 
   j b3()
 

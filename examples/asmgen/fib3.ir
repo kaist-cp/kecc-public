@@ -10,17 +10,17 @@ init:
     %l4:i32:next_term
 
 block b0:
-  %b0:i0:unit = store %b0:p0:i32 %l0:*i32
-  %b0:i1:unit = store 0:i32 %l1:*i32
-  %b0:i2:unit = store 0:i32 %l2:*i32
-  %b0:i3:unit = store 1:i32 %l3:*i32
-  %b0:i4:unit = store 0:i32 %l4:*i32
-  %b0:i5:i32 = load %l0:*i32
+  %b0:i0:unit = store %b0:p0:i32 %l0:i32*
+  %b0:i1:unit = store 0:i32 %l1:i32*
+  %b0:i2:unit = store 0:i32 %l2:i32*
+  %b0:i3:unit = store 1:i32 %l3:i32*
+  %b0:i4:unit = store 0:i32 %l4:i32*
+  %b0:i5:i32 = load %l0:i32*
   %b0:i6:u1 = cmp lt %b0:i5:i32 2:i32
   br %b0:i6:u1, b1(), b2()
 
 block b1:
-  %b1:i0:i32 = load %l0:*i32
+  %b1:i0:i32 = load %l0:i32*
   ret %b1:i0:i32
 
 block b2:
@@ -33,34 +33,34 @@ block b4:
   j b3()
 
 block b5:
-  %b5:i0:unit = store 1:i32 %l1:*i32
+  %b5:i0:unit = store 1:i32 %l1:i32*
   j b6()
 
 block b6:
-  %b6:i0:i32 = load %l1:*i32
-  %b6:i1:i32 = load %l0:*i32
+  %b6:i0:i32 = load %l1:i32*
+  %b6:i1:i32 = load %l0:i32*
   %b6:i2:u1 = cmp lt %b6:i0:i32 %b6:i1:i32
   br %b6:i2:u1, b7(), b9()
 
 block b7:
-  %b7:i0:i32 = load %l2:*i32
-  %b7:i1:i32 = load %l3:*i32
+  %b7:i0:i32 = load %l2:i32*
+  %b7:i1:i32 = load %l3:i32*
   %b7:i2:i32 = add %b7:i0:i32 %b7:i1:i32
-  %b7:i3:unit = store %b7:i2:i32 %l4:*i32
-  %b7:i4:i32 = load %l3:*i32
-  %b7:i5:unit = store %b7:i4:i32 %l2:*i32
-  %b7:i6:i32 = load %l4:*i32
-  %b7:i7:unit = store %b7:i6:i32 %l3:*i32
+  %b7:i3:unit = store %b7:i2:i32 %l4:i32*
+  %b7:i4:i32 = load %l3:i32*
+  %b7:i5:unit = store %b7:i4:i32 %l2:i32*
+  %b7:i6:i32 = load %l4:i32*
+  %b7:i7:unit = store %b7:i6:i32 %l3:i32*
   j b8()
 
 block b8:
-  %b8:i0:i32 = load %l1:*i32
+  %b8:i0:i32 = load %l1:i32*
   %b8:i1:i32 = add %b8:i0:i32 1:i32
-  %b8:i2:unit = store %b8:i1:i32 %l1:*i32
+  %b8:i2:unit = store %b8:i1:i32 %l1:i32*
   j b6()
 
 block b9:
-  %b9:i0:i32 = load %l3:*i32
+  %b9:i0:i32 = load %l3:i32*
   ret %b9:i0:i32
 
 block b10:
@@ -74,7 +74,7 @@ init:
 
 
 block b0:
-  %b0:i0:i32 = call @fibonacci:*[ret:i32 params:(i32)](9:i32)
+  %b0:i0:i32 = call @fibonacci:[ret:i32 params:(i32)]*(9:i32)
   %b0:i1:u1 = cmp eq %b0:i0:i32 34:i32
   %b0:i2:i32 = typecast %b0:i1:u1 to i32
   ret %b0:i2:i32
