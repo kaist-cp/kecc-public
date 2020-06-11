@@ -146,4 +146,4 @@ echo $?
 ## Submission
 
 - Submit the corresponding files to [gg.kaist.ac.kr](https://gg.kaist.ac.kr).
-- Run `./scripts/make-submissions.sh` to generate `hw4.zip` and `hw5.zip`, which you should submit for homework 4 and 5.
+- Run `./scripts/make-submissions.sh` to generate `hw3.zip` to `hw6.zip`, which you should submit for homework 3 to 6.
