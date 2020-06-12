@@ -77,6 +77,7 @@ impl WriteLine for Block {
 impl WriteString for Directive {
     fn write_string(&self) -> String {
         match self {
+            Self::Align(value) => format!(".align\t{}", value),
             Self::Globl(label) => format!(".globl\t{}", label.0),
             Self::Type(symbol, symbol_type) => {
                 format!(".type\t{}, {}", symbol.0, symbol_type.write_string())
@@ -381,7 +382,7 @@ impl WriteString for UType {
 impl WriteString for Pseudo {
     fn write_string(&self) -> String {
         match self {
-            Self::Li { rd, imm } => format!("li\t{},{:#x?}", rd.write_string(), imm),
+            Self::Li { rd, imm } => format!("li\t{},{}", rd.write_string(), *imm as i64),
             Self::Mv { rd, rs } => format!("mv\t{},{}", rd.write_string(), rs.write_string()),
             Self::Neg { data_size, rd, rs } => format!(
                 "neg{}\t{},{}",
@@ -412,7 +413,7 @@ impl WriteString for Pseudo {
 impl WriteString for Immediate {
     fn write_string(&self) -> String {
         match self {
-            Self::Value(value) => format!("{:#x?}", value),
+            Self::Value(value) => format!("{}", *value as i64),
             Self::Relocation { relocation, symbol } => {
                 format!("{}({})", relocation.write_string(), symbol.0)
             }

@@ -79,6 +79,8 @@ impl Block {
 /// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#assembler-directives
 #[derive(Debug, Clone, PartialEq)]
 pub enum Directive {
+    /// .align integer
+    Align(usize),
     /// .globl symbol
     Globl(Label),
     /// .section section_type
