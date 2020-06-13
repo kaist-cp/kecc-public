@@ -8,6 +8,10 @@ use crate::*;
 
 impl IsEquiv for TranslationUnit {
     fn is_equiv(&self, other: &Self) -> bool {
+        if self.decls.len() != other.decls.len() {
+            return false;
+        }
+
         for (lhs, rhs) in izip!(&self.decls, &other.decls) {
             if lhs.0 != rhs.0 {
                 return false;
