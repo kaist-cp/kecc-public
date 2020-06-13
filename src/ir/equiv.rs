@@ -13,7 +13,7 @@ impl IsEquiv for TranslationUnit {
                 return false;
             }
 
-            if !rhs.1.is_equiv(rhs.1) {
+            if !lhs.1.is_equiv(rhs.1) {
                 return false;
             }
         }
