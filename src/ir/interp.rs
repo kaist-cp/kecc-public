@@ -611,8 +611,8 @@ mod calculator {
         rhs: Value,
     ) -> Result<Value, ()> {
         match (lhs, rhs) {
-            (Value::Undef { .. }, _) => Err(()),
-            (_, Value::Undef { .. }) => Err(()),
+            (Value::Undef { dtype }, _) => Ok(Value::undef(dtype)),
+            (_, Value::Undef { dtype }) => Ok(Value::undef(dtype)),
             (
                 Value::Int {
                     value: lhs,
@@ -688,7 +688,7 @@ mod calculator {
         operand: Value,
     ) -> Result<Value, ()> {
         match operand {
-            Value::Undef { .. } => Err(()),
+            Value::Undef { dtype } => Ok(Value::undef(dtype)),
             Value::Int {
                 value,
                 width,
@@ -741,7 +741,7 @@ mod calculator {
         }
 
         match (value, dtype) {
-            (Value::Undef { .. }, _) => Err(()),
+            (Value::Undef { .. }, dtype) => Ok(Value::undef(dtype)),
             (
                 Value::Int { value, width, .. },
                 Dtype::Int {
