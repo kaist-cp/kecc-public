@@ -6,6 +6,7 @@ init:
 
 
 block b0:
+  %b0:p0:i32*:a
   ret %b0:p0:i32*
 }
 

@@ -7,6 +7,8 @@ init:
 
 
 block b0:
+  %b0:p0:i32:i
+  %b0:p1:i32:j
   %b0:i0:i32 = add %b0:p0:i32 %b0:p1:i32
   %b0:i1:i32 = load @g:i32*
   %b0:i2:i32 = add %b0:i0:i32 %b0:i1:i32

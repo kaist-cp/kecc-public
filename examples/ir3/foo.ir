@@ -6,6 +6,9 @@ init:
 
 
 block b0:
+  %b0:p0:i32:x
+  %b0:p1:i32:y
+  %b0:p2:i32:z
   %b0:i0:u1 = cmp eq %b0:p0:i32 %b0:p1:i32
   br %b0:i0:u1, b1(), b2()
 

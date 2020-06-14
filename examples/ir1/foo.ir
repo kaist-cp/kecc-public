@@ -8,6 +8,9 @@ init:
     %l2:i32:z
 
 block b0:
+  %b0:p0:i32:x
+  %b0:p1:i32:y
+  %b0:p2:i32:z
   %b0:i0:unit = store %b0:p0:i32 %l0:i32*
   %b0:i1:unit = store %b0:p1:i32 %l1:i32*
   %b0:i2:unit = store %b0:p2:i32 %l2:i32*

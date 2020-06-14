@@ -6,6 +6,7 @@ init:
 
 
 block b0:
+  %b0:p0:i32:n
   %b0:i0:u1 = cmp lt %b0:p0:i32 2:i32
   br %b0:i0:u1, b1(), b3(%b0:p0:i32)
 

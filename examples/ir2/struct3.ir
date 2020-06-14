@@ -9,6 +9,7 @@ init:
     %l1:struct Big:r
 
 block b0:
+  %b0:p0:struct Big:p1
   %b0:i0:unit = nop
   %b0:i1:unit = nop
   %b0:i2:unit = store %b0:p0:struct Big %l1:struct Big*

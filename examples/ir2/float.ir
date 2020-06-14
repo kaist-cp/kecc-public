@@ -9,6 +9,8 @@ init:
     %l3:i32:i
 
 block b0:
+  %b0:p0:i32:len
+  %b0:p1:i32*:a
   %b0:i0:unit = nop
   %b0:i1:unit = nop
   %b0:i2:unit = nop
@@ -55,6 +57,7 @@ init:
     %l1:f64:t0
 
 block b0:
+  %b0:p0:f64:a
   %b0:i0:unit = nop
   %b0:i1:unit = nop
   %b0:i2:f64 = typecast 0:i32 to f64
@@ -87,6 +90,8 @@ init:
     %l2:f64:t0
 
 block b0:
+  %b0:p0:f64:a
+  %b0:p1:f64:b
   %b0:i0:unit = nop
   %b0:i1:unit = nop
   %b0:i2:unit = nop
@@ -120,6 +125,10 @@ init:
     %l3:f64:abs_tol
 
 block b0:
+  %b0:p0:f64:a
+  %b0:p1:f64:b
+  %b0:p2:f64:rel_tol
+  %b0:p3:f64:abs_tol
   %b0:i0:unit = nop
   %b0:i1:unit = nop
   %b0:i2:unit = nop

@@ -6,6 +6,7 @@ init:
     %l0:i32:n
 
 block b0:
+  %b0:p0:i32:n
   %b0:i0:unit = store %b0:p0:i32 %l0:i32*
   %b0:i1:i32 = load %l0:i32*
   %b0:i2:i32 = load %l0:i32*

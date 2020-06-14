@@ -6,6 +6,8 @@ init:
 
 
 block b0:
+  %b0:p0:i8:i
+  %b0:p1:u8:j
   %b0:i0:i32 = typecast %b0:p0:i8 to i32
   %b0:i1:i32 = typecast %b0:p1:u8 to i32
   %b0:i2:u1 = cmp gt %b0:i0:i32 %b0:i1:i32
@@ -25,6 +27,8 @@ init:
 
 
 block b0:
+  %b0:p0:i32:i
+  %b0:p1:u32:j
   %b0:i0:u32 = typecast %b0:p0:i32 to u32
   %b0:i1:u1 = cmp gt %b0:i0:u32 %b0:p1:u32
   br %b0:i1:u1, b1(), b2()

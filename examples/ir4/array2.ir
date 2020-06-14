@@ -6,6 +6,9 @@ init:
 
 
 block b0:
+  %b0:p0:i32:row
+  %b0:p1:i32:col
+  %b0:p2:[5 x i32]*:a
   j b2(0:i32)
 
 block b2:

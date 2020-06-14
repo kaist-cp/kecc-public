@@ -8,6 +8,8 @@ init:
     %l1:i32:j
 
 block b0:
+  %b0:p0:i32:i
+  %b0:p1:i32:j
   %b0:i0:unit = nop
   %b0:i1:unit = nop
   %b0:i2:unit = nop

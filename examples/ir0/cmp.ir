@@ -7,6 +7,8 @@ init:
     %l1:u8:j
 
 block b0:
+  %b0:p0:i8:i
+  %b0:p1:u8:j
   %b0:i0:unit = store %b0:p0:i8 %l0:i8*
   %b0:i1:unit = store %b0:p1:u8 %l1:u8*
   %b0:i2:i8 = load %l0:i8*
@@ -40,6 +42,8 @@ init:
     %l1:u32:j
 
 block b0:
+  %b0:p0:i32:i
+  %b0:p1:u32:j
   %b0:i0:unit = store %b0:p0:i32 %l0:i32*
   %b0:i1:unit = store %b0:p1:u32 %l1:u32*
   %b0:i2:i32 = load %l0:i32*

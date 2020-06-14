@@ -1,5 +1,5 @@
-struct Sub : { m1:i64, m2:i64, m3:i64, m4:i64 }
 struct Big : { m1:struct Sub, m2:struct Sub, m3:struct Sub }
+struct Sub : { m1:i64, m2:i64, m3:i64, m4:i64 }
 
 fun struct Big @foo (struct Big) {
 init:
@@ -9,6 +9,7 @@ init:
     %l1:struct Big:r
 
 block b0:
+  %b0:p0:struct Big:p1
   %b0:i0:unit = store %b0:p0:struct Big %l0:struct Big*
   %b0:i1:struct Big = load %l0:struct Big*
   %b0:i2:unit = store %b0:i1:struct Big %l1:struct Big*

@@ -37,6 +37,8 @@ init:
 
 
 block b0:
+  %b0:p0:i32:len
+  %b0:p1:i32*:p
   j b2(0:i32, 0:i32)
 
 block b2:

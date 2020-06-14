@@ -6,6 +6,7 @@ init:
     %l0:i32*:a
 
 block b0:
+  %b0:p0:i32*:a
   %b0:i0:unit = nop
   %b0:i1:unit = nop
   ret %b0:p0:i32*
