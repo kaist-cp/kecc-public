@@ -264,7 +264,7 @@ fn is_equiv_block_exit(lhs: &BlockExit, rhs: &BlockExit, map: &HashMap<BlockId, 
                 arg_else: arg_else_other,
             },
         ) => {
-            if condition != condition_other {
+            if !is_equiv_operand(condition, condition_other, map) {
                 return false;
             }
             if !is_equiv_arg(arg_then, arg_then_other, map) {
@@ -287,7 +287,7 @@ fn is_equiv_block_exit(lhs: &BlockExit, rhs: &BlockExit, map: &HashMap<BlockId, 
                 cases: cases_other,
             },
         ) => {
-            if value != value_other {
+            if !is_equiv_operand(value, value_other, map) {
                 return false;
             }
             if !is_equiv_arg(default.deref(), default_other.deref(), map) {
@@ -314,8 +314,13 @@ fn is_equiv_arg(lhs: &JumpArg, rhs: &JumpArg, map: &HashMap<BlockId, BlockId>) -
     if map.get(&lhs.bid) != Some(&rhs.bid) {
         return false;
     }
-    if lhs.args != rhs.args {
+    if lhs.args.len() != rhs.args.len() {
         return false;
+    }
+    for (l, r) in izip!(&lhs.args, &rhs.args) {
+        if !is_equiv_operand(l, r, map) {
+            return false;
+        }
     }
     true
 }
