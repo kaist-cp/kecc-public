@@ -306,6 +306,9 @@ fn is_equiv_block_exit(lhs: &BlockExit, rhs: &BlockExit, map: &HashMap<BlockId, 
             }
             true
         }
+        (BlockExit::Return { value }, BlockExit::Return { value: value_other }) => {
+            is_equiv_operand(value, value_other, map)
+        }
         _ => lhs == rhs,
     }
 }
