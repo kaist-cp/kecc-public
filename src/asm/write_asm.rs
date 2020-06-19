@@ -208,7 +208,7 @@ impl WriteString for RType {
             Self::Sub(data_size) => format!("sub{}", data_size.write_string()),
             Self::Sll(data_size) => format!("sll{}", data_size.write_string()),
             Self::Srl(data_size) => format!("srl{}", data_size.write_string()),
-            Self::Sra(data_size) => format!("srl{}", data_size.write_string()),
+            Self::Sra(data_size) => format!("sra{}", data_size.write_string()),
             Self::Mul(data_size) => format!("mul{}", data_size.write_string()),
             Self::Div {
                 data_size,

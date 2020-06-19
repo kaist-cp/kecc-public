@@ -216,12 +216,7 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
 
 pub fn test_asmgen(path: &Path) {
     // TODO: delete ignore list in the future
-    let ignore_list = vec![
-        "examples/asmgen/struct.ir",
-        "examples/asmgen/struct2.ir",
-        "examples/asmgen/struct3.ir",
-        "examples/asmgen/temp2.ir",
-    ];
+    let ignore_list = vec!["examples/asmgen/struct3.ir"];
     if ignore_list.contains(&path.to_str().expect("`path` must be transformed to `&str`")) {
         println!("skip test");
         return;
