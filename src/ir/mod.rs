@@ -131,7 +131,7 @@ impl HasDtype for Declaration {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FunctionSignature {
     pub ret: Dtype,
     pub params: Vec<Dtype>,
@@ -155,7 +155,7 @@ impl HasDtype for FunctionSignature {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     /// Memory allocations for local variables.  The allocation is performed at the beginning of a
     /// function invocation.
@@ -168,7 +168,7 @@ pub struct FunctionDefinition {
     pub bid_init: BlockId,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BlockId(pub usize);
 
 impl fmt::Display for BlockId {
@@ -177,14 +177,14 @@ impl fmt::Display for BlockId {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Block {
     pub phinodes: Vec<Named<Dtype>>,
     pub instructions: Vec<Named<Instruction>>,
     pub exit: BlockExit,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum Instruction {
     Nop,
@@ -255,7 +255,7 @@ impl Instruction {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BlockExit {
     Jump {
         arg: JumpArg,
@@ -300,7 +300,7 @@ impl BlockExit {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct JumpArg {
     pub bid: BlockId,
     pub args: Vec<Operand>,
@@ -327,7 +327,7 @@ impl fmt::Display for JumpArg {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operand {
     Constant(Constant),
     Register { rid: RegisterId, dtype: Dtype },
@@ -849,7 +849,7 @@ impl HasDtype for Constant {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Named<T> {
     name: Option<String>,
     inner: T,

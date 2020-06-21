@@ -208,7 +208,7 @@ impl WriteString for RType {
             Self::Sub(data_size) => format!("sub{}", data_size.write_string()),
             Self::Sll(data_size) => format!("sll{}", data_size.write_string()),
             Self::Srl(data_size) => format!("srl{}", data_size.write_string()),
-            Self::Sra(data_size) => format!("srl{}", data_size.write_string()),
+            Self::Sra(data_size) => format!("sra{}", data_size.write_string()),
             Self::Mul(data_size) => format!("mul{}", data_size.write_string()),
             Self::Div {
                 data_size,
@@ -333,8 +333,10 @@ impl WriteString for IType {
             Self::Xori => "xori".to_string(),
             Self::Ori => "ori".to_string(),
             Self::Andi => "andi".to_string(),
-            Self::Slli => "slli".to_string(),
-            Self::Srli => "srli".to_string(),
+            Self::Slli(data_size) => format!("slli{}", data_size.write_string()),
+            Self::Srli(data_size) => format!("srli{}", data_size.write_string()),
+            Self::Srai(data_size) => format!("srai{}", data_size.write_string()),
+            Self::Slti { is_signed } => format!("slti{}", if *is_signed { "" } else { "u" }),
         }
     }
 }

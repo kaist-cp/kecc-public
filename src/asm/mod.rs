@@ -421,8 +421,12 @@ pub enum IType {
     Xori,
     Ori,
     Andi,
-    Slli,
-    Srli,
+    Slli(Option<DataSize>),
+    Srli(Option<DataSize>),
+    Srai(Option<DataSize>),
+    Slti {
+        is_signed: bool,
+    },
 }
 
 impl IType {
@@ -456,6 +460,30 @@ impl IType {
             data_size,
             is_signed,
         }
+    }
+
+    pub fn slli(dtype: ir::Dtype) -> Self {
+        let data_size =
+            DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
+        assert!(data_size.is_integer());
+
+        Self::Slli(data_size.word())
+    }
+
+    pub fn srli(dtype: ir::Dtype) -> Self {
+        let data_size =
+            DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
+        assert!(data_size.is_integer());
+
+        Self::Srli(data_size.word())
+    }
+
+    pub fn srai(dtype: ir::Dtype) -> Self {
+        let data_size =
+            DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
+        assert!(data_size.is_integer());
+
+        Self::Srai(data_size.word())
     }
 }
 

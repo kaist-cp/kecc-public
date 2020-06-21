@@ -27,6 +27,11 @@ fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Pat
     for entry in from_dir {
         let entry = ok_or!(entry, continue);
         let from_file_path = entry.path();
+
+        if !(from_file_path.is_file() && from_file_path.extension() == Some(OsStr::new("ir"))) {
+            continue;
+        }
+
         let file_name = from_file_path
             .strip_prefix(from)
             .expect("`from_file _path` must have file name");
@@ -54,17 +59,25 @@ const IRGEN_SMALL_TEST_IGNORE_LIST: [&str; 10] = [
     "examples/c/temp2.c",
 ];
 
+const ASMGEN_TEST_DIR_LIST: [&str; 5] = [
+    "examples/ir0",
+    "examples/ir1",
+    "examples/ir2",
+    "examples/ir3",
+    "examples/ir4",
+];
+
 const ASMGEN_SMALL_TEST_IGNORE_LIST: [&str; 10] = [
-    "examples/asmgen/array.ir",
-    "examples/asmgen/array2.ir",
-    "examples/asmgen/array3.ir",
-    "examples/asmgen/array4.ir",
-    "examples/asmgen/array5.ir",
-    "examples/asmgen/float.ir",
-    "examples/asmgen/struct.ir",
-    "examples/asmgen/struct2.ir",
-    "examples/asmgen/struct3.ir",
-    "examples/asmgen/temp2.ir",
+    "array.ir",
+    "array2.ir",
+    "array3.ir",
+    "array4.ir",
+    "array5.ir",
+    "float.ir",
+    "struct.ir",
+    "struct2.ir",
+    "struct3.ir",
+    "temp2.ir",
 ];
 
 #[test]
@@ -76,10 +89,9 @@ fn test_examples_write_c() {
 fn test_examples_irgen_small() {
     test_dir(Path::new("examples/c"), &OsStr::new("c"), |path| {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
-            return;
+        if !IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
+            test_irgen(path)
         }
-        test_irgen(path)
     });
 }
 
@@ -178,23 +190,34 @@ fn test_examples_gvn() {
 
 #[test]
 fn test_examples_asmgen_small() {
-    test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), |path| {
-        let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if ASMGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
-            return;
-        }
-        test_asmgen(path)
-    });
+    for dir in ASMGEN_TEST_DIR_LIST.iter() {
+        test_dir(Path::new(dir), &OsStr::new("ir"), |path| {
+            let file_name = &path
+                .file_name()
+                .expect("`path` must have file name")
+                .to_str()
+                .expect("must be transformed to `&str`");
+            if !ASMGEN_SMALL_TEST_IGNORE_LIST.contains(file_name) {
+                test_asmgen(path)
+            }
+        });
+    }
 }
 
 #[test]
 fn test_examples_asmgen_large() {
-    test_dir(Path::new("examples/asmgen"), &OsStr::new("ir"), |path| {
-        let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if ASMGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
-            test_asmgen(path)
-        }
-    });
+    for dir in ASMGEN_TEST_DIR_LIST.iter() {
+        test_dir(Path::new(dir), &OsStr::new("ir"), |path| {
+            let file_name = &path
+                .file_name()
+                .expect("`path` must have file name")
+                .to_str()
+                .expect("must be transformed to `&str`");
+            if ASMGEN_SMALL_TEST_IGNORE_LIST.contains(file_name) {
+                test_asmgen(path)
+            }
+        });
+    }
 }
 
 #[test]

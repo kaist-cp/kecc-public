@@ -215,18 +215,6 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
 }
 
 pub fn test_asmgen(path: &Path) {
-    // TODO: delete ignore list in the future
-    let ignore_list = vec![
-        "examples/asmgen/struct.ir",
-        "examples/asmgen/struct2.ir",
-        "examples/asmgen/struct3.ir",
-        "examples/asmgen/temp2.ir",
-    ];
-    if ignore_list.contains(&path.to_str().expect("`path` must be transformed to `&str`")) {
-        println!("skip test");
-        return;
-    }
-
     // Check if the file has .ir extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("ir")));
     let unit = ir::Parse::default()
