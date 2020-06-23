@@ -531,6 +531,12 @@ pub enum Pseudo {
     },
     /// mv rd, rs
     Mv { rd: Register, rs: Register },
+    /// fmv.s rd, rs or fmv.d rd, rs
+    Fmv {
+        data_size: DataSize,
+        rd: Register,
+        rs: Register,
+    },
     /// neg(w) rd, rs
     Neg {
         data_size: Option<DataSize>,

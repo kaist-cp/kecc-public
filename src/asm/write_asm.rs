@@ -386,6 +386,12 @@ impl WriteString for Pseudo {
         match self {
             Self::Li { rd, imm } => format!("li\t{},{}", rd.write_string(), *imm as i64),
             Self::Mv { rd, rs } => format!("mv\t{},{}", rd.write_string(), rs.write_string()),
+            Self::Fmv { data_size, rd, rs } => format!(
+                "fmv.{}\t{},{}",
+                data_size.write_string(),
+                rd.write_string(),
+                rs.write_string()
+            ),
             Self::Neg { data_size, rd, rs } => format!(
                 "neg{}\t{},{}",
                 data_size.write_string(),
