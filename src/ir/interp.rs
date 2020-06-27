@@ -227,7 +227,7 @@ impl Value {
         Ok(value)
     }
 
-    fn try_from_initializer(
+    pub fn try_from_initializer(
         initializer: &ast::Initializer,
         dtype: &Dtype,
         structs: &HashMap<String, Option<Dtype>>,
