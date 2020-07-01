@@ -123,7 +123,7 @@ doesn't, please run the fuzzer in Ubuntu 18.04 or 20.04.
 
 ```sh
 # Ubuntu 20.04 or higher
-apt install gcc-10-riscv64-linux-gnu qemu-user-static
+apt install gcc-10-riscv64-linux-gnu g++-10-riscv64-linux-gnu qemu-user-static
 ```
 
 ### Cross-Compilation and Architecture-Emulation
@@ -140,6 +140,14 @@ qemu-riscv64-static ./hello
 
 # Check the return value
 echo $?
+```
+
+
+## Run Benchmark for Performance Competition
+
+```sh
+cd bench
+make run
 ```
 
 
