@@ -1,5 +1,5 @@
 var i32 @g = 10
-var i32 @nonce = 0
+var i32 @nonce = 1
 
 fun i32 @foo (i32, i32) {
 init:

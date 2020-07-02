@@ -18,7 +18,7 @@ fn modify_c(path: &Path, rand_num: i32) -> String {
         .expect("`src` must be converted to string");
     drop(src);
 
-    let from = format!("int {} = 0", NONCE_NAME);
+    let from = format!("int {} = 1", NONCE_NAME);
     let to = format!("int {} = {}", NONCE_NAME, rand_num);
     data.replace(&from, &to)
 }
@@ -107,7 +107,6 @@ pub fn test_irgen(path: &Path) {
     let rand_num = rand::thread_rng().gen();
     let new_c = modify_c(path, rand_num);
     modify_ir(&mut ir, rand_num);
-    println!("{}", new_c);
 
     // compile recolved c example
     let temp_dir = tempdir().expect("temp dir creation failed");

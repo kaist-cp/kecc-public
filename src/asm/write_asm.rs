@@ -384,6 +384,7 @@ impl WriteString for UType {
 impl WriteString for Pseudo {
     fn write_string(&self) -> String {
         match self {
+            Self::La { rd, symbol } => format!("la\t{},{}", rd.write_string(), symbol.0),
             Self::Li { rd, imm } => format!("li\t{},{}", rd.write_string(), *imm as i64),
             Self::Mv { rd, rs } => format!("mv\t{},{}", rd.write_string(), rs.write_string()),
             Self::Fmv { data_size, rd, rs } => format!(

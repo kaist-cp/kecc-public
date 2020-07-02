@@ -523,6 +523,8 @@ pub enum UType {
 /// https://riscv.org/specifications/isa-spec-pdf/ (139p)
 #[derive(Debug, Clone, PartialEq)]
 pub enum Pseudo {
+    /// la rd, symbol
+    La { rd: Register, symbol: Label },
     /// li rd, immediate
     Li {
         rd: Register,
