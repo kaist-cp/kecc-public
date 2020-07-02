@@ -1,5 +1,7 @@
+int nonce; // For random input
+
 int main()
 {
-    int x = 1;
-    return 1;
+    int x = nonce;
+    return x;
 }

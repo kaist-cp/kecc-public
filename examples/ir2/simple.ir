@@ -1,3 +1,4 @@
+var i32 @nonce = default
 
 fun i32 @main () {
 init:
@@ -6,6 +7,8 @@ init:
     %l0:i32:x
 
 block b0:
-  %b0:i0:unit = nop
-  ret 1:i32
+  %b0:i0:i32 = load @nonce:i32*
+  %b0:i1:unit = nop
+  %b0:i2:unit = nop
+  ret %b0:i0:i32
 }

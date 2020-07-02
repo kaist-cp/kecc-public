@@ -56,4 +56,4 @@ then
   exit 1
 fi
 
-cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release --bin fuzz -- $FUZZ_ARG test_reduced.c 2>&1 | grep -q '(left == right)'
+cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release --bin fuzz -- $FUZZ_ARG test_reduced.c 2>&1 | grep -q 'assertion failed'

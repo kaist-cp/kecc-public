@@ -581,6 +581,14 @@ peg::parser! {
                 }
             }
         /
+            "0" suffix:ast_integer_suffix() {
+                ast::Integer {
+                    base: ast::IntegerBase::Decimal,
+                    number: Box::from("0"),
+                    suffix,
+                }
+            }
+        /
             "<ast_integer>" {
                 todo!()
             }

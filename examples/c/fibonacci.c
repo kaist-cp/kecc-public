@@ -1,3 +1,5 @@
+int nonce; // For random input
+
 int fibonacci(int n) {
     if (n < 2) {
         return n;
@@ -7,5 +9,6 @@ int fibonacci(int n) {
 }
 
 int main() {
-    return fibonacci(9) == 34;
+    int number = nonce % 20;
+    return fibonacci(number);
 }

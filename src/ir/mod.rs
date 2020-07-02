@@ -527,7 +527,12 @@ impl TryFrom<&ast::Constant> for Constant {
                     ast::IntegerBase::Octal => Self::OCTAL,
                     ast::IntegerBase::Hexadecimal => Self::HEXADECIMAL,
                 };
-                let value = u128::from_str_radix(integer.number.deref(), pat).unwrap();
+
+                let value = if integer.suffix.unsigned {
+                    u128::from_str_radix(integer.number.deref(), pat).unwrap()
+                } else {
+                    i128::from_str_radix(integer.number.deref(), pat).unwrap() as u128
+                };
 
                 let is_signed = !integer.suffix.unsigned && {
                     // Even if `suffix` represents `signed`, integer literal cannot be translated
