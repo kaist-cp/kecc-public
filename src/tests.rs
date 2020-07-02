@@ -9,7 +9,6 @@ use wait_timeout::ChildExt;
 
 use crate::*;
 
-const NONCE_DTYPE: &str = "int";
 const NONCE_NAME: &str = "nonce";
 
 fn modify_c(path: &Path, rand_num: i32) -> String {
@@ -19,8 +18,8 @@ fn modify_c(path: &Path, rand_num: i32) -> String {
         .expect("`src` must be converted to string");
     drop(src);
 
-    let from = format!("{} {}", NONCE_DTYPE, NONCE_NAME);
-    let to = format!("{} = {}", from, rand_num);
+    let from = format!("int {} = 0", NONCE_NAME);
+    let to = format!("int {} = {}", NONCE_NAME, rand_num);
     data.replace(&from, &to)
 }
 
@@ -44,9 +43,7 @@ fn ast_initializer(number: i32) -> ast::Initializer {
 fn modify_ir(unit: &mut ir::TranslationUnit, rand_num: i32) {
     for (name, decl) in &mut unit.decls {
         if name == NONCE_NAME {
-            let (dtype, initializer) = decl.get_variable().expect("`decl` must be variable");
-            assert!(initializer.is_none());
-
+            let (dtype, _) = decl.get_variable().expect("`decl` must be variable");
             let initializer = ast_initializer(rand_num);
             let new_decl = ir::Declaration::Variable {
                 dtype: dtype.clone(),
@@ -110,6 +107,7 @@ pub fn test_irgen(path: &Path) {
     let rand_num = rand::thread_rng().gen();
     let new_c = modify_c(path, rand_num);
     modify_ir(&mut ir, rand_num);
+    println!("{}", new_c);
 
     // compile recolved c example
     let temp_dir = tempdir().expect("temp dir creation failed");

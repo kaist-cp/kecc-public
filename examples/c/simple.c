@@ -1,4 +1,4 @@
-int nonce; // For random input
+int nonce = 0; // For random input
 
 int main()
 {

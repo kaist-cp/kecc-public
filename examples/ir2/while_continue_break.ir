@@ -1,4 +1,4 @@
-var i32 @nonce = default
+var i32 @nonce = 0
 
 fun i32 @foo () {
 init:
