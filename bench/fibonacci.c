@@ -1,14 +1,30 @@
 int fibonacci_loop(int n, int nonce) {
-  int x = nonce;
-  int y = nonce;
+  int result = 0;
 
-  for (int i = 1; i < n; ++i) {
-    int newy = x + y;
-    x = y;
-    y = newy;
+  for (int step = 0; step < 10; ++step) {
+    int x = nonce;
+    int y = nonce;
+
+    for (int i = 1; i < n; ++i) {
+      int newy = x + y;
+      newy += (x + y);
+      newy += (x + y);
+      newy += (x + y);
+      newy += (x + y);
+      newy += (x + y);
+      newy -= (x + y);
+      newy -= (x + y);
+      newy -= (x + y);
+      newy -= (x + y);
+      newy -= (x + y);
+      x = y;
+      y = newy;
+    }
+
+    result += y;
   }
 
-  return y;
+  return result;
 }
 
 int fibonacci_recursive(int n, int nonce) {

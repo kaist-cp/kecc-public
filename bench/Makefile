@@ -6,8 +6,9 @@ RM=rm -f
 
 SRCS=$(shell find . -name "*.c")
 OBJS=$(subst .c,.s,$(SRCS))
+OBJS_GCC=$(subst .c,.o,$(SRCS))
 
-all: bench
+all: bench bench-gcc
 
 bench: $(OBJS) driver.o
 	$(CXX) -o bench $(OBJS) driver.o
@@ -15,14 +16,23 @@ bench: $(OBJS) driver.o
 run: bench
 	qemu-riscv64-static -L /usr/riscv64-linux-gnu ./bench
 
-driver.o: driver.cpp
+bench-gcc: $(OBJS_GCC) driver.o
+	$(CXX) -o bench-gcc $(OBJS_GCC) driver.o
+
+run-gcc: bench-gcc
+	qemu-riscv64-static -L /usr/riscv64-linux-gnu ./bench-gcc
+
+driver.o: $(SRCS) driver.cpp
 	$(CXX) $(CFLAGS) -o driver.o -c -I. driver.cpp
 
-.c.s:
+.c.s: $(KECC)
 	($(KECC) -O $< >$@) || (rm $@ -rf; exit 1)
+
+.c.o:
+	($(CC) -O -c $< -o $@) || (rm $@ -rf; exit 1)
 
 $(KECC):
 	cargo build --manifest-path=../Cargo.toml --release --bin kecc
 
 clean:
-	$(RM) $(OBJS) driver.o bench
+	$(RM) $(OBJS) $(OBJS_GCC) driver.o bench bench-gcc

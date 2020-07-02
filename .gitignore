@@ -1,3 +1,4 @@
 /target
 /hw*.zip
+/final.zip
 **/*.rs.bk

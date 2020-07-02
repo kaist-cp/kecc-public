@@ -1,3 +1,4 @@
-/.depend
 /bench
+/bench-gcc
 *.o
+*.s
