@@ -10,7 +10,7 @@ int two_dimension_array(int n, int nonce) {
   }
 
   for (int i = 0; i < n; ++i) {
-    for (int j = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
       two_dimension_array_arr[i] += two_dimension_array_arr[j];
     }
   }

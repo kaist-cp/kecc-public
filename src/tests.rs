@@ -139,15 +139,10 @@ pub fn test_irgen(path: &Path) {
     }
 
     // Execute compiled executable
-    let mut child = Command::new(fs::canonicalize(bin_path.clone()).unwrap())
+    let mut child = Command::new(fs::canonicalize(bin_path).unwrap())
         .stderr(Stdio::piped())
         .spawn()
         .expect("failed to execute the compiled executable");
-
-    Command::new("rm")
-        .arg(bin_path)
-        .status()
-        .expect("failed to remove compiled executable");
 
     let status = some_or!(
         child
@@ -311,18 +306,22 @@ pub fn test_asmgen(path: &Path) {
     assert_eq!(width, 32);
     assert!(is_signed);
 
-    let asm_path = path.with_extension("S").as_path().display().to_string();
-    let mut buffer = File::create(Path::new(&asm_path)).expect("need to success creating file");
-    write(&asm, &mut buffer).unwrap();
-
-    // Link to an RISC-V executable
-    let bin_path = path
+    let temp_dir = tempdir().expect("temp dir creation failed");
+    let asm_path = temp_dir.path().join("temp.S");
+    let asm_path_str = asm_path.as_path().display().to_string();
+    let bin_path_str = asm_path
         .with_extension("asmgen")
         .as_path()
         .display()
         .to_string();
+
+    // Create the assembly code
+    let mut buffer = File::create(asm_path.as_path()).expect("need to success creating file");
+    write(&asm, &mut buffer).unwrap();
+
+    // Compile the assembly code
     if !Command::new("riscv64-linux-gnu-gcc-10")
-        .args(&["-static", &asm_path, "-o", &bin_path])
+        .args(&["-static", &asm_path_str, "-o", &bin_path_str])
         .stderr(Stdio::null())
         .status()
         .unwrap()
@@ -331,22 +330,12 @@ pub fn test_asmgen(path: &Path) {
         ::std::process::exit(SKIP_TEST);
     }
 
-    Command::new("rm")
-        .arg(asm_path)
-        .status()
-        .expect("failed to remove assembly code file");
-
     // Emulate the executable
     let mut child = Command::new("qemu-riscv64-static")
-        .args(&[&bin_path])
+        .args(&[&bin_path_str])
         .stderr(Stdio::piped())
         .spawn()
         .expect("failed to execute the compiled executable");
-
-    Command::new("rm")
-        .arg(bin_path)
-        .status()
-        .expect("failed to remove compiled executable");
 
     let status = some_or!(
         child
@@ -372,6 +361,8 @@ pub fn test_asmgen(path: &Path) {
     }
 
     let qemu_status = some_or_exit!(status.code(), SKIP_TEST);
+    drop(buffer);
+    temp_dir.close().expect("temp dir deletion failed");
 
     println!("kecc interp: {}, qemu: {}", value as u8, qemu_status as u8);
     assert_eq!(value as u8, qemu_status as u8);
