@@ -95,6 +95,8 @@ pub enum Directive {
     Word(u32),
     /// .quad value
     Quad(u64),
+    /// .zero bytes
+    Zero(usize),
 }
 
 impl Directive {

@@ -87,6 +87,7 @@ impl WriteString for Directive {
             Self::Half(value) => format!(".half\t{:#x?}", value),
             Self::Word(value) => format!(".word\t{:#x?}", value),
             Self::Quad(value) => format!(".quad\t{:#x?}", value),
+            Self::Zero(bytes) => format!(".zero\t{:#x?}", bytes),
         }
     }
 }
