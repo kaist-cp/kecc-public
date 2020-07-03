@@ -103,8 +103,7 @@ pub fn test_irgen(path: &Path) {
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
 
-    // Apply random value to global variable `dyn`
-    let rand_num = rand::thread_rng().gen();
+    let rand_num = rand::thread_rng().gen_range(1, 100);
     let new_c = modify_c(path, rand_num);
     modify_ir(&mut ir, rand_num);
 
@@ -300,8 +299,7 @@ pub fn test_asmgen(path: &Path) {
         .translate(&ir)
         .expect("fail to create riscv assembly code");
 
-    // Resolve examples
-    let rand_num = rand::thread_rng().gen();
+    let rand_num = rand::thread_rng().gen_range(1, 100);
     modify_ir(&mut ir, rand_num);
     modify_asm(&mut asm, rand_num);
 
