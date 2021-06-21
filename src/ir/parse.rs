@@ -660,7 +660,7 @@ pub enum Error {
     ResolveError,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Parse {}
 
 impl<P: AsRef<Path>> Translate<P> for Parse {

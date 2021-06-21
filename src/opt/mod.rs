@@ -22,15 +22,15 @@ pub trait Optimize<T> {
 pub type O0 = Null;
 pub type O1 = Repeat<(SimplifyCfg, (Mem2reg, (Gvn, Deadcode)))>;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Null {}
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Repeat<O> {
     inner: O,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct FunctionPass<T: Optimize<ir::FunctionDefinition>> {
     inner: T,
 }

@@ -1,6 +1,4 @@
-#[macro_use]
-extern crate clap;
-use clap::{crate_authors, crate_description, crate_version, App};
+use clap::{crate_authors, crate_description, crate_version, load_yaml, App};
 
 extern crate kecc;
 
@@ -9,7 +7,7 @@ use std::path::Path;
 fn main() {
     let yaml = load_yaml!("fuzz_cli.yml");
     #[allow(deprecated)]
-    let matches = App::from_yaml(yaml)
+    let matches = App::from(yaml)
         .version(crate_version!())
         .about(crate_description!())
         .author(crate_authors!(", "))

@@ -8,6 +8,7 @@ use lang_c::span::Node;
 use crate::utils::AssertSupported;
 use crate::Translate;
 
+/// TODO(document)
 #[derive(Debug)]
 pub enum Error {
     ParseError(ParseError),
@@ -15,7 +16,8 @@ pub enum Error {
     Unsupported,
 }
 
-#[derive(Default)]
+/// TODO(document)
+#[derive(Default, Debug)]
 pub struct Parse {}
 
 impl<P: AsRef<Path>> Translate<P> for Parse {
@@ -182,7 +184,7 @@ impl AssertSupported for AlignmentSpecifier {
     fn assert_supported(&self) {
         match self {
             Self::Type(typename) => typename.assert_supported(),
-            Self::Constant(_) => panic!(AlignmentSpecifier::Constant),
+            Self::Constant(_) => std::panic::panic_any(AlignmentSpecifier::Constant),
         }
     }
 }
@@ -225,7 +227,7 @@ impl AssertSupported for DerivedDeclarator {
             Self::Array(array_decl) => array_decl.assert_supported(),
             Self::Function(func_decl) => func_decl.assert_supported(),
             // Support when K&R function has no parameter
-            Self::KRFunction(kr_func_decl) => assert_eq!(true, kr_func_decl.is_empty()),
+            Self::KRFunction(kr_func_decl) => assert!(kr_func_decl.is_empty()),
         }
     }
 }
@@ -513,6 +515,7 @@ impl AssertSupported for SpecifierQualifier {
         match self {
             Self::TypeSpecifier(type_specifier) => type_specifier.assert_supported(),
             Self::TypeQualifier(type_qualifier) => type_qualifier.assert_supported(),
+            Self::Extension(_) => panic!("SpecifierQualifier::Extension"),
         }
     }
 }
@@ -551,14 +554,14 @@ impl AssertSupported for Constant {
 
 impl AssertSupported for Integer {
     fn assert_supported(&self) {
-        assert_eq!(false, self.suffix.imaginary);
+        assert!(!self.suffix.imaginary);
     }
 }
 
 impl AssertSupported for Float {
     fn assert_supported(&self) {
         self.suffix.format.assert_supported();
-        assert_eq!(false, self.suffix.imaginary);
+        assert!(!self.suffix.imaginary);
     }
 }
 

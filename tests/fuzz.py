@@ -224,7 +224,7 @@ def fuzz(tests_dir, fuzz_arg, num_iter):
                 dst.write(src_polished)
 
             try:
-                args = ["cargo", "run", "--release", "--bin", "fuzz", "--", fuzz_arg, os.path.join(tests_dir, "test_polished.c")]
+                args = ["cargo", "run", "--features=build-bin", "--release", "--bin", "fuzz", "--", fuzz_arg, os.path.join(tests_dir, "test_polished.c")]
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
                 proc.communicate(timeout=60)
 

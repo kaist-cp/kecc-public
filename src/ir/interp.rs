@@ -703,7 +703,7 @@ mod calculator {
                             let value = (-(value as i128)) as u128;
                             trim_unnecessary_bits(value, width as u128)
                         };
-                        Ok(Value::int(result as u128, width, is_signed))
+                        Ok(Value::int(result, width, is_signed))
                     }
                     ast::UnaryOperator::Negate => {
                         // Check if it is boolean
@@ -781,11 +781,11 @@ mod calculator {
                 if value == 0 {
                     Ok(Value::pointer(None, 0, inner.deref().clone()))
                 } else {
-                    panic!(format!(
+                    panic!(
                         "calculate_typecast: not support case \
-                         typecast int to pointer when `value` is {}",
+                            typecast int to pointer when `value` is {}",
                         value
-                    ))
+                    )
                 }
             }
             (
@@ -1028,7 +1028,7 @@ impl Byte {
                 let size = value.dtype().size_align_of(structs).unwrap().0;
                 let value_bits: u128 = match size {
                     Dtype::SIZE_OF_FLOAT => (float_value.into_inner() as f32).to_bits() as u128,
-                    Dtype::SIZE_OF_DOUBLE => (float_value.into_inner() as f64).to_bits() as u128,
+                    Dtype::SIZE_OF_DOUBLE => (float_value.into_inner()).to_bits() as u128,
                     _ => panic!("value_to_bytes: {} is not a valid float size", size),
                 };
 
@@ -1073,7 +1073,7 @@ impl Byte {
                 izip!(fields, offsets).for_each(|(f, o)| {
                     let result = Self::value_to_bytes(f.deref(), structs);
                     let size_of_data = f.deref().dtype().size_align_of(structs).unwrap().0;
-                    values.splice(*o..(*o + size_of_data), result.iter().cloned());
+                    let _ = values.splice(*o..(*o + size_of_data), result.iter().cloned());
                 });
 
                 values
@@ -1143,7 +1143,7 @@ impl Memory {
         let block = self.inner[bid].as_mut().unwrap();
 
         if 0 <= offset && end <= block.len() {
-            block.splice(offset as usize..end, bytes.iter().cloned());
+            let _ = block.splice(offset as usize..end, bytes.iter().cloned());
             Ok(())
         } else {
             Err(())
@@ -1163,16 +1163,16 @@ struct State<'i> {
 }
 
 impl<'i> State<'i> {
-    fn new(ir: &'i TranslationUnit, args: Vec<Value>) -> Result<State, InterpreterError> {
+    fn new(ir: &'i TranslationUnit, args: Vec<Value>) -> Result<State<'_>, InterpreterError> {
         // Interpreter starts with the main function
         let func_name = String::from("main");
         let func = ir
             .decls
             .get(&func_name)
-            .ok_or_else(|| InterpreterError::NoMainFunction)?;
+            .ok_or(InterpreterError::NoMainFunction)?;
         let (_, func_def) = func
             .get_function()
-            .ok_or_else(|| InterpreterError::NoMainFunction)?;
+            .ok_or(InterpreterError::NoMainFunction)?;
         let func_def = func_def
             .as_ref()
             .ok_or_else(|| InterpreterError::NoFunctionDefinition {
@@ -1218,7 +1218,7 @@ impl<'i> State<'i> {
                             },
                         )?
                     } else {
-                        Value::default_from_dtype(&dtype, &self.ir.structs)
+                        Value::default_from_dtype(dtype, &self.ir.structs)
                             .expect("default value must be derived from `dtype`")
                     };
 
@@ -1244,7 +1244,7 @@ impl<'i> State<'i> {
     fn alloc_local_variables(&mut self) -> Result<(), InterpreterError> {
         // add alloc register
         for (id, allocation) in self.stack_frame.func_def.allocations.iter().enumerate() {
-            let bid = self.memory.alloc(&allocation, &self.ir.structs)?;
+            let bid = self.memory.alloc(allocation, &self.ir.structs)?;
             let ptr = Value::pointer(Some(bid), 0, allocation.deref().clone());
             let rid = RegisterId::local(id);
 
@@ -1407,7 +1407,7 @@ impl<'i> State<'i> {
                 let lhs = self.interp_operand(lhs.clone())?;
                 let rhs = self.interp_operand(rhs.clone())?;
 
-                calculator::calculate_binary_operator_expression(&op, lhs, rhs).map_err(|_| {
+                calculator::calculate_binary_operator_expression(op, lhs, rhs).map_err(|_| {
                     InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
                         pc: self.stack_frame.pc,
@@ -1418,7 +1418,7 @@ impl<'i> State<'i> {
             Instruction::UnaryOp { op, operand, .. } => {
                 let operand = self.interp_operand(operand.clone())?;
 
-                calculator::calculate_unary_operator_expression(&op, operand).map_err(|_| {
+                calculator::calculate_unary_operator_expression(op, operand).map_err(|_| {
                     InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
                         pc: self.stack_frame.pc,
@@ -1517,7 +1517,7 @@ impl<'i> State<'i> {
                 let offset = prev_offset + value as isize;
                 assert!(0 <= offset);
 
-                Value::pointer(*bid, offset as isize, inner_dtype.clone())
+                Value::pointer(*bid, offset, inner_dtype.clone())
             }
         };
 

@@ -49,18 +49,27 @@ macro_rules! some_or_exit {
     }};
 }
 
+/// TODO(document)
 pub trait Translate<S> {
+    /// TODO(document)
     type Target;
+
+    /// TODO(document)
     type Error;
 
+    /// TODO(document)
     fn translate(&mut self, source: &S) -> Result<Self::Target, Self::Error>;
 }
 
+/// TODO(document)
 pub trait AssertSupported {
+    /// TODO(document)
     fn assert_supported(&self);
 }
 
+/// TODO(document)
 pub trait IsEquiv {
+    /// TODO(document)
     fn is_equiv(&self, other: &Self) -> bool;
 }
 

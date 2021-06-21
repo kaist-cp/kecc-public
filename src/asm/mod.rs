@@ -5,7 +5,7 @@ use crate::ir;
 use core::convert::TryFrom;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct TODO {}
+pub struct Todo {}
 
 /// TODO
 #[derive(Debug, Clone, PartialEq)]
@@ -616,9 +616,9 @@ impl Immediate {
 #[derive(Debug, Clone, PartialEq)]
 pub enum RelocationFunction {
     /// %hi
-    HI20,
+    Hi20,
     /// %lo
-    LO12,
+    Lo12,
 }
 
 /// `Label` is used as branch, unconditional jump targets and symbol offsets.
@@ -676,17 +676,11 @@ impl TryFrom<ir::Dtype> for DataSize {
 
 impl DataSize {
     pub fn is_integer(&self) -> bool {
-        match self {
-            Self::Byte | Self::Half | Self::Word | Self::Double => true,
-            _ => false,
-        }
+        matches!(self, Self::Byte | Self::Half | Self::Word | Self::Double)
     }
 
     pub fn is_floating_point(&self) -> bool {
-        match self {
-            Self::SinglePrecision | Self::DoublePrecision => true,
-            _ => false,
-        }
+        matches!(self, Self::SinglePrecision | Self::DoublePrecision)
     }
 
     fn word(self) -> Option<Self> {

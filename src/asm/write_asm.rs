@@ -434,8 +434,8 @@ impl WriteString for Immediate {
 impl WriteString for RelocationFunction {
     fn write_string(&self) -> String {
         match self {
-            Self::HI20 => "%hi",
-            Self::LO12 => "%lo",
+            Self::Hi20 => "%hi",
+            Self::Lo12 => "%lo",
         }
         .to_string()
     }

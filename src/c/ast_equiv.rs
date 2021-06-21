@@ -79,7 +79,7 @@ impl IsEquiv for DeclaratorKind {
             (Self::Identifier(identifier), Self::Identifier(other_identifier)) => {
                 identifier.node.name == other_identifier.node.name
             }
-            (Self::Declarator(decl), Self::Declarator(other_decl)) => decl.is_equiv(&other_decl),
+            (Self::Declarator(decl), Self::Declarator(other_decl)) => decl.is_equiv(other_decl),
             _ => false,
         }
     }
@@ -104,7 +104,7 @@ impl IsEquiv for DerivedDeclarator {
                 params.is_equiv(other_params)
             }
             (Self::KRFunction(kr_func_decl), Self::KRFunction(other_kr_func_decl)) => {
-                kr_func_decl.is_equiv(&other_kr_func_decl)
+                kr_func_decl.is_equiv(other_kr_func_decl)
             }
             _ => false,
         }
@@ -128,10 +128,10 @@ impl IsEquiv for ArraySize {
             (Self::Unknown, Self::Unknown) => true,
             (Self::VariableUnknown, Self::VariableUnknown) => true,
             (Self::VariableExpression(expr), Self::VariableExpression(other_expr)) => {
-                expr.is_equiv(&other_expr)
+                expr.is_equiv(other_expr)
             }
             (Self::StaticExpression(expr), Self::StaticExpression(other_expr)) => {
-                expr.is_equiv(&other_expr)
+                expr.is_equiv(other_expr)
             }
             _ => false,
         }
@@ -492,6 +492,7 @@ impl IsEquiv for Enumerator {
 
 impl IsEquiv for TypeQualifier {
     fn is_equiv(&self, other: &Self) -> bool {
+        #[allow(clippy::match_like_matches_macro)]
         match (self, other) {
             (Self::Const, Self::Const) => true,
             _ => false,

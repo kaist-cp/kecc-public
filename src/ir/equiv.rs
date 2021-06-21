@@ -4,7 +4,6 @@ use itertools::izip;
 
 use crate::ir::*;
 use crate::utils::IsEquiv;
-use crate::*;
 
 impl IsEquiv for TranslationUnit {
     fn is_equiv(&self, other: &Self) -> bool {
@@ -30,7 +29,7 @@ impl IsEquiv for TranslationUnit {
     }
 }
 
-impl IsEquiv for ir::Declaration {
+impl IsEquiv for Declaration {
     fn is_equiv(&self, other: &Self) -> bool {
         match (self, other) {
             (
@@ -328,7 +327,7 @@ fn is_equiv_arg(lhs: &JumpArg, rhs: &JumpArg, map: &HashMap<BlockId, BlockId>) -
     true
 }
 
-impl IsEquiv for ir::FunctionDefinition {
+impl IsEquiv for FunctionDefinition {
     fn is_equiv(&self, other: &Self) -> bool {
         if self.allocations != other.allocations {
             return false;
@@ -348,7 +347,7 @@ impl IsEquiv for ir::FunctionDefinition {
 
         let mut map = HashMap::new();
         for (f, t) in izip!(&preorder, &preorder_other) {
-            map.insert(*f, *t);
+            let _ = map.insert(*f, *t);
         }
 
         if map.get(&self.bid_init) != Some(&other.bid_init) {

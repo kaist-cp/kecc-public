@@ -14,7 +14,8 @@ const NONCE_NAME: &str = "nonce";
 fn modify_c(path: &Path, rand_num: i32) -> String {
     let mut src = File::open(path).expect("`path` must exist");
     let mut data = String::new();
-    src.read_to_string(&mut data)
+    let _ = src
+        .read_to_string(&mut data)
         .expect("`src` must be converted to string");
     drop(src);
 
@@ -69,8 +70,9 @@ fn modify_asm(unit: &mut asm::Asm, rand_num: i32) {
 
 // Rust sets an exit code of 101 when the process panicked.
 // So, we decide KECC sets an exit code of 102 after 101 when the test skipped.
-pub const SKIP_TEST: i32 = 102;
+const SKIP_TEST: i32 = 102;
 
+/// Tests write_c.
 pub fn test_write_c(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
@@ -82,7 +84,7 @@ pub fn test_write_c(path: &Path) {
     let temp_file_path = temp_dir.path().join("temp.c");
     let mut temp_file = File::create(&temp_file_path).unwrap();
 
-    crate::write(&unit, &mut temp_file).unwrap();
+    write(&unit, &mut temp_file).unwrap();
 
     let new_unit = c::Parse::default()
         .translate(&temp_file_path.as_path())
@@ -92,6 +94,7 @@ pub fn test_write_c(path: &Path) {
     temp_dir.close().expect("temp dir deletion failed");
 }
 
+/// Tests irgen.
 pub fn test_irgen(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
@@ -103,7 +106,7 @@ pub fn test_irgen(path: &Path) {
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
 
-    let rand_num = rand::thread_rng().gen_range(1, 100);
+    let rand_num = rand::thread_rng().gen_range(1..100);
     let new_c = modify_c(path, rand_num);
     modify_ir(&mut ir, rand_num);
 
@@ -151,7 +154,7 @@ pub fn test_irgen(path: &Path) {
         {
             println!("timeout occurs");
             child.kill().unwrap();
-            child.wait().unwrap();
+            let _ = child.wait().unwrap();
             ::std::process::exit(SKIP_TEST);
         }
     );
@@ -187,6 +190,7 @@ pub fn test_irgen(path: &Path) {
     assert_eq!(status as u8, value as u8);
 }
 
+/// Tests irparse.
 pub fn test_irparse(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
@@ -195,7 +199,7 @@ pub fn test_irparse(path: &Path) {
         .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
 
     // Test parse
-    c::Parse::default()
+    let _ = c::Parse::default()
         .translate(&path)
         .expect("failed to parse the given program");
 
@@ -207,7 +211,7 @@ pub fn test_irparse(path: &Path) {
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
     let temp_file_path = temp_dir.path().join("ir0.ir");
     let mut temp_file = File::create(&temp_file_path).unwrap();
-    crate::write(&ir, &mut temp_file).unwrap();
+    write(&ir, &mut temp_file).unwrap();
 
     let ir0 = ir::Parse::default()
         .translate(&temp_file_path.as_path())
@@ -233,9 +237,9 @@ fn test_irparse_for_optimized_ir<O: Optimize<ir::TranslationUnit>>(
     temp_file_path: &Path,
     mut opt: O,
 ) -> ir::TranslationUnit {
-    opt.optimize(&mut ir);
+    let _ = opt.optimize(&mut ir);
     let mut temp_file = File::create(temp_file_path).unwrap();
-    crate::write(&ir, &mut temp_file).unwrap();
+    write(&ir, &mut temp_file).unwrap();
 
     let optimized_ir = ir::Parse::default()
         .translate(&temp_file_path)
@@ -246,6 +250,7 @@ fn test_irparse_for_optimized_ir<O: Optimize<ir::TranslationUnit>>(
     optimized_ir
 }
 
+/// Tests optimizations.
 pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUnit>>(
     from: &P1,
     to: &P2,
@@ -258,7 +263,7 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
     let to = ir::Parse::default()
         .translate(to)
         .expect("parse failed while parsing the output from implemented printer");
-    opt.optimize(&mut ir);
+    let _ = opt.optimize(&mut ir);
 
     if !ir.is_equiv(&to) {
         stderr()
@@ -267,21 +272,22 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
                 "[test_opt] actual outcome mismatches with the expected outcome.\n\n[before opt]"
             ))
             .unwrap();
-        crate::write(&from, &mut stderr()).unwrap();
+        write(&from, &mut stderr()).unwrap();
         stderr()
             .lock()
             .write_fmt(format_args!("\n[after opt]"))
             .unwrap();
-        crate::write(&ir, &mut stderr()).unwrap();
+        write(&ir, &mut stderr()).unwrap();
         stderr()
             .lock()
             .write_fmt(format_args!("\n[after opt (expected)]"))
             .unwrap();
-        crate::write(&to, &mut stderr()).unwrap();
+        write(&to, &mut stderr()).unwrap();
         panic!("[test_opt]");
     }
 }
 
+/// Tests asmgen.
 pub fn test_asmgen(path: &Path) {
     // Check if the file has .ir extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("ir")));
@@ -294,7 +300,7 @@ pub fn test_asmgen(path: &Path) {
         .translate(&ir)
         .expect("fail to create riscv assembly code");
 
-    let rand_num = rand::thread_rng().gen_range(1, 100);
+    let rand_num = rand::thread_rng().gen_range(1..100);
     modify_ir(&mut ir, rand_num);
     modify_asm(&mut asm, rand_num);
 
@@ -320,7 +326,7 @@ pub fn test_asmgen(path: &Path) {
     write(&asm, &mut buffer).unwrap();
 
     // Compile the assembly code
-    if !Command::new("riscv64-linux-gnu-gcc-10")
+    if !Command::new("riscv64-linux-gnu-gcc")
         .args(&["-static", &asm_path_str, "-o", &bin_path_str])
         .stderr(Stdio::null())
         .status()
@@ -344,7 +350,7 @@ pub fn test_asmgen(path: &Path) {
         {
             println!("timeout occurs");
             child.kill().unwrap();
-            child.wait().unwrap();
+            let _ = child.wait().unwrap();
             ::std::process::exit(SKIP_TEST);
         }
     );
@@ -368,6 +374,7 @@ pub fn test_asmgen(path: &Path) {
     assert_eq!(value as u8, qemu_status as u8);
 }
 
+/// Tests end-to-end translation.
 // TODO: test all the way down to assembly
 pub fn test_end_to_end(path: &Path) {
     // Check if the file has .c extension
@@ -377,7 +384,7 @@ pub fn test_end_to_end(path: &Path) {
         .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
 
     // Test parse
-    c::Parse::default()
+    let _ = c::Parse::default()
         .translate(&path)
         .expect("failed to parse the given program");
 
@@ -412,7 +419,7 @@ pub fn test_end_to_end(path: &Path) {
         .spawn()
         .expect("failed to execute the compiled executable");
 
-    Command::new("rm")
+    let _ = Command::new("rm")
         .arg(bin_path)
         .status()
         .expect("failed to remove compiled executable");
@@ -424,7 +431,7 @@ pub fn test_end_to_end(path: &Path) {
         {
             println!("timeout occurs");
             child.kill().unwrap();
-            child.wait().unwrap();
+            let _ = child.wait().unwrap();
             ::std::process::exit(SKIP_TEST);
         }
     );
@@ -445,7 +452,7 @@ pub fn test_end_to_end(path: &Path) {
     let mut ir = Irgen::default()
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
-    O1::default().optimize(&mut ir);
+    let _ = O1::default().optimize(&mut ir);
     let args = Vec::new();
     let result = ir::interp(&ir, args).unwrap_or_else(|interp_error| panic!("{}", interp_error));
     // We only allow main function whose return type is `int`

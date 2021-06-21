@@ -12,14 +12,20 @@ use itertools::izip;
 use crate::ir::*;
 use crate::some_or;
 
+/// TODO(document)
 #[derive(Debug, PartialEq, Fail)]
 pub enum DtypeError {
     /// For uncommon error
     #[fail(display = "{}", message)]
-    Misc { message: String },
+    Misc {
+        /// TODO(document)
+        message: String,
+    },
 }
 
+/// TODO(document)
 pub trait HasDtype {
+    /// TODO(document)
     fn dtype(&self) -> Dtype;
 }
 
@@ -34,40 +40,77 @@ struct BaseDtype {
     is_typedef: bool,
 }
 
+/// TODO(document)
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Dtype {
+    /// TODO(document)
     Unit {
+        /// TODO(document)
         is_const: bool,
     },
+    /// TODO(document)
     Int {
+        /// TODO(document)
         width: usize,
+
+        /// TODO(document)
         is_signed: bool,
+
+        /// TODO(document)
         is_const: bool,
     },
+    /// TODO(document)
     Float {
+        /// TODO(document)
         width: usize,
+
+        /// TODO(document)
         is_const: bool,
     },
+    /// TODO(document)
     Pointer {
+        /// TODO(document)
         inner: Box<Dtype>,
+
+        /// TODO(document)
         is_const: bool,
     },
+    /// TODO(document)
     Array {
+        /// TODO(document)
         inner: Box<Dtype>,
+
+        /// TODO(document)
         size: usize,
     },
+    /// TODO(document)
     Struct {
+        /// TODO(document)
         name: Option<String>,
+
+        /// TODO(document)
         fields: Option<Vec<Named<Dtype>>>,
+
+        /// TODO(document)
         is_const: bool,
+
+        /// TODO(document)
         size_align_offsets: Option<(usize, usize, Vec<usize>)>,
     },
+    /// TODO(document)
     Function {
+        /// TODO(document)
         ret: Box<Dtype>,
+
+        /// TODO(document)
         params: Vec<Dtype>,
     },
+    /// TODO(document)
     Typedef {
+        /// TODO(document)
         name: String,
+
+        /// TODO(document)
         is_const: bool,
     },
 }
@@ -201,6 +244,7 @@ impl BaseDtype {
             ast::SpecifierQualifier::TypeQualifier(type_qualifier) => {
                 self.apply_type_qualifier(&type_qualifier.node)?
             }
+            ast::SpecifierQualifier::Extension(_) => panic!("unsupported specifier qualifier"),
         }
 
         Ok(())
@@ -464,40 +508,73 @@ impl TryFrom<&ast::ParameterDeclaration> for Dtype {
 }
 
 impl Dtype {
+    /// TODO(document)
     pub const BITS_OF_BYTE: usize = 8;
+
+    /// TODO(document)
     pub const SIZE_OF_BYTE: usize = 1;
+
+    /// TODO(document)
     // TODO: consider architecture dependency (current: 64-bit architecture)
     pub const SIZE_OF_POINTER: usize = 8;
 
+    /// TODO(document)
     pub const SIZE_OF_CHAR: usize = 1;
+
+    /// TODO(document)
     pub const SIZE_OF_SHORT: usize = 2;
+
+    /// TODO(document)
     pub const SIZE_OF_INT: usize = 4;
+
+    /// TODO(document)
     pub const SIZE_OF_LONG: usize = 8;
+
+    /// TODO(document)
     pub const SIZE_OF_LONGLONG: usize = 8;
 
+    /// TODO(document)
     pub const SIZE_OF_FLOAT: usize = 4;
+
+    /// TODO(document)
     pub const SIZE_OF_DOUBLE: usize = 8;
 
+    /// TODO(document)
     // signed option cannot be applied to boolean value
     pub const BOOL: Self = Self::Int {
         width: 1,
         is_signed: false,
         is_const: false,
     };
+
+    /// TODO(document)
     pub const CHAR: Self = Self::int(Self::SIZE_OF_CHAR * Self::BITS_OF_BYTE);
+
+    /// TODO(document)
     pub const SHORT: Self = Self::int(Self::SIZE_OF_SHORT * Self::BITS_OF_BYTE);
+
+    /// TODO(document)
     pub const INT: Self = Self::int(Self::SIZE_OF_INT * Self::BITS_OF_BYTE);
+
+    /// TODO(document)
     pub const LONG: Self = Self::int(Self::SIZE_OF_LONG * Self::BITS_OF_BYTE);
+
+    /// TODO(document)
     pub const LONGLONG: Self = Self::int(Self::SIZE_OF_LONGLONG * Self::BITS_OF_BYTE);
 
+    /// TODO(document)
     pub const FLOAT: Self = Self::float(Self::SIZE_OF_FLOAT * Self::BITS_OF_BYTE);
+
+    /// TODO(document)
     pub const DOUBLE: Self = Self::float(Self::SIZE_OF_DOUBLE * Self::BITS_OF_BYTE);
 
+    /// TODO(document)
     #[inline]
     pub const fn unit() -> Self {
         Self::Unit { is_const: false }
     }
 
+    /// TODO(document)
     #[inline]
     pub const fn int(width: usize) -> Self {
         Self::Int {
@@ -507,6 +584,7 @@ impl Dtype {
         }
     }
 
+    /// TODO(document)
     #[inline]
     pub const fn float(width: usize) -> Self {
         Self::Float {
@@ -515,6 +593,7 @@ impl Dtype {
         }
     }
 
+    /// TODO(document)
     #[inline]
     pub fn pointer(inner: Dtype) -> Self {
         Self::Pointer {
@@ -523,9 +602,14 @@ impl Dtype {
         }
     }
 
-    // Suppose the C declaration is `int *a[2][3]`. Then `a`'s `ir::Dtype` should be `[2 x [3 x int*]]`.
-    // But in the AST, it is parsed as `Array(3, Array(2, Pointer(int)))`, reversing the order of `2` and `3`.
-    // In the recursive translation of declaration into Dtype, we need to insert `3` inside `[2 * int*]`.
+    /// TODO(document)
+    ///
+    /// # Examples
+    ///
+    /// Suppose the C declaration is `int *a[2][3]`. Then `a`'s `ir::Dtype` should be `[2 x [3 x
+    /// int*]]`.  But in the AST, it is parsed as `Array(3, Array(2, Pointer(int)))`, reversing the
+    /// order of `2` and `3`.  In the recursive translation of declaration into Dtype, we need to
+    /// insert `3` inside `[2 * int*]`.
     pub fn array(base_dtype: Dtype, size: usize) -> Self {
         match base_dtype {
             Self::Array {
@@ -547,6 +631,7 @@ impl Dtype {
         }
     }
 
+    /// TODO(document)
     #[inline]
     pub fn structure(name: Option<String>, fields: Option<Vec<Named<Self>>>) -> Self {
         Self::Struct {
@@ -1344,7 +1429,7 @@ fn check_no_duplicate_field(fields: &[Named<Dtype>], field_names: &mut HashSet<S
                 .expect("`field_dtype` must be struct type")
                 .as_ref()
                 .expect("struct type must have its definition");
-            if !check_no_duplicate_field(&fields, field_names) {
+            if !check_no_duplicate_field(fields, field_names) {
                 return false;
             }
         }

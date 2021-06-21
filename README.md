@@ -16,15 +16,15 @@ cargo build --release  # release build
 ## Run
 
 ```sh
-cargo run -- -h                                     # print options
-cargo run -- -p            examples/c/fibonacci.c   # parse
-cargo run -- -i            examples/c/fibonacci.c   # irgen
-cargo run -- -O --iroutput examples/c/fibonacci.c   # optimize
-cargo run --               examples/c/fibonacci.c   # compile
+cargo run --features=build-bin -- -h                                     # print options
+cargo run --features=build-bin -- -p            examples/c/fibonacci.c   # parse
+cargo run --features=build-bin -- -i            examples/c/fibonacci.c   # irgen
+cargo run --features=build-bin -- -O --iroutput examples/c/fibonacci.c   # optimize
+cargo run --features=build-bin --               examples/c/fibonacci.c   # compile
 
-cargo run -- --irrun examples/c/fibonacci.c   # interprets the IR
+cargo run --features=build-bin -- --irrun examples/c/fibonacci.c   # interprets the IR
 
-cargo run --release -- examples/c/fibonacci.c  # compile with release build
+cargo run --features=build-bin --release -- examples/c/fibonacci.c  # compile with release build
 ```
 
 
@@ -73,9 +73,8 @@ cat tests/test_reduced.c
 ### Install
 
 ```sh
-# Ubuntu 18.04 or higher
-apt install -y make cmake python3
-apt install -y csmith libcsmith-dev creduce
+# Ubuntu 20.04
+sudo apt install -y make cmake python3 csmith libcsmith-dev creduce
 ```
 
 ### Run
@@ -113,8 +112,8 @@ reduces the program; check if the reduced program still fails on the test, and i
 given program with the reduced one; repeat until you get a small enough buggy program. For more
 information, we refer to the [Creduce](https://embed.cs.utah.edu/creduce/) homepage.
 
-**[NOTICE]** The fuzzer supports Ubuntu 18.04 or 20.04 only. It may work for other platforms, but if it
-doesn't, please run the fuzzer in Ubuntu 18.04 or 20.04.
+**[NOTICE]** The fuzzer supports Ubuntu 20.04 only. It may work for other platforms, but if it
+doesn't, please run the fuzzer in Ubuntu 20.04.
 
 
 ## Running RISC-V Binaries
@@ -122,18 +121,18 @@ doesn't, please run the fuzzer in Ubuntu 18.04 or 20.04.
 ### Install
 
 ```sh
-# Ubuntu 20.04 or higher
-apt install gcc-10-riscv64-linux-gnu g++-10-riscv64-linux-gnu qemu-user-static
+# Ubuntu 20.04
+sudo apt install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu qemu-user-static
 ```
 
 ### Cross-Compilation and Architecture-Emulation
 
 ```sh
 # Compile C source code into RISC-V assembly
-riscv64-linux-gnu-gcc-10 hello.c -S -o hello.S
+riscv64-linux-gnu-gcc hello.c -S -o hello.S
 
 # Link to an RISC-V executable
-riscv64-linux-gnu-gcc-10 -static hello.S -o hello
+riscv64-linux-gnu-gcc -static hello.S -o hello
 
 # Emulate the executable
 qemu-riscv64-static ./hello

@@ -1,5 +1,5 @@
-CC=riscv64-linux-gnu-gcc-10
-CXX=riscv64-linux-gnu-g++-10
+CC=riscv64-linux-gnu-gcc
+CXX=riscv64-linux-gnu-g++
 KECC=../target/release/kecc
 CFLAGS=-O
 RM=rm -f

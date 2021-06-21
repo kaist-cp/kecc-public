@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - staging
+      - trying
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ci:
+    name: ci
+    runs-on: [self-hosted, ubuntu-20.04]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+          components: rust-src, rustfmt, clippy
+      - name: Rustfmt
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --all
+      - name: Check
+        run: cargo check --all
+      - name: Test (Debug)
+        run: RUST_MIN_STACK=8388608 cargo test -- --skip test_examples_asmgen
+      - name: Test (Release)
+        run: RUST_MIN_STACK=8388608 cargo test --release -- --skip test_examples_asmgen

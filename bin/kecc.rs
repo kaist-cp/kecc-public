@@ -1,8 +1,7 @@
 use std::ffi::OsStr;
 use std::path::Path;
-#[macro_use]
-extern crate clap;
-use clap::{crate_authors, crate_description, crate_version, App};
+
+use clap::{crate_authors, crate_description, crate_version, load_yaml, App};
 
 use lang_c::ast::TranslationUnit;
 
@@ -17,7 +16,7 @@ use kecc::{
 fn main() {
     let yaml = load_yaml!("kecc_cli.yml");
     #[allow(deprecated)]
-    let matches = App::from_yaml(yaml)
+    let matches = App::from(yaml)
         .version(crate_version!())
         .about(crate_description!())
         .author(crate_authors!(", "))
@@ -26,7 +25,7 @@ fn main() {
     let input = matches.value_of("INPUT").unwrap();
     let input = Path::new(input);
 
-    let output = matches.value_of("output").unwrap_or_else(|| "-");
+    let output = matches.value_of("output").unwrap_or("-");
     let mut output: Box<dyn ::std::io::Write> = if output == "-" {
         Box::new(::std::io::stdout())
     } else {
@@ -48,7 +47,7 @@ fn main() {
 fn compile_c(
     input: &TranslationUnit,
     output: &mut dyn ::std::io::Write,
-    matches: &clap::ArgMatches<'_>,
+    matches: &clap::ArgMatches,
 ) {
     if matches.is_present("parse") {
         return;
@@ -78,7 +77,7 @@ fn compile_c(
 fn compile_ir(
     input: &mut ir::TranslationUnit,
     output: &mut dyn ::std::io::Write,
-    matches: &clap::ArgMatches<'_>,
+    matches: &clap::ArgMatches,
 ) {
     if matches.is_present("irparse") {
         return;

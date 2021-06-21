@@ -1,7 +1,7 @@
 [package]
 name = "kecc"
 version = "0.1.0"
-authors = ["Chunmyong Park <chunmyong.park@kaist.ac.kr>", "Jeehoon Kang <jeehoon.kang@kaist.ac.kr>", "Hyunsu Kim <hyunsu.kim00@kaist.ac.kr>"]
+authors = ["Chunmyong Park <chunmyong.park@kaist.ac.kr>", "Jeehoon Kang <jeehoon.kang@kaist.ac.kr>"]
 edition = "2018"
 default-run = "kecc"
 
@@ -18,19 +18,24 @@ path = "src/lib.rs"
 [[bin]]
 name = "kecc"
 path = "bin/kecc.rs"
+required-features = ["build-bin"]
 
 [[bin]]
 name = "fuzz"
 path = "bin/fuzz.rs"
+required-features = ["build-bin"]
+
+[features]
+build-bin = ["clap"]
 
 [dependencies]
-clap = { version = "2.33.0", features = ["yaml"] }
-lang-c = "0.8.1"
-itertools = "0.9.0"
-failure = "0.1.7"
-tempfile = "3.1.0"
-ordered-float = "1.0"
+clap = { version = "3.0.0-beta.2", features = ["yaml"], optional = true }
+lang-c = "0.10.1"
+itertools = "0.10.1"
+failure = "0.1.8"
+tempfile = "3.2.0"
+ordered-float = "2.5.1"
 hexf = "0.1.0"
 wait-timeout = "0.2.0"
-peg = "0.6.2"
-rand = "0.7"
+peg = "0.7.0"
+rand = "0.8.4"
