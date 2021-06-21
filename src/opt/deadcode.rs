@@ -4,7 +4,7 @@ use crate::*;
 
 pub type Deadcode = FunctionPass<Repeat<DeadcodeInner>>;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DeadcodeInner {}
 
 impl Optimize<FunctionDefinition> for DeadcodeInner {

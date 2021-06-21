@@ -2,7 +2,7 @@ use crate::asm;
 use crate::ir;
 use crate::Translate;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Asmgen {}
 
 impl Translate<ir::TranslationUnit> for Asmgen {

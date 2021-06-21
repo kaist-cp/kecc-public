@@ -4,7 +4,7 @@ use lang_c::ast::*;
 
 use crate::*;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Irgen {}
 
 #[derive(Debug, PartialEq)]

@@ -4,7 +4,7 @@ use crate::*;
 
 pub type Mem2reg = FunctionPass<Mem2regInner>;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Mem2regInner {}
 
 impl Optimize<FunctionDefinition> for Mem2regInner {

@@ -10,19 +10,19 @@ pub type SimplifyCfg = FunctionPass<
 >;
 
 /// Simplifies block exits by propagating constants.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SimplifyCfgConstProp {}
 
 /// Retains only those blocks that are reachable from the init.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SimplifyCfgReach {}
 
 /// Merges two blocks if a block is pointed to only by another
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SimplifyCfgMerge {}
 
 /// Removes empty blocks
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SimplifyCfgEmpty {}
 
 impl Optimize<FunctionDefinition> for SimplifyCfgConstProp {
