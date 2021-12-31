@@ -7,7 +7,7 @@ use std::path::Path;
 fn main() {
     let yaml = load_yaml!("fuzz_cli.yml");
     #[allow(deprecated)]
-    let matches = App::from(yaml)
+    let matches = App::from_yaml(yaml)
         .version(crate_version!())
         .about(crate_description!())
         .author(crate_authors!(", "))

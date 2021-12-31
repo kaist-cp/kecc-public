@@ -466,8 +466,9 @@ impl AssertSupported for Expression {
             Self::Member(member) => member.assert_supported(),
             Self::Call(call) => call.assert_supported(),
             Self::CompoundLiteral(_) => panic!("Expression::CompoundLiteral"),
-            Self::SizeOf(typename) => typename.assert_supported(),
-            Self::AlignOf(typename) => typename.assert_supported(),
+            Self::SizeOfTy(size_of_ty) => size_of_ty.assert_supported(),
+            Self::SizeOfVal(size_of_val) => size_of_val.assert_supported(),
+            Self::AlignOf(align_of) => align_of.assert_supported(),
             Self::UnaryOperator(unary) => unary.assert_supported(),
             Self::Cast(cast) => cast.assert_supported(),
             Self::BinaryOperator(binary) => binary.assert_supported(),
@@ -589,5 +590,23 @@ impl AssertSupported for ConditionalExpression {
         self.condition.assert_supported();
         self.then_expression.assert_supported();
         self.else_expression.assert_supported();
+    }
+}
+
+impl AssertSupported for SizeOfTy {
+    fn assert_supported(&self) {
+        self.0.assert_supported();
+    }
+}
+
+impl AssertSupported for SizeOfVal {
+    fn assert_supported(&self) {
+        self.0.assert_supported();
+    }
+}
+
+impl AssertSupported for AlignOf {
+    fn assert_supported(&self) {
+        self.0.assert_supported();
     }
 }

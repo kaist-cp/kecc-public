@@ -10,7 +10,7 @@ mod write_ir;
 use core::convert::TryFrom;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
-use hexf::{parse_hexf32, parse_hexf64};
+use hexf_parse::{parse_hexf32, parse_hexf64};
 use lang_c::ast;
 use ordered_float::OrderedFloat;
 use std::collections::{BTreeMap, HashMap};

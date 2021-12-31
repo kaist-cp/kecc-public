@@ -247,11 +247,14 @@ impl IsEquiv for Expression {
             }
             (Self::Member(member), Self::Member(other_member)) => member.is_equiv(other_member),
             (Self::Call(call), Self::Call(other_call)) => call.is_equiv(other_call),
-            (Self::SizeOf(typename), Self::SizeOf(other_typename)) => {
-                typename.is_equiv(other_typename)
+            (Self::SizeOfTy(size_of_ty), Self::SizeOfTy(other_size_of_ty)) => {
+                size_of_ty.is_equiv(other_size_of_ty)
             }
-            (Self::AlignOf(typename), Self::AlignOf(other_typename)) => {
-                typename.is_equiv(other_typename)
+            (Self::SizeOfVal(size_of_val), Self::SizeOfVal(other_size_of_val)) => {
+                size_of_val.is_equiv(other_size_of_val)
+            }
+            (Self::AlignOf(align_of), Self::AlignOf(other_align_of)) => {
+                align_of.is_equiv(other_align_of)
             }
             (Self::UnaryOperator(unary), Self::UnaryOperator(other_unary)) => {
                 unary.node.operator.is_equiv(&other_unary.node.operator)
@@ -503,6 +506,24 @@ impl IsEquiv for TypeQualifier {
 impl IsEquiv for CallExpression {
     fn is_equiv(&self, other: &Self) -> bool {
         self.callee.is_equiv(&other.callee) && self.arguments.is_equiv(&other.arguments)
+    }
+}
+
+impl IsEquiv for SizeOfTy {
+    fn is_equiv(&self, other: &Self) -> bool {
+        self.0.is_equiv(&other.0)
+    }
+}
+
+impl IsEquiv for SizeOfVal {
+    fn is_equiv(&self, other: &Self) -> bool {
+        self.0.is_equiv(&other.0)
+    }
+}
+
+impl IsEquiv for AlignOf {
+    fn is_equiv(&self, other: &Self) -> bool {
+        self.0.is_equiv(&other.0)
     }
 }
 
