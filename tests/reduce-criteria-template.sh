@@ -51,9 +51,9 @@ if
   grep 'comparison between pointer and integer' outa.txt ||\
   ! gcc -O1 test_reduced.c > cc_out1.txt 2>&1 ||\
   ! gcc -O2 test_reduced.c > cc_out2.txt 2>&1 ||\
-  ! cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release -- --parse test_reduced.c >/dev/null 2>&1)
+  ! cargo run --manifest-path $PROJECT_DIR/Cargo.toml --features=build-bin --release -- --parse test_reduced.c >/dev/null 2>&1)
 then
   exit 1
 fi
 
-cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release --bin fuzz -- $FUZZ_ARG test_reduced.c 2>&1 | grep -q 'assertion failed'
+cargo run --manifest-path $PROJECT_DIR/Cargo.toml --features=build-bin --release --bin fuzz -- $FUZZ_ARG test_reduced.c 2>&1 | grep -q 'assertion failed'
