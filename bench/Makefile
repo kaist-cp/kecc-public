@@ -23,13 +23,13 @@ run-gcc: bench-gcc
 	qemu-riscv64-static -L /usr/riscv64-linux-gnu ./bench-gcc
 
 driver.o: $(SRCS) driver.cpp
-	$(CXX) $(CFLAGS) -o driver.o -c -I. driver.cpp
+	$(CXX) $(CFLAGS) -fsigned-char -o driver.o -c -I. driver.cpp
 
 .c.s: $(KECC)
 	($(KECC) -O $< >$@) || (rm $@ -rf; exit 1)
 
 .c.o:
-	($(CC) -O -c $< -o $@) || (rm $@ -rf; exit 1)
+	($(CC) -O -fsigned-char -c $< -o $@) || (rm $@ -rf; exit 1)
 
 $(KECC):
 	cargo build --manifest-path=../Cargo.toml --release --bin kecc

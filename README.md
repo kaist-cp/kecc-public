@@ -129,7 +129,7 @@ sudo apt install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu qemu-user-static
 
 ```sh
 # Compile C source code into RISC-V assembly
-riscv64-linux-gnu-gcc hello.c -S -o hello.S
+riscv64-linux-gnu-gcc hello.c -S -fsigned-char -o hello.S
 
 # Link to an RISC-V executable
 riscv64-linux-gnu-gcc -static hello.S -o hello
