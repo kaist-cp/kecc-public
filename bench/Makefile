@@ -25,14 +25,14 @@ run-gcc: bench-gcc
 driver.o: $(SRCS) driver.cpp
 	$(CXX) $(CFLAGS) -fsigned-char -o driver.o -c -I. driver.cpp
 
-.c.s: $(KECC)
+%.s: %.c $(KECC)
 	($(KECC) -O $< >$@) || (rm $@ -rf; exit 1)
 
-.c.o:
+%.o: %.c
 	($(CC) -O -fsigned-char -c $< -o $@) || (rm $@ -rf; exit 1)
 
 $(KECC):
-	cargo build --manifest-path=../Cargo.toml --release --bin kecc
+	cargo build --manifest-path=../Cargo.toml --features=build-bin --release --bin kecc
 
 clean:
 	$(RM) $(OBJS) $(OBJS_GCC) driver.o bench bench-gcc
