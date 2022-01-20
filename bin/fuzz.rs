@@ -1,7 +1,5 @@
 use clap::Parser;
 
-extern crate kecc;
-
 use std::path::Path;
 
 #[derive(Debug, Parser)]

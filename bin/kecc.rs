@@ -1,16 +1,13 @@
+use clap::Parser;
+
 use std::ffi::OsStr;
 use std::path::Path;
 
-use clap::Parser;
-
 use lang_c::ast::TranslationUnit;
 
-#[macro_use]
-extern crate kecc;
-
 use kecc::{
-    ir, write, Asmgen, Deadcode, Gvn, IrParse, Irgen, Mem2reg, Optimize, Parse, SimplifyCfg,
-    Translate, O1,
+    ir, ok_or_exit, write, Asmgen, Deadcode, Gvn, IrParse, Irgen, Mem2reg, Optimize, Parse,
+    SimplifyCfg, Translate, O1,
 };
 
 #[derive(Debug, Parser)]
