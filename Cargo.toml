@@ -29,7 +29,7 @@ required-features = ["build-bin"]
 build-bin = ["clap"]
 
 [dependencies]
-clap = { version = "3.0.10", features = ["yaml", "cargo"], optional = true }
+clap = { version = "3.0.10", features = ["derive"], optional = true }
 lang-c = "0.11.0"
 itertools = "0.10.3"
 failure = "0.1.8"

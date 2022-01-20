@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 use std::path::Path;
 
-use clap::{crate_authors, crate_description, crate_version, load_yaml, App};
+use clap::Parser;
 
 use lang_c::ast::TranslationUnit;
 
@@ -13,19 +13,71 @@ use kecc::{
     Translate, O1,
 };
 
+#[derive(Debug, Parser)]
+#[clap(name = "kecc", version, author, about)]
+struct KeccCli {
+    /// Parses the input C file
+    #[clap(long)]
+    parse: bool,
+
+    /// Prints the input AST
+    #[clap(short, long)]
+    print: bool,
+
+    /// Generates IR
+    #[clap(short, long)]
+    irgen: bool,
+
+    /// Parses the input IR file
+    #[clap(long)]
+    irparse: bool,
+
+    /// Prints the input IR AST
+    #[clap(long)]
+    irprint: bool,
+
+    /// Executes the input file
+    #[clap(long)]
+    irrun: bool,
+
+    /// Optimizes IR
+    #[clap(short = 'O', long)]
+    optimize: bool,
+
+    /// Performs simplify-cfg
+    #[clap(long = "simplify-cfg")]
+    simplify_cfg: bool,
+
+    /// Performs mem2reg
+    #[clap(long)]
+    mem2reg: bool,
+
+    /// Performs deadcode elimination
+    #[clap(long)]
+    deadcode: bool,
+
+    /// Performs gvn
+    #[clap(long)]
+    gvn: bool,
+
+    /// Prints the output IR
+    #[clap(long)]
+    iroutput: bool,
+
+    /// Sets the output file to use
+    #[clap(short, long, value_name = "FILE")]
+    output: Option<String>,
+
+    /// Sets the input file to use
+    input: String,
+}
+
 fn main() {
-    let yaml = load_yaml!("kecc_cli.yml");
-    #[allow(deprecated)]
-    let matches = App::from_yaml(yaml)
-        .version(crate_version!())
-        .about(crate_description!())
-        .author(crate_authors!(", "))
-        .get_matches();
+    let matches = KeccCli::parse();
+    let input = Path::new(&matches.input);
 
-    let input = matches.value_of("INPUT").unwrap();
-    let input = Path::new(input);
+    let output = matches.output.clone().unwrap_or_else(|| "-".to_string());
 
-    let output = matches.value_of("output").unwrap_or("-");
     let mut output: Box<dyn ::std::io::Write> = if output == "-" {
         Box::new(::std::io::stdout())
     } else {
@@ -44,16 +96,12 @@ fn main() {
     }
 }
 
-fn compile_c(
-    input: &TranslationUnit,
-    output: &mut dyn ::std::io::Write,
-    matches: &clap::ArgMatches,
-) {
-    if matches.is_present("parse") {
+fn compile_c(input: &TranslationUnit, output: &mut dyn ::std::io::Write, matches: &KeccCli) {
+    if matches.parse {
         return;
     }
 
-    if matches.is_present("print") {
+    if matches.print {
         write(input, output).unwrap();
         return;
     }
@@ -66,7 +114,7 @@ fn compile_c(
         }
     };
 
-    if matches.is_present("irgen") {
+    if matches.irgen {
         write(&ir, output).unwrap();
         return;
     }
@@ -77,43 +125,43 @@ fn compile_c(
 fn compile_ir(
     input: &mut ir::TranslationUnit,
     output: &mut dyn ::std::io::Write,
-    matches: &clap::ArgMatches,
+    matches: &KeccCli,
 ) {
-    if matches.is_present("irparse") {
+    if matches.irparse {
         return;
     }
 
-    if matches.is_present("irprint") {
+    if matches.irprint {
         write(input, output).unwrap();
         return;
     }
 
-    if matches.is_present("optimize") {
+    if matches.optimize {
         O1::default().optimize(input);
     } else {
-        if matches.is_present("simplify-cfg") {
+        if matches.simplify_cfg {
             SimplifyCfg::default().optimize(input);
         }
 
-        if matches.is_present("mem2reg") {
+        if matches.mem2reg {
             Mem2reg::default().optimize(input);
         }
 
-        if matches.is_present("deadcode") {
+        if matches.deadcode {
             Deadcode::default().optimize(input);
         }
 
-        if matches.is_present("gvn") {
+        if matches.gvn {
             Gvn::default().optimize(input);
         }
     }
 
-    if matches.is_present("iroutput") {
+    if matches.iroutput {
         write(input, output).unwrap();
         return;
     }
 
-    if matches.is_present("irrun") {
+    if matches.irrun {
         let result = ir::interp(input, Vec::new()).unwrap();
         let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
         assert_eq!(width, 32);
