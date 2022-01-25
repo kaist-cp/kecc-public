@@ -32,8 +32,8 @@ jobs:
       - name: Clippy
         run: cargo clippy --all -- -D warnings
       - name: Test (Debug)
-        run: RUST_MIN_STACK=8388608 cargo test
+        run: RUST_MIN_STACK=33554432 cargo test
       - name: Test (Release)
-        run: RUST_MIN_STACK=8388608 cargo test --release
+        run: RUST_MIN_STACK=33554432 cargo test --release
       - name: Bench
         run: cd bench; make run
