@@ -4,22 +4,22 @@ use crate::ir;
 
 use core::convert::TryFrom;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Todo {}
 
 /// TODO
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asm {
     pub unit: TranslationUnit,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TranslationUnit {
     pub functions: Vec<Section<Function>>,
     pub variables: Vec<Section<Variable>>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Section<T> {
     /// Section Headers provice size, offset, type, alignment and flags of the sections
     /// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#section-header
@@ -36,7 +36,7 @@ impl<T> Section<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Function {
     pub blocks: Vec<Block>,
 }
@@ -47,7 +47,7 @@ impl Function {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Variable {
     pub label: Label,
     pub directives: Vec<Directive>,
@@ -59,7 +59,7 @@ impl Variable {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Block {
     pub label: Option<Label>,
     pub instructions: Vec<Instruction>,
@@ -77,7 +77,7 @@ impl Block {
 /// The assembler implements a number of directives that control the assembly of instructions
 /// into an object file.
 /// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#assembler-directives
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Directive {
     /// .align integer
     Align(usize),
@@ -112,7 +112,7 @@ impl Directive {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SectionType {
     Text,
     Data,
@@ -120,13 +120,13 @@ pub enum SectionType {
     Bss,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SymbolType {
     Function,
     Object,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
     /// R-type instruction format
     /// https://riscv.org/specifications/isa-spec-pdf/ (16p, 129p)
@@ -171,7 +171,7 @@ pub enum Instruction {
 /// If the enum variant contains `bool`,
 /// It means that different instructions exist
 /// depending on whether the operand is signed or not.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RType {
     Add(DataSize),
     Sub(DataSize),
@@ -398,7 +398,7 @@ impl RType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IType {
     Load {
         data_size: DataSize,
@@ -474,7 +474,7 @@ impl IType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SType {
     Store(DataSize),
 }
@@ -490,7 +490,7 @@ impl SType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BType {
     Beq,
     Bne,
@@ -498,7 +498,7 @@ pub enum BType {
     Bge { is_signed: bool },
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UType {
     Lui,
 }
@@ -508,7 +508,7 @@ pub enum UType {
 /// that result in distinct semantics.
 /// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#assembler-pseudo-instructions
 /// https://riscv.org/specifications/isa-spec-pdf/ (139p)
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Pseudo {
     /// la rd, symbol
     La { rd: Register, symbol: Label },
@@ -574,7 +574,7 @@ impl Pseudo {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Immediate {
     // TODO: consider architecture dependency (current: 64-bit architecture)
     Value(u64),
@@ -594,7 +594,7 @@ impl Immediate {
 /// The relocation function creates synthesize operand values that are resolved
 /// at program link time and are used as immediate parameters to specific instructions.
 /// https://github.com/riscv/riscv-asm-manual/blob/master/riscv-asm.md
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RelocationFunction {
     /// %hi
     Hi20,
@@ -614,7 +614,7 @@ impl Label {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DataSize {
     Byte,
     Half,
