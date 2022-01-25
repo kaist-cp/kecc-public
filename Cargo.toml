@@ -30,9 +30,9 @@ build-bin = ["clap"]
 
 [dependencies]
 clap = { version = "3.0.10", features = ["derive"], optional = true }
+thiserror = "1.0.30"
 lang-c = "0.11.0"
 itertools = "0.10.3"
-failure = "0.1.8"
 tempfile = "3.3.0"
 ordered-float = "2.10.0"
 hexf-parse = "0.2.1"

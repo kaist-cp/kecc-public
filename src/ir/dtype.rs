@@ -1,11 +1,11 @@
 use core::convert::TryFrom;
 use core::fmt;
 use core::ops::Deref;
-use failure::Fail;
 use lang_c::ast;
 use lang_c::span::Node;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
+use thiserror::Error;
 
 use itertools::izip;
 
@@ -13,10 +13,10 @@ use crate::ir::*;
 use crate::some_or;
 
 /// TODO(document)
-#[derive(Debug, PartialEq, Fail)]
+#[derive(Debug, PartialEq, Error)]
 pub enum DtypeError {
     /// For uncommon error
-    #[fail(display = "{}", message)]
+    #[error("{message}")]
     Misc {
         /// TODO(document)
         message: String,

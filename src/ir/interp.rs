@@ -1,9 +1,9 @@
 use core::fmt;
 use core::iter;
 use core::mem;
-use failure::Fail;
 use ordered_float::OrderedFloat;
 use std::collections::HashMap;
+use thiserror::Error;
 
 use itertools::izip;
 
@@ -301,20 +301,17 @@ impl Value {
     }
 }
 
-#[derive(Debug, PartialEq, Fail)]
+#[derive(Debug, PartialEq, Error)]
 pub enum InterpreterError {
-    #[fail(display = "current block is unreachable")]
+    #[error("current block is unreachable")]
     Unreachable,
-    #[fail(display = "ir has no main function")]
+    #[error("ir has no main function")]
     NoMainFunction,
-    #[fail(display = "ir has no function definition of {} function", func_name)]
+    #[error("ir has no function definition of {} function", func_name)]
     NoFunctionDefinition { func_name: String },
-    #[fail(
-        display = "ir has no structure definition of {} structure",
-        struct_name
-    )]
+    #[error("ir has no structure definition of {struct_name} structure")]
     NoStructureDefinition { struct_name: String },
-    #[fail(display = "{}:{} / {}", func_name, pc, msg)]
+    #[error("{func_name}:{pc} / {msg}")]
     Misc {
         func_name: String,
         pc: Pc,
