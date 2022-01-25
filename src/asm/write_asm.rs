@@ -205,19 +205,19 @@ impl WriteString for Instruction {
 impl WriteString for RType {
     fn write_string(&self) -> String {
         match self {
-            Self::Add(data_size) => format!("add{}", data_size.write_string()),
-            Self::Sub(data_size) => format!("sub{}", data_size.write_string()),
-            Self::Sll(data_size) => format!("sll{}", data_size.write_string()),
-            Self::Srl(data_size) => format!("srl{}", data_size.write_string()),
-            Self::Sra(data_size) => format!("sra{}", data_size.write_string()),
-            Self::Mul(data_size) => format!("mul{}", data_size.write_string()),
+            Self::Add(data_size) => format!("add{}", data_size.word().write_string()),
+            Self::Sub(data_size) => format!("sub{}", data_size.word().write_string()),
+            Self::Sll(data_size) => format!("sll{}", data_size.word().write_string()),
+            Self::Srl(data_size) => format!("srl{}", data_size.word().write_string()),
+            Self::Sra(data_size) => format!("sra{}", data_size.word().write_string()),
+            Self::Mul(data_size) => format!("mul{}", data_size.word().write_string()),
             Self::Div {
                 data_size,
                 is_signed,
             } => format!(
                 "div{}{}",
                 if *is_signed { "" } else { "u" },
-                data_size.write_string()
+                data_size.word().write_string()
             ),
             Self::Rem {
                 data_size,
@@ -225,7 +225,7 @@ impl WriteString for RType {
             } => format!(
                 "rem{}{}",
                 if *is_signed { "" } else { "u" },
-                data_size.write_string()
+                data_size.word().write_string()
             ),
             Self::Slt { is_signed } => format!("slt{}", if *is_signed { "" } else { "u" }),
             Self::Xor => "xor".to_string(),
@@ -265,10 +265,10 @@ impl WriteString for RType {
                 is_signed,
             } => {
                 assert!(float_data_size.is_floating_point());
+                assert!(matches!(int_data_size, DataSize::Word | DataSize::Double));
                 format!(
                     "fcvt.{}{}.{}",
-                    if let Some(int_data_size) = int_data_size {
-                        assert_eq!(*int_data_size, DataSize::Word);
+                    if matches!(int_data_size, DataSize::Word) {
                         "w"
                     } else {
                         "l"
@@ -284,11 +284,11 @@ impl WriteString for RType {
                 is_signed,
             } => {
                 assert!(float_data_size.is_floating_point());
+                assert!(matches!(int_data_size, DataSize::Word | DataSize::Double));
                 format!(
                     "fcvt.{}.{}{}",
                     float_data_size.write_string(),
-                    if let Some(int_data_size) = int_data_size {
-                        assert_eq!(*int_data_size, DataSize::Word);
+                    if matches!(int_data_size, DataSize::Word) {
                         "w"
                     } else {
                         "l"
@@ -330,13 +330,13 @@ impl WriteString for IType {
                     )
                 }
             }
-            Self::Addi(data_size) => format!("addi{}", data_size.write_string()),
+            Self::Addi(data_size) => format!("addi{}", data_size.word().write_string()),
             Self::Xori => "xori".to_string(),
             Self::Ori => "ori".to_string(),
             Self::Andi => "andi".to_string(),
-            Self::Slli(data_size) => format!("slli{}", data_size.write_string()),
-            Self::Srli(data_size) => format!("srli{}", data_size.write_string()),
-            Self::Srai(data_size) => format!("srai{}", data_size.write_string()),
+            Self::Slli(data_size) => format!("slli{}", data_size.word().write_string()),
+            Self::Srli(data_size) => format!("srli{}", data_size.word().write_string()),
+            Self::Srai(data_size) => format!("srai{}", data_size.word().write_string()),
             Self::Slti { is_signed } => format!("slti{}", if *is_signed { "" } else { "u" }),
         }
     }
@@ -396,7 +396,7 @@ impl WriteString for Pseudo {
             ),
             Self::Neg { data_size, rd, rs } => format!(
                 "neg{}\t{},{}",
-                data_size.write_string(),
+                data_size.word().write_string(),
                 rd.write_string(),
                 rs.write_string()
             ),

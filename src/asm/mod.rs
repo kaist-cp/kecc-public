@@ -168,31 +168,23 @@ pub enum Instruction {
     Pseudo(Pseudo),
 }
 
-/// If the enum variant contains `Option<DataSize>`,
-/// it means that the instructions used may vary according to `DataSize`.
-/// Use 'Some' if RISC-V ISA provides instruction to support a specific 'DataSize',
-/// if not, 'None' which means to use default instruction.
-/// Because KECC uses RV64 (RISC-V ISA for 64-bit architecture),
-/// KECC uses `Some` if `DataSize` is `Word`, if not, use `None`.
-/// https://riscv.org/specifications/isa-spec-pdf/ (35p)
-///
 /// If the enum variant contains `bool`,
 /// It means that different instructions exist
 /// depending on whether the operand is signed or not.
 #[derive(Debug, Clone, PartialEq)]
 pub enum RType {
-    Add(Option<DataSize>),
-    Sub(Option<DataSize>),
-    Sll(Option<DataSize>),
-    Srl(Option<DataSize>),
-    Sra(Option<DataSize>),
-    Mul(Option<DataSize>),
+    Add(DataSize),
+    Sub(DataSize),
+    Sll(DataSize),
+    Srl(DataSize),
+    Sra(DataSize),
+    Mul(DataSize),
     Div {
-        data_size: Option<DataSize>,
+        data_size: DataSize,
         is_signed: bool,
     },
     Rem {
-        data_size: Option<DataSize>,
+        data_size: DataSize,
         is_signed: bool,
     },
     Slt {
@@ -218,7 +210,7 @@ pub enum RType {
     /// fcvt.s.l(u) or fcvt.d.l(u)
     /// fcvt.s.w(u) or fcvt.d.w(u)
     FcvtIntToFloat {
-        int_data_size: Option<DataSize>,
+        int_data_size: DataSize,
         float_data_size: DataSize,
         is_signed: bool,
     },
@@ -226,7 +218,7 @@ pub enum RType {
     /// fcvt.w(u).s or fcvt.w(u).d
     FcvtFloatToInt {
         float_data_size: DataSize,
-        int_data_size: Option<DataSize>,
+        int_data_size: DataSize,
         is_signed: bool,
     },
     /// fcvt.s.d or fcvt.d.s
@@ -240,58 +232,58 @@ impl RType {
     pub fn add(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Add(data_size.word())
+        Self::Add(data_size)
     }
 
     pub fn sub(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Sub(data_size.word())
+        Self::Sub(data_size)
     }
 
     pub fn sll(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Sll(data_size.word())
+        Self::Sll(data_size)
     }
 
     pub fn srl(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Srl(data_size.word())
+        Self::Srl(data_size)
     }
 
     pub fn sra(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Sra(data_size.word())
+        Self::Sra(data_size)
     }
 
     pub fn mul(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Mul(data_size.word())
+        Self::Mul(data_size)
     }
 
     pub fn div(dtype: ir::Dtype, is_signed: bool) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
         Self::Div {
-            data_size: data_size.word(),
+            data_size,
             is_signed,
         }
     }
@@ -299,10 +291,10 @@ impl RType {
     pub fn rem(dtype: ir::Dtype, is_signed: bool) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
         Self::Rem {
-            data_size: data_size.word(),
+            data_size,
             is_signed,
         }
     }
@@ -375,14 +367,14 @@ impl RType {
         let is_signed = from.is_int_signed();
         let int_data_size =
             DataSize::try_from(from).expect("`data_size` must be derived from `dtype`");
-        assert!(int_data_size.is_integer());
+        assert!(matches!(int_data_size, DataSize::Word | DataSize::Double));
 
         let float_data_size =
             DataSize::try_from(to).expect("`data_size` must be derived from `dtype`");
         assert!(float_data_size.is_floating_point());
 
         Self::FcvtIntToFloat {
-            int_data_size: int_data_size.word(),
+            int_data_size,
             float_data_size,
             is_signed,
         }
@@ -396,36 +388,29 @@ impl RType {
         let is_signed = to.is_int_signed();
         let int_data_size =
             DataSize::try_from(to).expect("`data_size` must be derived from `dtype`");
-        assert!(int_data_size.is_integer());
+        assert!(matches!(int_data_size, DataSize::Word | DataSize::Double));
 
         Self::FcvtFloatToInt {
             float_data_size,
-            int_data_size: int_data_size.word(),
+            int_data_size,
             is_signed,
         }
     }
 }
 
-/// If the enum variant contains `Option<DataSize>`,
-/// it means that the instructions used may vary according to `DataSize`.
-/// Use 'Some' if RISC-V ISA provides instruction to support a specific 'DataSize',
-/// if not, 'None' which means to use default instruction.
-/// Because KECC uses RV64 (RISC-V ISA for 64-bit architecture),
-/// KECC uses `Some` if `DataSize` is `Word`, if not, use `None`.
-/// https://riscv.org/specifications/isa-spec-pdf/ (35p)
 #[derive(Debug, Clone, PartialEq)]
 pub enum IType {
     Load {
         data_size: DataSize,
         is_signed: bool,
     },
-    Addi(Option<DataSize>),
+    Addi(DataSize),
     Xori,
     Ori,
     Andi,
-    Slli(Option<DataSize>),
-    Srli(Option<DataSize>),
-    Srai(Option<DataSize>),
+    Slli(DataSize),
+    Srli(DataSize),
+    Srai(DataSize),
     Slti {
         is_signed: bool,
     },
@@ -440,7 +425,7 @@ impl IType {
         data_size: DataSize::Double,
         is_signed: true,
     };
-    pub const ADDI: Self = Self::Addi(None);
+    pub const ADDI: Self = Self::Addi(DataSize::Double);
 
     pub fn load(dtype: ir::Dtype) -> Self {
         let data_size =
@@ -467,25 +452,25 @@ impl IType {
     pub fn slli(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Slli(data_size.word())
+        Self::Slli(data_size)
     }
 
     pub fn srli(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Srli(data_size.word())
+        Self::Srli(data_size)
     }
 
     pub fn srai(dtype: ir::Dtype) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        assert!(data_size.is_integer());
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
-        Self::Srai(data_size.word())
+        Self::Srai(data_size)
     }
 }
 
@@ -543,7 +528,7 @@ pub enum Pseudo {
     },
     /// neg(w) rd, rs
     Neg {
-        data_size: Option<DataSize>,
+        data_size: DataSize,
         rd: Register,
         rs: Register,
     },
@@ -575,11 +560,7 @@ impl Pseudo {
     pub fn neg(dtype: ir::Dtype, rd: Register, rs: Register) -> Self {
         let data_size =
             DataSize::try_from(dtype).expect("`data_size` must be derived from `dtype`");
-        let data_size = if data_size == DataSize::Word {
-            Some(data_size)
-        } else {
-            None
-        };
+        assert!(matches!(data_size, DataSize::Word | DataSize::Double));
 
         Self::Neg { data_size, rd, rs }
     }
@@ -633,7 +614,7 @@ impl Label {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DataSize {
     Byte,
     Half,
