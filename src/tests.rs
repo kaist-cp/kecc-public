@@ -375,18 +375,14 @@ pub fn test_asmgen(path: &Path) {
 }
 
 /// Tests end-to-end translation.
-// TODO: test all the way down to assembly
 pub fn test_end_to_end(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
+
+    // Test parse
     let unit = c::Parse::default()
         .translate(&path)
         .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
-
-    // Test parse
-    let _ = c::Parse::default()
-        .translate(&path)
-        .expect("failed to parse the given program");
 
     let file_path = path.display().to_string();
     let bin_path = path
@@ -447,8 +443,9 @@ pub fn test_end_to_end(path: &Path) {
         ::std::process::exit(SKIP_TEST);
     }
 
-    let status = some_or_exit!(status.code(), SKIP_TEST);
+    let gcc_status = some_or_exit!(status.code(), SKIP_TEST);
 
+    // Execute optimized IR
     let mut ir = Irgen::default()
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
@@ -464,6 +461,72 @@ pub fn test_end_to_end(path: &Path) {
     // For this reason, we make `fuzzer` generate the C source code which returns value
     // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
     // may be deleted. So, we truncate result value to byte size one more time here.
-    println!("gcc: {}, kecc: {}", status as u8, value as u8);
-    assert_eq!(status as u8, value as u8);
+    println!("gcc: {}, kecc interp: {}", gcc_status as u8, value as u8);
+    assert_eq!(gcc_status as u8, value as u8);
+
+    // Generate RISC-V assembly from IR
+    let asm = Asmgen::default()
+        .translate(&ir)
+        .expect("fail to create riscv assembly code");
+
+    let temp_dir = tempdir().expect("temp dir creation failed");
+    let asm_path = temp_dir.path().join("temp.S");
+    let asm_path_str = asm_path.as_path().display().to_string();
+    let bin_path_str = asm_path
+        .with_extension("asmgen")
+        .as_path()
+        .display()
+        .to_string();
+
+    // Create the assembly code
+    let mut buffer = File::create(asm_path.as_path()).expect("need to success creating file");
+    write(&asm, &mut buffer).unwrap();
+
+    // Compile the assembly code
+    if !Command::new("riscv64-linux-gnu-gcc")
+        .args(&["-static", &asm_path_str, "-o", &bin_path_str])
+        .stderr(Stdio::null())
+        .status()
+        .unwrap()
+        .success()
+    {
+        ::std::process::exit(SKIP_TEST);
+    }
+
+    // Emulate the executable
+    let mut child = Command::new("qemu-riscv64-static")
+        .args(&[&bin_path_str])
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("failed to execute the compiled executable");
+
+    let status = some_or!(
+        child
+            .wait_timeout_ms(500)
+            .expect("failed to obtain exit status from child process"),
+        {
+            println!("timeout occurs");
+            child.kill().unwrap();
+            let _ = child.wait().unwrap();
+            ::std::process::exit(SKIP_TEST);
+        }
+    );
+
+    if child
+        .stderr
+        .expect("`stderr` of `child` must be `Some`")
+        .bytes()
+        .next()
+        .is_some()
+    {
+        println!("error occurs");
+        ::std::process::exit(SKIP_TEST);
+    }
+
+    let qemu_status = some_or_exit!(status.code(), SKIP_TEST);
+    drop(buffer);
+    temp_dir.close().expect("temp dir deletion failed");
+
+    println!("gcc: {}, qemu: {}", gcc_status as u8, qemu_status as u8);
+    assert_eq!(gcc_status as u8, qemu_status as u8);
 }
