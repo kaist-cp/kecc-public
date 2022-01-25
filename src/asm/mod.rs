@@ -22,14 +22,14 @@ pub struct TranslationUnit {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Section<T> {
     /// Section Headers provice size, offset, type, alignment and flags of the sections
-    /// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#section-header
+    /// https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#section-header
     pub header: Vec<Directive>,
     pub body: T,
 }
 
 /// An object file is made up of multiple sections, with each section corresponding to
 /// distinct types of executable code or data.
-/// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#sections
+/// https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#sections
 impl<T> Section<T> {
     pub fn new(header: Vec<Directive>, body: T) -> Self {
         Self { header, body }
@@ -76,7 +76,7 @@ impl Block {
 
 /// The assembler implements a number of directives that control the assembly of instructions
 /// into an object file.
-/// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#assembler-directives
+/// https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#assembler-directives
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Directive {
     /// .align integer
@@ -129,7 +129,7 @@ pub enum SymbolType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
     /// R-type instruction format
-    /// https://riscv.org/specifications/isa-spec-pdf/ (16p, 129p)
+    /// https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf (104p)
     RType {
         instr: RType,
         rd: Register,
@@ -137,7 +137,7 @@ pub enum Instruction {
         rs2: Option<Register>,
     },
     /// I-type instruction format
-    /// https://riscv.org/specifications/isa-spec-pdf/ (16p, 129p)
+    /// https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf (104p)
     IType {
         instr: IType,
         rd: Register,
@@ -145,7 +145,7 @@ pub enum Instruction {
         imm: Immediate,
     },
     /// S-type instruction format
-    /// https://riscv.org/specifications/isa-spec-pdf/ (16p, 129p)
+    /// https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf (104p)
     SType {
         instr: SType,
         rs1: Register,
@@ -153,7 +153,7 @@ pub enum Instruction {
         imm: Immediate,
     },
     /// B-type instruction format
-    /// https://riscv.org/specifications/isa-spec-pdf/ (16p, 129p)
+    /// https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf (104p)
     BType {
         instr: BType,
         rs1: Register,
@@ -506,8 +506,8 @@ pub enum UType {
 /// The assembler implements a number of convenience psuedo-instructions that are formed from
 /// instructions in the base ISA, but have implicit arguments or in some case reversed arguments,
 /// that result in distinct semantics.
-/// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#assembler-pseudo-instructions
-/// https://riscv.org/specifications/isa-spec-pdf/ (139p)
+/// https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#assembler-pseudo-instructions
+/// https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf (110p)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Pseudo {
     /// la rd, symbol
@@ -593,7 +593,7 @@ impl Immediate {
 
 /// The relocation function creates synthesize operand values that are resolved
 /// at program link time and are used as immediate parameters to specific instructions.
-/// https://github.com/riscv/riscv-asm-manual/blob/master/riscv-asm.md
+/// https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RelocationFunction {
     /// %hi
@@ -603,7 +603,7 @@ pub enum RelocationFunction {
 }
 
 /// `Label` is used as branch, unconditional jump targets and symbol offsets.
-/// https://github.com/rv8-io/rv8-io.github.io/blob/master/asm.md#labels
+/// https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#labels
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Label(pub String);
 
@@ -675,7 +675,7 @@ impl DataSize {
 
 // TODO: Add calling convention information (caller/callee-save registers)
 /// ABI name for RISC-V integer and floating-point register
-/// https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf (155p)
+/// https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf (109p)
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum Register {
     Zero,
