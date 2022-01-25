@@ -4,7 +4,6 @@ on:
   pull_request:
   push:
     branches:
-      - master
       - staging
       - trying
 
@@ -18,19 +17,23 @@ jobs:
     runs-on: [self-hosted, ubuntu-20.04]
     steps:
       - uses: actions/checkout@v2
-      - name: Install latest
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           override: true
           components: rust-src, rustfmt, clippy
+      - name: Install RISC-V
+        run: (echo 'Acquire::http { Proxy "http://10.22.0.2:3142"; }' | sudo tee -a /etc/apt/apt.conf.d/01proxy) && sudo apt-get update && sudo apt-get install -yy gcc-riscv64-linux-gnu g++-riscv64-linux-gnu qemu-user-static
+      - name: Check
+        run: cargo check --all --verbose
       - name: Rustfmt
         run: cargo fmt --all -- --check
       - name: Clippy
-        run: cargo clippy --all
-      - name: Check
-        run: cargo check --all
+        run: cargo clippy --all -- -D warnings
       - name: Test (Debug)
-        run: RUST_MIN_STACK=8388608 cargo test -- --skip test_examples_asmgen
+        run: RUST_MIN_STACK=8388608 cargo test
       - name: Test (Release)
-        run: RUST_MIN_STACK=8388608 cargo test --release -- --skip test_examples_asmgen
+        run: RUST_MIN_STACK=8388608 cargo test --release
+      - name: Bench
+        run: cd bench; make run
