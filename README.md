@@ -118,6 +118,11 @@ doesn't, please run the fuzzer in Ubuntu 20.04.
 
 ## Running RISC-V Binaries
 
+### RISC-V Documentation
+
+- ISA: <https://riscv.org/technical/specifications/>
+- ELF calling convention: <https://github.com/riscv-non-isa/riscv-elf-psabi-doc>
+
 ### Install
 
 ```sh
