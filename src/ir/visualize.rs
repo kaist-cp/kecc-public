@@ -48,9 +48,8 @@ impl Translate<TranslationUnit> for Visualizer {
                 for (bid, block) in &definition.blocks {
                     for (iid, instruction) in block.instructions.iter().enumerate() {
                         if let Instruction::Call { callee, .. } = &instruction.inner {
-                            let callee = self.translate_callee(callee)?;
                             let from = self.translate_instruction_node(name, *bid, iid);
-                            let to = self.get_function_first_instruction(&callee);
+                            let to = self.translate_callee(name, callee)?;
 
                             edges.push(format!("{} -> {};", from, to));
                         }
@@ -93,11 +92,15 @@ impl Visualizer {
     }
 
     #[inline]
-    fn translate_callee(&mut self, callee: &Operand) -> Result<String, ()> {
+    fn translate_callee(&mut self, name: &str, callee: &Operand) -> Result<String, ()> {
         match callee {
             Operand::Constant(_constant @ Constant::GlobalVariable { name, .. }) => {
-                Ok(name.clone())
+                Ok(self.get_function_first_instruction(name))
             }
+            Operand::Register {
+                rid: _rid @ RegisterId::Temp { bid, iid },
+                ..
+            } => Ok(self.translate_instruction_node(name, *bid, *iid)),
             _ => todo!("translate_callee: operand {:?}", callee),
         }
     }
