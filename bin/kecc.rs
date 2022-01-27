@@ -43,7 +43,7 @@ struct KeccCli {
 
     /// Visualizes IR
     #[clap(long, value_name = "FILE")]
-    irvisualize: Option<String>,
+    irviz: Option<String>,
 
     /// Optimizes IR
     #[clap(short = 'O', long)]
@@ -141,7 +141,7 @@ fn compile_ir(
         return;
     }
 
-    if let Some(path) = &matches.irvisualize {
+    if let Some(path) = &matches.irviz {
         assert_eq!(
             Path::new(&path).extension(),
             Some(std::ffi::OsStr::new("png"))
