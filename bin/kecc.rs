@@ -1,13 +1,17 @@
 use clap::Parser;
 
 use std::ffi::OsStr;
+use std::io::Write;
+use std::os::unix::io::{FromRawFd, IntoRawFd};
 use std::path::Path;
+use std::process::{Command, Stdio};
 
 use lang_c::ast::TranslationUnit;
+use tempfile::tempdir;
 
 use kecc::{
-    ir, ok_or_exit, write, Asmgen, Deadcode, Gvn, IrParse, Irgen, Mem2reg, Optimize, Parse,
-    SimplifyCfg, Translate, O1,
+    ir, ok_or_exit, write, Asmgen, Deadcode, Gvn, IrParse, IrVisualizer, Irgen, Mem2reg, Optimize,
+    Parse, SimplifyCfg, Translate, O1,
 };
 
 #[derive(Debug, Parser)]
@@ -36,6 +40,10 @@ struct KeccCli {
     /// Executes the input file
     #[clap(long)]
     irrun: bool,
+
+    /// Visualizes IR
+    #[clap(long, value_name = "FILE")]
+    irvisualize: Option<String>,
 
     /// Optimizes IR
     #[clap(short = 'O', long)]
@@ -131,6 +139,46 @@ fn compile_ir(
     if matches.irprint {
         write(input, output).unwrap();
         return;
+    }
+
+    if let Some(path) = &matches.irvisualize {
+        assert_eq!(
+            Path::new(&path).extension(),
+            Some(std::ffi::OsStr::new("png"))
+        );
+        let img_path = Path::new(path);
+        let dot = IrVisualizer::default()
+            .translate(input)
+            .expect("ir visualize failed");
+
+        let temp_dir = tempdir().expect("temp dir creation failed");
+        let dot_path = temp_dir.path().join("temp.dot");
+        let dot_path_str = dot_path.as_path().display().to_string();
+        let img_path_str = img_path.display().to_string();
+
+        // Create the dot file
+        let mut buffer =
+            ::std::fs::File::create(dot_path.as_path()).expect("need to success creating file");
+        buffer
+            .write(dot.as_bytes())
+            .expect("failed to write to dot file");
+
+        // Create the image file
+        let img = ::std::fs::File::create(&img_path_str).expect("need to success creating file");
+
+        // Translate dot file into image
+        if !Command::new("dot")
+            .args(&["-Tpng", &dot_path_str])
+            .stdout(unsafe { Stdio::from_raw_fd(img.into_raw_fd()) })
+            .status()
+            .unwrap()
+            .success()
+        {
+            panic!("failed to save image file");
+        }
+
+        drop(buffer);
+        temp_dir.close().expect("temp dir deletion failed");
     }
 
     if matches.optimize {

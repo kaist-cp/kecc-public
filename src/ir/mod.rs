@@ -5,6 +5,7 @@ mod equiv;
 mod interp;
 #[allow(clippy::all)]
 mod parse;
+mod visualize;
 mod write_ir;
 
 use core::convert::TryFrom;
@@ -19,6 +20,7 @@ use std::hash::{Hash, Hasher};
 pub use dtype::{Dtype, DtypeError, HasDtype};
 pub use interp::{interp, Value};
 pub use parse::Parse;
+pub use visualize::Visualizer;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TranslationUnit {
