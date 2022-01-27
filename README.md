@@ -22,10 +22,13 @@ cargo run --features=build-bin -- -i            examples/c/fibonacci.c   # irgen
 cargo run --features=build-bin -- -O --iroutput examples/c/fibonacci.c   # optimize
 cargo run --features=build-bin --               examples/c/fibonacci.c   # compile
 
-cargo run --features=build-bin -- --irrun examples/c/fibonacci.c   # interprets the IR
+cargo run --features=build-bin -- --irrun examples/c/fibonacci.c    # interprets the IR
+cargo run --features=build-bin -- --irviz fibonacci.png examples/c/fibonacci.c    # visualizes the IR
 
 cargo run --features=build-bin --release -- examples/c/fibonacci.c  # compile with release build
 ```
+
+You need to install `graphviz` package for IR visualization. (`--irviz`)
 
 
 ## Test
