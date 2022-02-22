@@ -10,24 +10,17 @@ use itertools::izip;
 use crate::ir::*;
 use crate::*;
 
-// TODO: delete `allow(dead_code)`
-/// Even though `Undef`, `Int`, `Float` are constructed and actively used at run-time,
-/// the rust compiler analyzes these elements are dead code.
-/// For this reason, we add `allow(dead_code)` mark above these elements respectively.
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
-    #[allow(dead_code)]
     Undef {
         dtype: Dtype,
     },
     Unit,
-    #[allow(dead_code)]
     Int {
         value: u128,
         width: usize,
         is_signed: bool,
     },
-    #[allow(dead_code)]
     Float {
         /// `value` may be `f32`, but it is possible to consider it as `f64`.
         ///
@@ -358,8 +351,8 @@ impl RegisterMap {
     }
 }
 
-#[derive(Default, Debug, PartialEq, Clone)]
 /// Bidirectional map between the name of a global variable and memory box id
+#[derive(Default, Debug, PartialEq, Clone)]
 struct GlobalMap {
     /// Map name of a global variable to memory box id
     ///
@@ -806,15 +799,10 @@ mod calculator {
     }
 }
 
-// TODO: delete `allow(dead_code)`
-/// Even though `Pointer` variant is constructed and actively used at run-time,
-/// the rust compiler analyzes it is dead code.
-/// For this reason, we add `allow(dead_code)` mark.
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 enum Byte {
     Undef,
     Concrete(u8),
-    #[allow(dead_code)]
     Pointer {
         bid: Option<usize>,
         offset: isize,

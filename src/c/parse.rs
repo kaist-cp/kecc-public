@@ -12,7 +12,6 @@ use crate::Translate;
 #[derive(Debug)]
 pub enum Error {
     ParseError(ParseError),
-    #[allow(dead_code)]
     Unsupported,
 }
 
