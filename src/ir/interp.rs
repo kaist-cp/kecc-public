@@ -794,6 +794,9 @@ mod calculator {
             (Value::Float { value, .. }, Dtype::Float { width, .. }) => {
                 Ok(Value::float(value.into_inner(), width))
             }
+            (Value::Pointer { bid, offset, .. }, Dtype::Pointer { inner, .. }) => {
+                Ok(Value::pointer(bid, offset, inner.deref().clone()))
+            }
             (value, dtype) => todo!("calculate_typecast ({:?}) {:?}", value, dtype),
         }
     }
