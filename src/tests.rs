@@ -124,7 +124,7 @@ pub fn test_irgen(path: &Path) {
         .to_string();
 
     // Compile c file: If fails, test is vacuously success
-    if !Command::new("gcc")
+    if !Command::new("clang")
         .args(&[
             "-fsanitize=undefined",
             "-fno-sanitize-recover=all",
@@ -182,11 +182,11 @@ pub fn test_irgen(path: &Path) {
     assert_eq!(width, 32);
     assert!(is_signed);
 
-    // When obtain status from `gcc` executable process, value is truncated to byte size.
+    // When obtain status from `clang` executable process, value is truncated to byte size.
     // For this reason, we make `fuzzer` generate the C source code which returns value
     // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
     // may be deleted. So, we truncate result value to byte size one more time here.
-    println!("gcc: {}, kecc: {}", status as u8, value as u8);
+    println!("clang: {}, kecc: {}", status as u8, value as u8);
     assert_eq!(status as u8, value as u8);
 }
 
@@ -392,7 +392,7 @@ pub fn test_end_to_end(path: &Path) {
         .to_string();
 
     // Compile c file: If fails, test is vacuously success
-    if !Command::new("gcc")
+    if !Command::new("clang")
         .args(&[
             "-fsanitize=undefined",
             "-fno-sanitize-recover=all",
@@ -443,7 +443,7 @@ pub fn test_end_to_end(path: &Path) {
         ::std::process::exit(SKIP_TEST);
     }
 
-    let gcc_status = some_or_exit!(status.code(), SKIP_TEST);
+    let clang_status = some_or_exit!(status.code(), SKIP_TEST);
 
     // Execute optimized IR
     let mut ir = Irgen::default()
@@ -457,12 +457,15 @@ pub fn test_end_to_end(path: &Path) {
     assert_eq!(width, 32);
     assert!(is_signed);
 
-    // When obtain status from `gcc` executable process, value is truncated to byte size.
+    // When obtain status from `clang` executable process, value is truncated to byte size.
     // For this reason, we make `fuzzer` generate the C source code which returns value
     // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
     // may be deleted. So, we truncate result value to byte size one more time here.
-    println!("gcc: {}, kecc interp: {}", gcc_status as u8, value as u8);
-    assert_eq!(gcc_status as u8, value as u8);
+    println!(
+        "clang: {}, kecc interp: {}",
+        clang_status as u8, value as u8
+    );
+    assert_eq!(clang_status as u8, value as u8);
 
     // Generate RISC-V assembly from IR
     let asm = Asmgen::default()
@@ -527,6 +530,6 @@ pub fn test_end_to_end(path: &Path) {
     drop(buffer);
     temp_dir.close().expect("temp dir deletion failed");
 
-    println!("gcc: {}, qemu: {}", gcc_status as u8, qemu_status as u8);
-    assert_eq!(gcc_status as u8, qemu_status as u8);
+    println!("clang: {}, qemu: {}", clang_status as u8, qemu_status as u8);
+    assert_eq!(clang_status as u8, qemu_status as u8);
 }
