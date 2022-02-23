@@ -41,7 +41,6 @@ if
   grep 'no semicolon at end' outa.txt ||\
   grep 'type defaults to' outa.txt ||\
   grep 'too few arguments for format' outa.txt ||\
-  grep 'incompatible pointer' outa.txt ||\
   grep 'ordered comparison of pointer with integer' outa.txt ||\
   grep 'declaration does not declare anything' outa.txt ||\
   grep 'expects type' outa.txt ||\
