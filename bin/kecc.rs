@@ -86,7 +86,7 @@ fn main() {
     let mut output: Box<dyn ::std::io::Write> = if output == "-" {
         Box::new(::std::io::stdout())
     } else {
-        Box::new(ok_or_exit!(::std::fs::File::open(output), 1))
+        Box::new(ok_or_exit!(::std::fs::File::create(output), 1))
     };
 
     let ext = input.extension();
