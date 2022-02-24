@@ -28,7 +28,7 @@ cargo run --features=build-bin -- --irviz fibonacci.png examples/c/fibonacci.c  
 cargo run --features=build-bin --release -- examples/c/fibonacci.c  # compile with release build
 ```
 
-You need to install `graphviz` package for IR visualization. (`--irviz`)
+For more information, please refer to the [KECC User's Manual](bin/README.md).
 
 
 ## Test
