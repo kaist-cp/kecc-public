@@ -26,7 +26,8 @@ pub enum Value {
         ///
         /// * Casting from an f32 to an f64 is perfect and lossless (f32 -> f64)
         /// * Casting from an f64 to an f32 will produce the closest possible value (f64 -> f32)
-        /// https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#type-cast-expressions
+        ///
+        /// For more details: <https://doc.rust-lang.org/stable/reference/expressions/operator-expr.html#type-cast-expressions>
         value: OrderedFloat<f64>,
         width: usize,
     },

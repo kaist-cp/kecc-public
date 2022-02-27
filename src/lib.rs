@@ -44,7 +44,7 @@ mod tests;
 mod utils;
 mod write_base;
 
-mod asm;
+pub mod asm;
 mod c;
 pub mod ir;
 
