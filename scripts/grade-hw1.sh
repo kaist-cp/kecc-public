@@ -4,7 +4,7 @@
 set -e
 
 # Run lints.
-cargo fmt --all -- --check
+cargo fmt --all -- --check # run `cargo fmt` to auto-correct format.
 cargo clippy
 
 # Run tests.
