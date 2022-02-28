@@ -272,8 +272,7 @@ impl WriteString for RType {
                         "w"
                     } else {
                         "l"
-                    }
-                    .to_string(),
+                    },
                     if *is_signed { "" } else { "u" },
                     float_data_size.write_string()
                 )
@@ -292,8 +291,7 @@ impl WriteString for RType {
                         "w"
                     } else {
                         "l"
-                    }
-                    .to_string(),
+                    },
                     if *is_signed { "" } else { "u" }
                 )
             }

@@ -28,7 +28,7 @@ impl WriteLine for TranslationUnit {
                             } else {
                                 "%anon"
                             },
-                            f.deref().to_string()
+                            f.deref()
                         )
                     })
                     .collect::<Vec<_>>()

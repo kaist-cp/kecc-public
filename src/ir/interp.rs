@@ -1037,12 +1037,11 @@ impl Byte {
                 let padding = std::cmp::max(inner_size, inner_align) - inner_size;
                 values
                     .iter()
-                    .map(|v| {
+                    .flat_map(|v| {
                         let mut result = Self::value_to_bytes(v, structs);
                         result.extend(iter::repeat(Byte::Undef).take(padding));
                         result
                     })
-                    .flatten()
                     .collect()
             }
             Value::Struct { name, fields } => {

@@ -740,6 +740,7 @@ impl Constant {
         matches!(self, Self::Undef { .. })
     }
 
+    #[must_use]
     pub fn typecast(self, target_dtype: Dtype) -> Self {
         if self.dtype() == target_dtype {
             return self;

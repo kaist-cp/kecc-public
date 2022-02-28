@@ -77,7 +77,7 @@ cat tests/test_reduced.c
 
 ```sh
 # Ubuntu 20.04
-sudo apt install -y make cmake python3 csmith libcsmith-dev creduce
+sudo apt install -y build-essential clang make cmake python3 csmith libcsmith-dev creduce
 ```
 
 ### Run

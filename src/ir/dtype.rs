@@ -881,6 +881,7 @@ impl Dtype {
         }
     }
 
+    #[must_use]
     pub fn set_const(self, is_const: bool) -> Self {
         match self {
             Self::Unit { .. } => Self::Unit { is_const },
@@ -998,6 +999,7 @@ impl Dtype {
         }
     }
 
+    #[must_use]
     pub fn set_signed(self, is_signed: bool) -> Self {
         match self {
             Self::Int {
