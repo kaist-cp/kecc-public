@@ -119,7 +119,6 @@ def generate(tests_dir, bin_path, seed=None, easy=False):
             "--max-block-depth", "2",
             "--max-block-size", "2",
             "--max-struct-fields", "3",
-            "--inline-function-prob", "10",
         ]
     args = [bin_path] + options
     
@@ -270,13 +269,7 @@ if __name__ == "__main__":
     parser.add_argument('--easy', action='store_true', help="Generate more easy code by csmith option")
     parser.add_argument('--seed', type=int, help="Provide seed of fuzz generation", default=-1)
     args = parser.parse_args()
-
-    if args.print and args.irgen:
-        raise Exception("Choose an option used for fuzzing: '--print' or '--irgen', NOT both")
-    
-    if args.print:
-        fuzz_arg = "-p"
-    elif args.irgen:
+            "--inline-function-prob", "10",
         fuzz_arg = "-i"
     else:
         raise Exception("Specify fuzzing argument")
