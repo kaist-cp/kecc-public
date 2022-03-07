@@ -13,6 +13,7 @@ import itertools
 import argparse
 import sys
 import re
+import random
 from pathlib import Path
 
 REPLACE_DICT = {
@@ -96,7 +97,7 @@ def install_csmith(tests_dir):
 
     return bin_path, inc_path
 
-def generate(tests_dir, bin_path):
+def generate(tests_dir, bin_path, seed=None, easy=False):
     """Feeding options to built Csmith to randomly generate test case.
 
     For generality, I disabled most of the features that are enabled by default.
@@ -111,8 +112,17 @@ def generate(tests_dir, bin_path):
         "--no-structs", "--no-unions",
         "--float", "--strict-float",
     ]
+    if seed is not None:
+        options += ["--seed", str(seed)]
+    if easy:
+        options += [
+            "--max-block-depth", "2",
+            "--max-block-size", "2",
+            "--max-struct-fields", "3",
+            "--inline-function-prob", "10",
+        ]
     args = [bin_path] + options
-
+    
     try:
         proc = subprocess.Popen(args, cwd=tests_dir, stdout=subprocess.PIPE)
         (src, err) = proc.communicate()
@@ -202,7 +212,7 @@ def creduce(tests_dir, fuzz_arg):
         proc.kill()
         raise e
 
-def fuzz(tests_dir, fuzz_arg, num_iter):
+def fuzz(tests_dir, fuzz_arg, num_iter, easy=False):
     global SKIP_TEST
 
     csmith_bin, csmith_inc = install_csmith(tests_dir)
@@ -217,7 +227,10 @@ def fuzz(tests_dir, fuzz_arg, num_iter):
         skip = 0
         while True:
             print("Test case #{} (skipped: {})".format(i, skip))
-            src = generate(tests_dir, csmith_bin)
+            src = generate(
+                tests_dir, csmith_bin, 
+                seed = random.randint(1, 987654321), easy=easy
+            )
             with open(os.path.join(tests_dir, "test.c"), 'w') as dst:
                 dst.write(src)
 
@@ -249,14 +262,18 @@ def fuzz(tests_dir, fuzz_arg, num_iter):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Fuzzing KECC.')
-    parser.add_argument('-n', '--num', type=int, help='The number of tests')
+    parser.add_argument('-n', '--num', type=int, help='The number of tests', default=None)
     parser.add_argument('-p', '--print', action='store_true', help='Fuzzing C AST printer')
     parser.add_argument('-i', '--irgen', action='store_true', help='Fuzzing irgen')
     parser.add_argument('-r', '--reduce', action='store_true', help="Reducing input file")
+    parser.add_argument('--skip-build', action='store_true', help="Skipping cargo build")
+    parser.add_argument('--easy', action='store_true', help="Generate more easy code by csmith option")
+    parser.add_argument('--seed', type=int, help="Provide seed of fuzz generation", default=-1)
     args = parser.parse_args()
 
     if args.print and args.irgen:
         raise Exception("Choose an option used for fuzzing: '--print' or '--irgen', NOT both")
+    
     if args.print:
         fuzz_arg = "-p"
     elif args.irgen:
@@ -264,17 +281,26 @@ if __name__ == "__main__":
     else:
         raise Exception("Specify fuzzing argument")
 
+    if args.seed != -1:
+        print('Set seed as', args.seed)
+        random.seed(args.seed)
+    else:
+        print('Use default random seed')
+
     tests_dir = os.path.abspath(os.path.dirname(__file__))
 
-    print("Building KECC..")
-    try:
-        proc = subprocess.Popen(["cargo", "build", "--release"], cwd=tests_dir)
-        proc.communicate()
-    except subprocess.TimeoutExpired as e:
-        proc.kill()
-        raise e
+    if not args.skip_build:
+        print("Building KECC..")
+        try:
+            proc = subprocess.Popen(["cargo", "build", "--release"], cwd=tests_dir)
+            proc.communicate()
+        except subprocess.TimeoutExpired as e:
+            proc.kill()
+            raise e
+    else: 
+        print("Skip building. You should manually build the binary. Please execute `cargo build --release` to build.")
 
     if args.reduce:
         creduce(tests_dir, fuzz_arg)
     else:
-        fuzz(tests_dir, fuzz_arg, args.num)
+        fuzz(tests_dir, fuzz_arg, args.num, args.easy)
