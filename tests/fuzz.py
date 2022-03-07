@@ -269,7 +269,13 @@ if __name__ == "__main__":
     parser.add_argument('--easy', action='store_true', help="Generate more easy code by csmith option")
     parser.add_argument('--seed', type=int, help="Provide seed of fuzz generation", default=-1)
     args = parser.parse_args()
-            "--inline-function-prob", "10",
+
+    if args.print and args.irgen:
+        raise Exception("Choose an option used for fuzzing: '--print' or '--irgen', NOT both")
+    
+    if args.print:
+        fuzz_arg = "-p"
+    elif args.irgen:
         fuzz_arg = "-i"
     else:
         raise Exception("Specify fuzzing argument")
