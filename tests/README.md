@@ -14,7 +14,7 @@ Fuzzer randomly generates input C program and feeds it to your implementation fo
 
 After the fuzzing stage, you may found a buggy input program in `test_polished.c`. However, it is highly likely that the input program is too big (about 3~5K lines of code) to manually inspect. In this stage, we use `creduce` to reduce the buggy input program as much as possible. Reduced buggy input program is saved to `test_reduced.c`.
 
-**[NOTICE]** The buggy input program after reducing stage may contain undefined behaviors. To workaround this, please refer to this issue: [kaist-cp/cs420#218](https://github.com/kaist-cp/cs420/issues/218)
+**[NOTICE]** The buggy input program after reducing stage may contain undefined behaviors. To workaround this, please refer to this issue: [#218](https://github.com/kaist-cp/cs420/issues/218)
 
 For now, fuzzer is supported only for Homework 1 (C AST Printer) and Homework 2 (IRgen).
 
@@ -75,7 +75,71 @@ Use `-h` option to display all available options.
   python3 tests/fuzz.py -i -r
   ```
 
-## Suggested Readings
+## How to use fuzzer on your local machine for HW2
 
-- Suggestions about how to use fuzzer and creduce: [kaist-cp/cs420#318](https://github.com/kaist-cp/cs420/issues/318)
-- Suggestion for who is running KECC on their local machine: [kaist-cp/cs420#314](https://github.com/kaist-cp/cs420/issues/314)
+_This section is copied from [#318](https://github.com/kaist-cp/cs420/issues/318)._
+
+This is a more detailed explain how to use `fuzzer` and `creduce` on your local machine for HW2.
+
+### Bugs
+
+As mentioned in [#314](https://github.com/kaist-cp/cs420/issues/314), the main problems of `fuzzer` and `creduce` are the following points.
+
+- The current version is not working.
+
+  If you run `python3 tests/fuzz.py -i`, you might get an error.
+
+- `creduce` gives out program with undefined behavior or misleading output.
+
+### How to make it work
+
+Here are some workaround if any of the above problems occurred.
+
+1. Make sure you have the correct development environment.
+
+   - OS: Ubuntu 20.04
+   - Clang: 10.0.0
+   - Python: 3.8.10
+
+2. If the current version of `fuzzer` and `creduce` doesn't work, try to modify `tests/reduce-criteria-template.sh`.
+
+    Change this line:
+
+    ```sh
+    cargo run --manifest-path $PROJECT_DIR/Cargo.toml --features=build-bin --release --bin fuzz -- $FUZZ_ARG test_reduced.c 2>&1 | grep -q 'assertion failed'
+    ```
+
+    into this:
+
+    ```sh
+    cargo run --manifest-path $PROJECT_DIR/Cargo.toml --release --bin fuzz -- $FUZZ_ARG test_reduced.c
+    if [ "$?" = 101 ]
+    then
+      exit 0
+    else
+      exit 1
+    fi
+    ```
+
+3. If it still gives you the error after the above two steps, then it might be some of the implementations are not correct. Please refer to [#314](https://github.com/kaist-cp/cs420/issues/314), make sure the implementation of dealing with different kinds of types are correct.
+
+4. If your `fuzzer` starts working properly, you will start passing some random generated C program. If you get an undefined behavior output after `creduce`, just skip this and rerun your `fuzzer`. However, if the `creduce` gives you the below program
+
+    ```c
+    # 1 "" 3
+    void main() {}
+    ```
+
+    Then it might be the inappropriate implementation of different types. For example, make sure you handle `Int` with different `width` properly. Again refer to [#314](https://github.com/kaist-cp/cs420/issues/314).
+
+5. Don't be afraid of the giant output of fuzzer, sometimes directly debugging on the raw output of fuzzer might not be as bad as you think.
+
+6. Live monitoring the result of `creduce` might help you to figure out the issue too. Please refer to [#314](https://github.com/kaist-cp/cs420/issues/314) and [#218](https://github.com/kaist-cp/cs420/issues/218).
+
+### Summary
+
+- Don't try to depend on the fuzzer at the beginning.
+  
+  It takes a lot of time to reduce a buggy program and you don't know if `creduce` will give you the desired output. So use the fuzzer as a criteria to judge your implementation is correct or not instead of depending on it for TDD at the beginning. Once your implementation reach a certain point that can pass decent amount of test cases, use fuzzer as a tool for TDD.
+
+- Undefined behavior output can be ignored, rerun your fuzzer.
