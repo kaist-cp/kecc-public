@@ -42,7 +42,7 @@ REPLACE_DICT = {
     r"__asm__\s*\([^\)]*\)": "",    # asm extension in linux
     "typedef __builtin_va_list __gnuc_va_list;": "",
     "typedef __gnuc_va_list va_list;": "",
-    r"fabsf\(": "(",
+    r"\(fabsf\(": "((",
     
     # todo: need to consider the case below in the future:
     # avoid compile-time constant expressed as complex expression such as `1 + 1`
