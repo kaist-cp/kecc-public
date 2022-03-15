@@ -43,7 +43,7 @@ REPLACE_DICT = {
     r"__asm__\s*\([^\)]*\)": "",    # asm extension in linux
     "typedef __builtin_va_list __gnuc_va_list;": "",
     "typedef __gnuc_va_list va_list;": "",
-    r"fabsf\(": "(",
+    r"\(fabsf\(": "((",
     
     # todo: need to consider the case below in the future:
     # avoid compile-time constant expressed as complex expression such as `1 + 1`
@@ -121,7 +121,7 @@ def generate(tests_dir, bin_path, seed=None, easy=False):
             "--max-struct-fields", "3",
         ]
     args = [bin_path] + options
-    
+
     try:
         proc = subprocess.Popen(args, cwd=tests_dir, stdout=subprocess.PIPE)
         (src, err) = proc.communicate()
@@ -261,11 +261,10 @@ def fuzz(tests_dir, fuzz_arg, num_iter, easy=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Fuzzing KECC.')
-    parser.add_argument('-n', '--num', type=int, help='The number of tests', default=None)
+    parser.add_argument('-n', '--num', type=int, help='The number of tests')
     parser.add_argument('-p', '--print', action='store_true', help='Fuzzing C AST printer')
     parser.add_argument('-i', '--irgen', action='store_true', help='Fuzzing irgen')
     parser.add_argument('-r', '--reduce', action='store_true', help="Reducing input file")
-    parser.add_argument('--skip-build', action='store_true', help="Skipping cargo build")
     parser.add_argument('--easy', action='store_true', help="Generate more easy code by csmith option")
     parser.add_argument('--seed', type=int, help="Provide seed of fuzz generation", default=-1)
     args = parser.parse_args()
@@ -288,16 +287,13 @@ if __name__ == "__main__":
 
     tests_dir = os.path.abspath(os.path.dirname(__file__))
 
-    if not args.skip_build:
-        print("Building KECC..")
-        try:
-            proc = subprocess.Popen(["cargo", "build", "--release"], cwd=tests_dir)
-            proc.communicate()
-        except subprocess.TimeoutExpired as e:
-            proc.kill()
-            raise e
-    else: 
-        print("Skip building. You should manually build the binary. Please execute `cargo build --release` to build.")
+    print("Building KECC..")
+    try:
+        proc = subprocess.Popen(["cargo", "build", "--release"], cwd=tests_dir)
+        proc.communicate()
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        raise e
 
     if args.reduce:
         creduce(tests_dir, fuzz_arg)
