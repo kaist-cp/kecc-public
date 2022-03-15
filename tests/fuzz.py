@@ -97,7 +97,7 @@ def install_csmith(tests_dir):
 
     return bin_path, inc_path
 
-def generate(tests_dir, bin_path, seed=None, easy=False):
+def generate(tests_dir, bin_path, seed, easy):
     """Feeding options to built Csmith to randomly generate test case.
 
     For generality, I disabled most of the features that are enabled by default.
@@ -111,9 +111,8 @@ def generate(tests_dir, bin_path, seed=None, easy=False):
         "--no-jumps", "--no-pointers",
         "--no-structs", "--no-unions",
         "--float", "--strict-float",
+        "--seed", str(seed),
     ]
-    if seed is not None:
-        options += ["--seed", str(seed)]
     if easy:
         options += [
             "--max-block-depth", "2",
@@ -161,6 +160,8 @@ def make_reduce_criteria(tests_dir, fuzz_arg):
     arg_dict = {
         "$PROJECT_DIR": str(Path(tests_dir).parent),
         "$FUZZ_ARG": fuzz_arg,
+        "$KECC_BIN": str(os.path.abspath(os.path.join(tests_dir, "../target/release/kecc"))),
+        "$FUZZ_BIN": str(os.path.abspath(os.path.join(tests_dir, "../target/release/fuzz"))),
     }
     with open(os.path.join(tests_dir, "reduce-criteria-template.sh"), "r") as t:
         temp = t.read()
@@ -211,10 +212,11 @@ def creduce(tests_dir, fuzz_arg):
         proc.kill()
         raise e
 
-def fuzz(tests_dir, fuzz_arg, num_iter, easy=False):
+def fuzz(tests_dir, fuzz_arg, num_iter, easy):
     global SKIP_TEST
 
     csmith_bin, csmith_inc = install_csmith(tests_dir)
+    fuzz_bin = os.path.abspath(os.path.join(tests_dir, "../target/release/fuzz"))
     try:
         if num_iter is None:
             print("Fuzzing with infinitely many test cases.  Please press [ctrl+C] to break.")
@@ -226,10 +228,7 @@ def fuzz(tests_dir, fuzz_arg, num_iter, easy=False):
         skip = 0
         while True:
             print("Test case #{} (skipped: {})".format(i, skip))
-            src = generate(
-                tests_dir, csmith_bin, 
-                seed = random.randint(1, 987654321), easy=easy
-            )
+            src = generate(tests_dir, csmith_bin, random.randint(1, 987654321), easy)
             with open(os.path.join(tests_dir, "test.c"), 'w') as dst:
                 dst.write(src)
 
@@ -238,7 +237,7 @@ def fuzz(tests_dir, fuzz_arg, num_iter, easy=False):
                 dst.write(src_polished)
 
             try:
-                args = ["cargo", "run", "--features=build-bin", "--release", "--bin", "fuzz", "--", fuzz_arg, os.path.join(tests_dir, "test_polished.c")]
+                args = [fuzz_bin, fuzz_arg, os.path.join(tests_dir, "test_polished.c")]
                 proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
                 proc.communicate(timeout=60)
 
@@ -265,6 +264,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--print', action='store_true', help='Fuzzing C AST printer')
     parser.add_argument('-i', '--irgen', action='store_true', help='Fuzzing irgen')
     parser.add_argument('-r', '--reduce', action='store_true', help="Reducing input file")
+    parser.add_argument('--skip-build', action='store_true', help="Skipping cargo build")
     parser.add_argument('--easy', action='store_true', help="Generate more easy code by csmith option")
     parser.add_argument('--seed', type=int, help="Provide seed of fuzz generation", default=-1)
     args = parser.parse_args()
@@ -287,13 +287,16 @@ if __name__ == "__main__":
 
     tests_dir = os.path.abspath(os.path.dirname(__file__))
 
-    print("Building KECC..")
-    try:
-        proc = subprocess.Popen(["cargo", "build", "--release"], cwd=tests_dir)
-        proc.communicate()
-    except subprocess.TimeoutExpired as e:
-        proc.kill()
-        raise e
+    if not args.skip_build:
+        print("Building KECC..")
+        try:
+            proc = subprocess.Popen(["cargo", "build", "--features=build-bin", "--release", "--bin", "fuzz", "--bin", "kecc"], cwd=tests_dir)
+            proc.communicate()
+        except subprocess.TimeoutExpired as e:
+            proc.kill()
+            raise e
+    else:
+        print("Skip building. Please run `cargo build --features=build-bin --release --bin fuzz --bin kecc` to manually build.")
 
     if args.reduce:
         creduce(tests_dir, fuzz_arg)
