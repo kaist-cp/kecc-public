@@ -6,6 +6,13 @@ rm -f out*.txt
 #ulimit -v 2000000                                                                                                                                                                                          
 
 if
+  (! gcc test_reduced.c > cc_out.txt 2>&1 ||\
+  ! $KECC_BIN --parse test_reduced.c >/dev/null 2>&1)
+then
+  exit 1
+fi
+
+if
   [ $FUZZ_ARG = '-i' ] &&\
   (! clang -pedantic -Wall -Werror=strict-prototypes -O1 -c test_reduced.c  > out.txt 2>&1 ||\
   grep 'main-return-type' out.txt ||\
@@ -47,12 +54,15 @@ if
   grep 'pointer from integer' outa.txt ||\
   grep 'incompatible implicit' outa.txt ||\
   grep 'excess elements in struct initializer' outa.txt ||\
-  grep 'comparison between pointer and integer' outa.txt ||\
-  ! gcc -O1 test_reduced.c > cc_out1.txt 2>&1 ||\
-  ! gcc -O2 test_reduced.c > cc_out2.txt 2>&1 ||\
-  ! $KECC_BIN --parse test_reduced.c >/dev/null 2>&1)
+  grep 'comparison between pointer and integer' outa.txt)
 then
   exit 1
 fi
 
-$FUZZ_BIN $FUZZ_ARG test_reduced.c 2>&1 | grep -q 'assertion failed'
+$FUZZ_BIN $FUZZ_ARG test_reduced.c
+if [ "$?" = 101 ]
+then
+  exit 0
+else
+  exit 1
+fi
