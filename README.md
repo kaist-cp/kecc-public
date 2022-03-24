@@ -118,6 +118,7 @@ information, we refer to the [Creduce](https://embed.cs.utah.edu/creduce/) homep
 **[NOTICE]** The fuzzer supports Ubuntu 20.04 only. It may work for other platforms, but if it
 doesn't, please run the fuzzer in Ubuntu 20.04.
 
+For more information on usage, please refer to the [Fuzzer User's Manual](tests/README.md).
 
 ## Running RISC-V Binaries
 
