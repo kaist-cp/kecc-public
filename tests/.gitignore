@@ -2,3 +2,4 @@
 /csmith-*
 /test*.c
 /reduce-criteria.sh
+/creduce_bug_*

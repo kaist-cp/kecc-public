@@ -14,6 +14,7 @@ import argparse
 import sys
 import re
 import random
+import time
 from pathlib import Path
 
 REPLACE_DICT = {
@@ -51,6 +52,25 @@ REPLACE_DICT = {
 }
 CSMITH_DIR = "csmith-2.3.0"
 SKIP_TEST = 102
+
+class ProgressBar:
+    def __init__(self):
+        self.progress = 0.0
+        # TODO: Impl. ETA
+    
+    def print_progressbar(self, progress):
+        import shutil
+        
+        console_width = shutil.get_terminal_size((80, 20)).columns
+        decorator_length = 9
+        filled_bar_length = round(progress * (console_width - decorator_length))
+        line = "[" +\
+                "#" * filled_bar_length +\
+                "-" * (console_width - decorator_length - filled_bar_length) +\
+                "] "
+        percentage = progress * 100
+        line += f"{percentage:.1f}".rjust(5) + "%\r"
+        print(line, end="")
 
 def install_csmith(tests_dir):
     global CSMITH_DIR
@@ -202,12 +222,25 @@ def creduce(tests_dir, fuzz_arg):
 
     try:
         # --tidy: Do not make a backup copy of each file to reduce as file.orig
-        args = ["creduce", "--tidy", "./reduce-criteria.sh", "test_reduced.c"]
+        args = ["creduce", "--tidy", "--timing", "./reduce-criteria.sh", "test_reduced.c"]
         proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
+        pbar = ProgressBar()
+        while True:
+            line = proc.stdout.readline()
+            if not line:
+                break
+            line = line.decode()
+            if "%" in line:
+                try:
+                    pbar.print_progressbar(abs(float(line[1:line.index("%")])) / 100)
+                except:
+                    pass # This is for potential error
         (out, err) = proc.communicate()
         if proc.returncode != 0:
             print(out.decode())
             raise Exception("Reducing test_reduced.c by `{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
+        print()
+        print("Creduce finished.")
     except subprocess.TimeoutExpired as e:
         proc.kill()
         raise e
