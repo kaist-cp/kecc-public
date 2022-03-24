@@ -18,7 +18,6 @@ if
   grep 'main-return-type' out.txt ||\
   grep 'conversions than data arguments' out.txt ||\
   grep 'int-conversion' out.txt ||\
-  grep 'incompatible redeclaration' out.txt ||\
   grep 'ordered comparison between pointer and zero' out.txt ||\
   grep 'ordered comparison between pointer and integer' out.txt ||\
   grep 'eliding middle term' out.txt ||\
