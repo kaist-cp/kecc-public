@@ -56,21 +56,25 @@ SKIP_TEST = 102
 class ProgressBar:
     def __init__(self):
         self.progress = 0.0
+        self.stage = 0
+        self.stage_indicators = ["-", "\\", "|", "/", "-", "\\", "|", "/", "-", ]
         # TODO: Impl. ETA
     
     def print_progressbar(self, progress):
         import shutil
         
         console_width = shutil.get_terminal_size((80, 20)).columns
-        decorator_length = 9
+        decorator_length = 10
         filled_bar_length = round(progress * (console_width - decorator_length))
-        line = "[" +\
+        line =  self.stage_indicators[self.stage % len(self.stage_indicators)] +\
+                "[" +\
                 "#" * filled_bar_length +\
                 "-" * (console_width - decorator_length - filled_bar_length) +\
                 "] "
         percentage = progress * 100
         line += f"{percentage:.1f}".rjust(5) + "%\r"
         print(line, end="")
+        self.stage += 1
 
 def install_csmith(tests_dir):
     global CSMITH_DIR
