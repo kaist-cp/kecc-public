@@ -545,13 +545,22 @@ mod calculator {
         rhs: OrderedFloat<f64>,
         width: usize,
     ) -> Result<Value, ()> {
+        let (lhs, rhs) = if width == Dtype::SIZE_OF_FLOAT * Dtype::BITS_OF_BYTE {
+            (
+                lhs.into_inner() as f32 as f64,
+                rhs.into_inner() as f32 as f64,
+            )
+        } else {
+            (lhs.into_inner(), rhs.into_inner())
+        };
+
         let result = match op {
-            ast::BinaryOperator::Plus => lhs.into_inner() + rhs.into_inner(),
-            ast::BinaryOperator::Minus => lhs.into_inner() - rhs.into_inner(),
-            ast::BinaryOperator::Multiply => lhs.into_inner() * rhs.into_inner(),
+            ast::BinaryOperator::Plus => lhs + rhs,
+            ast::BinaryOperator::Minus => lhs - rhs,
+            ast::BinaryOperator::Multiply => lhs * rhs,
             ast::BinaryOperator::Divide => {
-                assert!(rhs.into_inner() != 0.0);
-                lhs.into_inner() / rhs.into_inner()
+                assert!(rhs != 0.0);
+                lhs / rhs
             }
             ast::BinaryOperator::Equals => {
                 let order = lhs
