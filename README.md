@@ -63,21 +63,26 @@ generate test input, and if it fails, then reduce it as much as possible and man
 reduced test input. For example, for homework 1, do:
 
 ```sh
-# randomly generates test inputs and tests them
-python3 tests/fuzz.py --print
+# Randomly generates test inputs and tests them
+# If this command is going infinitly, then try `python3 tests/fuzz.py --print`,
+#   which is generating more complicated code.
+python3 tests/fuzz.py <fuzz-option> --easy
 
-# reduces the failing test input as much as possible
-python3 tests/fuzz.py --print --reduce
+# Reduces the failing test input as much as possible
+python3 tests/fuzz.py <fuzz-option> --reduce
 
-# fix your code for the reduced test input
+# Fix your code for the reduced test input
 cat tests/test_reduced.c
 ```
+
+`<fuzz-option>` can be `--print` or `--irgen`. It shall be the one used in [Run](#run).
 
 ### Install
 
 ```sh
 # Ubuntu 20.04
 sudo apt install -y build-essential clang make cmake python3 csmith libcsmith-dev creduce
+pip3 install tqdm
 ```
 
 ### Run
