@@ -18,7 +18,6 @@ if
   grep 'main-return-type' out.txt ||\
   grep 'conversions than data arguments' out.txt ||\
   grep 'int-conversion' out.txt ||\
-  grep 'incompatible redeclaration' out.txt ||\
   grep 'ordered comparison between pointer and zero' out.txt ||\
   grep 'ordered comparison between pointer and integer' out.txt ||\
   grep 'eliding middle term' out.txt ||\
@@ -54,7 +53,8 @@ if
   grep 'pointer from integer' outa.txt ||\
   grep 'incompatible implicit' outa.txt ||\
   grep 'excess elements in struct initializer' outa.txt ||\
-  grep 'comparison between pointer and integer' outa.txt)
+  grep 'comparison between pointer and integer' outa.txt ||\
+  grep 'division by zero' outa.txt)
 then
   exit 1
 fi

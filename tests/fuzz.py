@@ -154,6 +154,7 @@ def polish(src, inc_path):
         args = ["gcc",
                 "-I", inc_path,
                 "-E",
+                "-P",
                 "-",
         ]
         proc = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
