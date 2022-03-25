@@ -15,6 +15,7 @@ import sys
 import re
 import random
 import time
+import tqdm
 from pathlib import Path
 
 REPLACE_DICT = {
@@ -55,26 +56,17 @@ SKIP_TEST = 102
 
 class ProgressBar:
     def __init__(self):
-        self.progress = 0.0
         self.stage = 0
-        self.stage_indicators = ["-", "\\", "|", "/", "-", "\\", "|", "/", "-", ]
-        # TODO: Impl. ETA
+        self.stage_indicators = ["-", "\\", "|", "/", ]
+        self.pbar = tqdm.tqdm(total=1, bar_format="{l_bar}{bar}| [elapsed:{elapsed}, <eta:{remaining}]")
+        self.last_progress = 0
     
     def print_progressbar(self, progress):
-        import shutil
-        
-        console_width = shutil.get_terminal_size((80, 20)).columns
-        decorator_length = 10
-        filled_bar_length = round(progress * (console_width - decorator_length))
-        line =  self.stage_indicators[self.stage % len(self.stage_indicators)] +\
-                "[" +\
-                "#" * filled_bar_length +\
-                "-" * (console_width - decorator_length - filled_bar_length) +\
-                "] "
-        percentage = progress * 100
-        line += f"{percentage:.1f}".rjust(5) + "%\r"
-        print(line, end="")
+        indicator = self.stage_indicators[self.stage % len(self.stage_indicators)]
         self.stage += 1
+        self.pbar.set_description(indicator)
+        self.pbar.update(progress - self.last_progress)
+        self.last_progress = progress
 
 def install_csmith(tests_dir):
     global CSMITH_DIR
