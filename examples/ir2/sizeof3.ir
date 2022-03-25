@@ -1,0 +1,15 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:x
+    %l1:i32:y
+
+block b0:
+  %b0:i0:unit = nop
+  %b0:i1:i32 = typecast 4:u64 to i32
+  %b0:i2:unit = nop
+  %b0:i3:unit = nop
+  ret 3:i32
+}

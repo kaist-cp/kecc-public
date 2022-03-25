@@ -74,7 +74,10 @@ impl AssertSupported for TranslationUnit {
 impl AssertSupported for ExternalDeclaration {
     fn assert_supported(&self) {
         match self {
-            Self::Declaration(decl) => decl.assert_supported(),
+            Self::Declaration(decl) => {
+                assert!(is_valid_global_variable_declaration(&decl.node));
+                decl.assert_supported()
+            }
             Self::StaticAssert(_) => panic!("ExternalDeclaration::StaticAssert"),
             Self::FunctionDefinition(fdef) => fdef.assert_supported(),
         }
@@ -607,5 +610,37 @@ impl AssertSupported for SizeOfVal {
 impl AssertSupported for AlignOf {
     fn assert_supported(&self) {
         self.0.assert_supported();
+    }
+}
+
+#[inline]
+pub fn is_valid_global_variable_declaration(decl: &Declaration) -> bool {
+    let declarators = &decl.declarators;
+
+    declarators.iter().all(|init_decl| {
+        if let Some(initializer) = &init_decl.node.initializer {
+            is_valid_global_variable_initializer(&initializer.node)
+        } else {
+            true
+        }
+    })
+}
+
+#[inline]
+pub fn is_valid_global_variable_initializer(initializer: &Initializer) -> bool {
+    match initializer {
+        Initializer::Expression(expr) => match &expr.node {
+            Expression::Constant(_) => true,
+            Expression::UnaryOperator(unary) => {
+                matches!(
+                    &unary.node.operator.node,
+                    UnaryOperator::Minus | UnaryOperator::Plus
+                ) && matches!(&unary.node.operand.node, Expression::Constant(_))
+            }
+            _ => false,
+        },
+        Initializer::List(items) => items
+            .iter()
+            .all(|item| is_valid_global_variable_initializer(&item.node.initializer.node)),
     }
 }

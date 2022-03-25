@@ -395,8 +395,16 @@ peg::parser! {
                 Constant::float(f, Dtype::float(64)) // TODO: the right dtype
             }
         /
+            "-" f:float_number() {
+                Constant::minus(Constant::float(f, Dtype::float(64))) // TODO: the right dtype
+            }
+        /
             n:number() {
                 Constant::int(n as _, Dtype::int(128)) // TODO: the right dtype
+            }
+        /
+            "-" n:number() {
+                Constant::minus(Constant::int(n as _, Dtype::int(128))) // TODO: the right dtype
             }
         /
             "undef" {
