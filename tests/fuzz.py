@@ -58,7 +58,7 @@ class ProgressBar:
     def __init__(self):
         self.stage = 0
         self.stage_indicators = ["-", "\\", "|", "/", ]
-        self.pbar = tqdm.tqdm(total=1, bar_format="{l_bar}{bar}| [elapsed:{elapsed}, <eta:{remaining}]")
+        self.pbar = tqdm.tqdm(total=1, bar_format="{l_bar}{bar}| [Elapsed:{elapsed}, <ETA:{remaining}]")
         self.last_progress = 0
     
     def print_progressbar(self, progress):
