@@ -14,7 +14,7 @@ fi
 
 if
   [ $FUZZ_ARG = '-i' ] &&\
-  (! clang -pedantic -Wall -Werror=strict-prototypes -c test_reduced.c  > out.txt 2>&1 ||\
+  (! clang -pedantic -Wall -Werror=strict-prototypes -c test_reduced.c > out.txt 2>&1 ||\
   grep 'main-return-type' out.txt ||\
   grep 'conversions than data arguments' out.txt ||\
   grep 'int-conversion' out.txt ||\
@@ -54,7 +54,9 @@ if
   grep 'incompatible implicit' outa.txt ||\
   grep 'excess elements in struct initializer' outa.txt ||\
   grep 'comparison between pointer and integer' outa.txt ||\
-  grep 'division by zero' outa.txt)
+  grep 'division by zero' outa.txt ||\
+  ! clang -Wall -Wextra --analyze -c test_reduced.c > outb.txt 2>&1 ||\
+  grep 'garbage value' outb.txt)
 then
   exit 1
 fi
