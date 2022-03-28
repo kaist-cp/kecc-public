@@ -770,10 +770,17 @@ mod calculator {
                 },
                 Dtype::Float { width, .. },
             ) => {
-                let casted_value = if is_signed {
-                    value as i128 as f64
-                } else {
-                    value as f64
+                let size = (width - 1) / Dtype::BITS_OF_BYTE + 1;
+                let casted_value = match (is_signed, size) {
+                    (true, Dtype::SIZE_OF_FLOAT) => value as i128 as f32 as f64,
+                    (true, Dtype::SIZE_OF_DOUBLE) => value as i128 as f64,
+                    (false, Dtype::SIZE_OF_FLOAT) => value as f32 as f64,
+                    (false, Dtype::SIZE_OF_DOUBLE) => value as f64,
+                    _ => panic!(
+                        "calculate_typecast: not supported case \
+                            typecast int to float when `width` is {}",
+                        width
+                    ),
                 };
                 Ok(Value::float(casted_value, width))
             }
