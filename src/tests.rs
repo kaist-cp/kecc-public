@@ -128,7 +128,6 @@ pub fn test_irgen(path: &Path) {
         .args(&[
             "-fsanitize=undefined",
             "-fno-sanitize-recover=all",
-            "-O1",
             &file_path,
             "-o",
             &bin_path,
@@ -396,7 +395,6 @@ pub fn test_end_to_end(path: &Path) {
         .args(&[
             "-fsanitize=undefined",
             "-fno-sanitize-recover=all",
-            "-O1",
             &file_path,
             "-o",
             &bin_path,

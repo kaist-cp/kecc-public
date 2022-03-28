@@ -14,7 +14,7 @@ fi
 
 if
   [ $FUZZ_ARG = '-i' ] &&\
-  (! clang -pedantic -Wall -Werror=strict-prototypes -O1 -c test_reduced.c  > out.txt 2>&1 ||\
+  (! clang -pedantic -Wall -Werror=strict-prototypes -c test_reduced.c  > out.txt 2>&1 ||\
   grep 'main-return-type' out.txt ||\
   grep 'conversions than data arguments' out.txt ||\
   grep 'int-conversion' out.txt ||\
@@ -37,7 +37,7 @@ if
   grep 'declaration does not declare anything' out.txt ||\
   grep 'not equal to a null pointer is always true' out.txt ||\
   grep 'empty struct is a GNU extension' out.txt ||\
-  ! gcc -Wall -Wextra -O2 test_reduced.c > outa.txt 2>&1 ||\
+  ! gcc -Wall -Wextra test_reduced.c > outa.txt 2>&1 ||\
   grep 'uninitialized' outa.txt ||\
   grep 'without a cast' outa.txt ||\
   grep 'control reaches end' outa.txt ||\
