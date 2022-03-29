@@ -1477,6 +1477,19 @@ impl<'i> State<'i> {
                             func_name: callee_name.clone(),
                         })?;
 
+                let block_init = func_def
+                    .blocks
+                    .get(&func_def.bid_init)
+                    .expect("init block must exists");
+
+                if !(args.len() == block_init.phinodes.len()
+                    && izip!(args, &block_init.phinodes).all(|(a, d)| {
+                        a.dtype().set_const(false) == d.deref().clone().set_const(false)
+                    }))
+                {
+                    panic!("dtype of args and phinodes of init block must be compatible");
+                }
+
                 let args = self.interp_args(func_signature, args)?;
 
                 let stack_frame = StackFrame::new(func_def.bid_init, callee_name, func_def);
