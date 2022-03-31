@@ -126,6 +126,7 @@ pub fn test_irgen(path: &Path) {
     // Compile c file: If fails, test is vacuously success
     if !Command::new("clang")
         .args(&[
+            "-fsanitize=float-divide-by-zero",
             "-fsanitize=undefined",
             "-fno-sanitize-recover=all",
             &file_path,
@@ -393,6 +394,7 @@ pub fn test_end_to_end(path: &Path) {
     // Compile c file: If fails, test is vacuously success
     if !Command::new("clang")
         .args(&[
+            "-fsanitize=float-divide-by-zero",
             "-fsanitize=undefined",
             "-fno-sanitize-recover=all",
             &file_path,
