@@ -14,7 +14,6 @@ import argparse
 import sys
 import re
 import random
-import time
 import tqdm
 from pathlib import Path
 
@@ -238,8 +237,7 @@ def creduce(tests_dir, fuzz_arg, analyze):
         if proc.returncode != 0:
             print(out.decode())
             raise Exception("Reducing test_reduced.c by `{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
-        print()
-        print("Creduce finished.")
+        print("Reduce finished.")
     except subprocess.TimeoutExpired as e:
         proc.kill()
         raise e
