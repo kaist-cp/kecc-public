@@ -14,6 +14,7 @@ import argparse
 import sys
 import re
 import random
+import tqdm
 from pathlib import Path
 
 REPLACE_DICT = {
@@ -52,6 +53,20 @@ REPLACE_DICT = {
 }
 CSMITH_DIR = "csmith-2.3.0"
 SKIP_TEST = 102
+
+class ProgressBar:
+    def __init__(self):
+        self.stage = 0
+        self.stage_indicators = ["-", "\\", "|", "/", ]
+        self.pbar = tqdm.tqdm(total=1, bar_format="{l_bar}{bar}| [Elapsed:{elapsed}, <ETA:{remaining}]")
+        self.last_progress = 0
+    
+    def print_progressbar(self, progress):
+        indicator = self.stage_indicators[self.stage % len(self.stage_indicators)]
+        self.stage += 1
+        self.pbar.set_description(indicator)
+        self.pbar.update(progress - self.last_progress)
+        self.last_progress = progress
 
 def install_csmith(tests_dir):
     global CSMITH_DIR
@@ -205,12 +220,24 @@ def creduce(tests_dir, fuzz_arg, analyze):
 
     try:
         # --tidy: Do not make a backup copy of each file to reduce as file.orig
-        args = ["creduce", "--tidy", "--timeout", "20", "./reduce-criteria.sh", "test_reduced.c"]
+        args = ["creduce", "--tidy", "--timing", "--timeout", "20", "./reduce-criteria.sh", "test_reduced.c"]
         proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
+        pbar = ProgressBar()
+        while True:
+            line = proc.stdout.readline()
+            if not line:
+                break
+            line = line.decode()
+            if "%" in line:
+                try:
+                    pbar.print_progressbar(abs(float(line[1:line.index("%")])) / 100)
+                except:
+                    pass # This is for potential error
         (out, err) = proc.communicate()
         if proc.returncode != 0:
             print(out.decode())
             raise Exception("Reducing test_reduced.c by `{}` failed with exit code {}.".format(" ".join(args), proc.returncode))
+        print("Reduce finished.")
     except subprocess.TimeoutExpired as e:
         proc.kill()
         raise e
