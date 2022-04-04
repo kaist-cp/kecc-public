@@ -14,7 +14,11 @@ Fuzzer randomly generates input C program and feeds it to your implementation fo
 
 After the fuzzing stage, you may found a buggy input program in `test_polished.c`. However, it is highly likely that the input program is too big (about 3~5K lines of code) to manually inspect. In this stage, we use `creduce` to reduce the buggy input program as much as possible. Reduced buggy input program is saved to `test_reduced.c`.
 
-**[NOTICE]** The buggy input program after reducing stage may contain undefined behaviors. To workaround this, please refer to this issue: [#218](https://github.com/kaist-cp/cs420/issues/218)
+**[NOTICE]** The buggy input program after reducing stage may contain undefined behaviors. To workaround this, we recommend you to (1) use `--clang-analyze` option to use clang static analyzer for reducing, or (2) do manual binary search to reduce the program by following this:
+
+- If the code is 4000 lines, delete the latter 2000, and try again
+- If there is no error, undo and delete only the latter 1000. If there is, delete lines 1000 to 2000, etc.
+- It is important that you do not delete upper lines you know are safe (e.g, have lines 1000 to 2000 alive when checking 2000to 3000) as they might have some include for macros that can lead to compile errors if left out.
 
 For now, fuzzer is supported only for Homework 1 (C AST Printer) and Homework 2 (IRgen).
 

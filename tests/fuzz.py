@@ -40,6 +40,7 @@ REPLACE_DICT = {
     "_Nullable": "",
     "\"g_\w*\", ": "",              # transparent_crc에서 프린트 목적으로 받은 StringLiteral 삭제
     "char\* vname, ": "",           # transparent_crc에서 사용하지 않는 파라미터 삭제
+    r"transparent_crc_bytes\s*\([^;]*\);": "", # transparent_crc_bytes 삭제
     r"[^\n]*_IO_2_1_[^;]*;": "",    # extern을 지우면서 생긴 size를 알 수 없는 struct 삭제
     r"__asm\s*\([^\)]*\)": "",      # asm extension in mac
     r"__asm__\s*\([^\)]*\)": "",    # asm extension in linux
@@ -170,7 +171,7 @@ def polish(src, inc_path):
 
     return src_replaced
 
-def make_reduce_criteria(tests_dir, fuzz_arg):
+def make_reduce_criteria(tests_dir, fuzz_arg, analyze):
     """Make executable reduce_criteria.sh
     """
     # Make shell script i.e. dependent to KECC path
@@ -179,6 +180,7 @@ def make_reduce_criteria(tests_dir, fuzz_arg):
         "$FUZZ_ARG": fuzz_arg,
         "$KECC_BIN": str(os.path.abspath(os.path.join(tests_dir, "../target/release/kecc"))),
         "$FUZZ_BIN": str(os.path.abspath(os.path.join(tests_dir, "../target/release/fuzz"))),
+        "$CLANG_ANALYZE": str(analyze).lower(),
     }
     with open(os.path.join(tests_dir, "reduce-criteria-template.sh"), "r") as t:
         temp = t.read()
@@ -198,14 +200,14 @@ def make_reduce_criteria(tests_dir, fuzz_arg):
         proc.kill()
         raise e
 
-def creduce(tests_dir, fuzz_arg):
+def creduce(tests_dir, fuzz_arg, analyze):
     """Reduce `tests/test_polished.c` to `tests/test_reduced.c`
 
     First, we copy test_polished.c to test_reduced.c.
     Then, when Creduce reduces test_reduced.c, it overwrites partially reduced program to itself.
     Original file is moved to test_reduced.c.orig which is then identical to test_polished.c.
     """
-    make_reduce_criteria(tests_dir, fuzz_arg)
+    make_reduce_criteria(tests_dir, fuzz_arg, analyze)
 
     try:
         args = ["cp", "test_polished.c", "test_reduced.c"]
@@ -219,7 +221,7 @@ def creduce(tests_dir, fuzz_arg):
 
     try:
         # --tidy: Do not make a backup copy of each file to reduce as file.orig
-        args = ["creduce", "--tidy", "--timing", "./reduce-criteria.sh", "test_reduced.c"]
+        args = ["creduce", "--tidy", "--timing", "--timeout", "20", "./reduce-criteria.sh", "test_reduced.c"]
         proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
         pbar = ProgressBar()
         while True:
@@ -297,6 +299,7 @@ if __name__ == "__main__":
     parser.add_argument('--skip-build', action='store_true', help="Skipping cargo build")
     parser.add_argument('--easy', action='store_true', help="Generate more easy code by csmith option")
     parser.add_argument('--seed', type=int, help="Provide seed of fuzz generation", default=-1)
+    parser.add_argument('--clang-analyze', action='store_true', help="Use clang static analyzer for reducing. It prevents undefined behaviors coming from reduced program, but perhaps take a long time to do so")
     args = parser.parse_args()
 
     if args.print and args.irgen:
@@ -329,6 +332,6 @@ if __name__ == "__main__":
         print("Skip building. Please run `cargo build --features=build-bin --release --bin fuzz --bin kecc` to manually build.")
 
     if args.reduce:
-        creduce(tests_dir, fuzz_arg)
+        creduce(tests_dir, fuzz_arg, args.clang_analyze)
     else:
         fuzz(tests_dir, fuzz_arg, args.num, args.easy)

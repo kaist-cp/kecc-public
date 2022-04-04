@@ -770,10 +770,17 @@ mod calculator {
                 },
                 Dtype::Float { width, .. },
             ) => {
-                let casted_value = if is_signed {
-                    value as i128 as f64
-                } else {
-                    value as f64
+                let size = (width - 1) / Dtype::BITS_OF_BYTE + 1;
+                let casted_value = match (is_signed, size) {
+                    (true, Dtype::SIZE_OF_FLOAT) => value as i128 as f32 as f64,
+                    (true, Dtype::SIZE_OF_DOUBLE) => value as i128 as f64,
+                    (false, Dtype::SIZE_OF_FLOAT) => value as f32 as f64,
+                    (false, Dtype::SIZE_OF_DOUBLE) => value as f64,
+                    _ => panic!(
+                        "calculate_typecast: not supported case \
+                            typecast int to float when `width` is {}",
+                        width
+                    ),
                 };
                 Ok(Value::float(casted_value, width))
             }
@@ -803,9 +810,6 @@ mod calculator {
             }
             (Value::Float { value, .. }, Dtype::Float { width, .. }) => {
                 Ok(Value::float(value.into_inner(), width))
-            }
-            (Value::Pointer { bid, offset, .. }, Dtype::Pointer { inner, .. }) => {
-                Ok(Value::pointer(bid, offset, inner.deref().clone()))
             }
             (value, dtype) => todo!("calculate_typecast ({:?}) {:?}", value, dtype),
         }
@@ -1469,6 +1473,19 @@ impl<'i> State<'i> {
                         .ok_or_else(|| InterpreterError::NoFunctionDefinition {
                             func_name: callee_name.clone(),
                         })?;
+
+                let block_init = func_def
+                    .blocks
+                    .get(&func_def.bid_init)
+                    .expect("init block must exists");
+
+                if !(args.len() == block_init.phinodes.len()
+                    && izip!(args, &block_init.phinodes).all(|(a, d)| {
+                        a.dtype().set_const(false) == d.deref().clone().set_const(false)
+                    }))
+                {
+                    panic!("dtype of args and phinodes of init block must be compatible");
+                }
 
                 let args = self.interp_args(func_signature, args)?;
 
