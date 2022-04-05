@@ -14,7 +14,6 @@ import argparse
 import sys
 import re
 import random
-import tqdm
 from pathlib import Path
 
 REPLACE_DICT = {
@@ -330,6 +329,7 @@ if __name__ == "__main__":
         print("Skip building. Please run `cargo build --features=build-bin --release --bin fuzz --bin kecc` to manually build.")
 
     if args.reduce:
+        import tqdm
         creduce(tests_dir, fuzz_arg, args.clang_analyze)
     else:
         fuzz(tests_dir, fuzz_arg, args.num, args.easy)
