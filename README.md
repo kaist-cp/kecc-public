@@ -60,13 +60,15 @@ RUST_MIN_STACK=33554432 cargo test test_examples_end_to_end    # run irgen, opti
 
 We encourage you to do homework using the test-driven development approach (TDD). You randomly
 generate test input, and if it fails, then reduce it as much as possible and manually inspect the
-reduced test input. For example, for homework 1, do:
+reduced test input. For example:
 
 ```sh
-# Randomly generates test inputs and tests them
-# If this command is going infinitly, then try `python3 tests/fuzz.py --print`,
-#   which is generating more complicated code.
+# Randomly generates simple test inputs and tests them.
+# If this goes infinitely, then try without `--easy` option. It will generate more complicated code.
 python3 tests/fuzz.py <fuzz-option> --easy
+
+# Randomly generates test inputs and tests them
+python3 tests/fuzz.py <fuzz-option>
 
 # Reduces the failing test input as much as possible
 python3 tests/fuzz.py <fuzz-option> --reduce
@@ -76,6 +78,8 @@ cat tests/test_reduced.c
 ```
 
 `<fuzz-option>` can be `--print` or `--irgen`. It shall be the one used in [Run](#run).
+
+For more information on usage, please refer to the [Fuzzer User's Manual](tests/README.md).
 
 ### Install
 
@@ -108,7 +112,7 @@ Suppose `tests/test_polished.c` is the buggy input program. Then the following s
 program to `tests/test_reduced.c`:
 
 ```sh
-python3 tests/fuzz.py --reduce <fuzz-option>
+python3 tests/fuzz.py <fuzz-option> --reduce
 ```
 
 `<fuzz-option>` can be `--print` or `--irgen`. It shall be the one used in [Run](#run).
@@ -122,8 +126,6 @@ information, we refer to the [Creduce](https://embed.cs.utah.edu/creduce/) homep
 
 **[NOTICE]** The fuzzer supports Ubuntu 20.04 only. It may work for other platforms, but if it
 doesn't, please run the fuzzer in Ubuntu 20.04.
-
-For more information on usage, please refer to the [Fuzzer User's Manual](tests/README.md).
 
 ## Running RISC-V Binaries
 
