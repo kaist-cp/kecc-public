@@ -27,6 +27,7 @@ For now, fuzzer is supported only for Homework 1 (C AST Printer) and Homework 2 
 ```bash
 # Ubuntu 20.04
 sudo apt install -y make cmake python3 csmith libcsmith-dev creduce
+pip3 install tqdm
 ```
 
 **[NOTICE]** The fuzzer supports Ubuntu 20.04 only. It may work for other platforms, but if it doesn't, please run the fuzzer in Ubuntu 20.04.
@@ -46,6 +47,10 @@ Use `-h` option to display all available options.
 - Fuzzing
 
   ```bash
+  # Try infinitely many simple test cases until find a buggy one.
+  # If this goes infinitely, then try without `--easy` option. It will generate more complicated code.
+  python3 tests/fuzz.py -p --easy
+
   # Try infinitely many test cases until find a buggy one.
   python3 tests/fuzz.py -p
   
@@ -65,6 +70,10 @@ Use `-h` option to display all available options.
 - Fuzzing
 
   ```bash
+  # Try infinitely many simple test cases until find a buggy one.
+  # If this goes infinitely, then try without `--easy` option. It will generate more complicated code.
+  python3 tests/fuzz.py -i --easy
+
   # Try infinitely many test cases until find a buggy one.
   python3 tests/fuzz.py -i
   
