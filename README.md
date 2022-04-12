@@ -63,10 +63,6 @@ generate test input, and if it fails, then reduce it as much as possible and man
 reduced test input. For example:
 
 ```sh
-# Randomly generates simple test inputs and tests them.
-# If this goes infinitely, then try without `--easy` option. It will generate more complicated code.
-python3 tests/fuzz.py <fuzz-option> --easy
-
 # Randomly generates test inputs and tests them
 python3 tests/fuzz.py <fuzz-option>
 
