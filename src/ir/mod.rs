@@ -252,7 +252,7 @@ impl HasDtype for Instruction {
 }
 
 impl Instruction {
-    pub fn is_pure(&self) -> bool {
+    pub fn has_no_side_effects(&self) -> bool {
         !matches!(self, Self::Store { .. } | Self::Call { .. })
     }
 }
