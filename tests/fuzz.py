@@ -169,8 +169,8 @@ def polish(src, inc_path):
 
     return src_replaced
 
-def make_reduce_criteria(tests_dir, fuzz_arg, analyze):
-    """Make executable reduce_criteria.sh
+def make_reduce_criteria(tests_dir, fuzz_arg, fuzz_errmsg, analyze):
+    """Make executable reduce-criteria.sh
     """
     # Make shell script i.e. dependent to KECC path
     arg_dict = {
@@ -178,6 +178,7 @@ def make_reduce_criteria(tests_dir, fuzz_arg, analyze):
         "$FUZZ_ARG": fuzz_arg,
         "$KECC_BIN": str(os.path.abspath(os.path.join(tests_dir, "../target/release/kecc"))),
         "$FUZZ_BIN": str(os.path.abspath(os.path.join(tests_dir, "../target/release/fuzz"))),
+        "$FUZZ_ERRMSG": "'{}'".format(fuzz_errmsg),
         "$CLANG_ANALYZE": str(analyze).lower(),
     }
     with open(os.path.join(tests_dir, "reduce-criteria-template.sh"), "r") as t:
@@ -198,6 +199,25 @@ def make_reduce_criteria(tests_dir, fuzz_arg, analyze):
         proc.kill()
         raise e
 
+def make_fuzz_errmsg(tests_dir, fuzz_arg):
+    """Make fuzz error message in reduce-criteria.sh.
+    """
+    fuzz_errmsg = "panicked"
+    try:
+        args = ["cargo", "run", "--features=build-bin", "--bin", "fuzz", "--", fuzz_arg, "test_polished.c"]
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir)
+        (out, err) = proc.communicate()
+        if proc.returncode != 0:
+            if "assertion failed" in out.decode():
+                fuzz_errmsg = "assertion failed"
+        else:
+            raise Exception("Reducing failed because `{}` returned 0".format(" ".join(args)))
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        raise e
+
+    return fuzz_errmsg
+
 def creduce(tests_dir, fuzz_arg, analyze):
     """Reduce `tests/test_polished.c` to `tests/test_reduced.c`
 
@@ -205,7 +225,8 @@ def creduce(tests_dir, fuzz_arg, analyze):
     Then, when Creduce reduces test_reduced.c, it overwrites partially reduced program to itself.
     Original file is moved to test_reduced.c.orig which is then identical to test_polished.c.
     """
-    make_reduce_criteria(tests_dir, fuzz_arg, analyze)
+    fuzz_errmsg = make_fuzz_errmsg(tests_dir, fuzz_arg)
+    make_reduce_criteria(tests_dir, fuzz_arg, fuzz_errmsg, analyze)
 
     try:
         args = ["cp", "test_polished.c", "test_reduced.c"]

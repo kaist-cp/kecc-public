@@ -70,10 +70,4 @@ fi
 
 $FUZZ_BIN $FUZZ_ARG test_reduced.c > out_fuzz.txt 2>&1
 
-if
-  [ $FUZZ_ARG = '-p' ]
-then
-  grep 'panicked' out_fuzz.txt
-else
-  grep 'assertion failed' out_fuzz.txt
-fi
+grep $FUZZ_ERRMSG out_fuzz.txt
