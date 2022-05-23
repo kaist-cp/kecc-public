@@ -191,6 +191,15 @@ fn test_examples_gvn() {
 }
 
 #[test]
+fn test_examples_optimize() {
+    test_opt_between_dirs(
+        &Path::new("examples/ir0"),
+        &Path::new("examples/opt"),
+        &mut O1::default(),
+    )
+}
+
+#[test]
 fn test_examples_asmgen_small() {
     for dir in ASMGEN_TEST_DIR_LIST.iter() {
         test_dir(Path::new(dir), &OsStr::new("ir"), |path| {
