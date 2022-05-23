@@ -1,0 +1,31 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:u64 = typecast 1:i32 to u64
+  %b0:i1:u1 = cmp eq 1:u64 %b0:i0:u64
+  br %b0:i1:u1, b4(), b6(0:u1)
+
+block b1:
+  %b1:i0:u64 = typecast 80:i32 to u64
+  %b1:i1:u1 = cmp eq 80:u64 %b1:i0:u64
+  j b3(%b1:i1:u1)
+
+block b3:
+  %b3:p0:u1:t1
+  %b3:i0:i32 = typecast %b3:p0:u1 to i32
+  ret %b3:i0:i32
+
+block b4:
+  %b4:i0:u64 = typecast 4:i32 to u64
+  %b4:i1:u1 = cmp eq 4:u64 %b4:i0:u64
+  j b6(%b4:i1:u1)
+
+block b6:
+  %b6:p0:u1:t0
+  br %b6:p0:u1, b1(), b3(0:u1)
+}

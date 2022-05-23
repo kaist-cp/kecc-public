@@ -1,0 +1,60 @@
+struct color : { number:i32, name:i8 }
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+    %l0:struct color:c
+
+block b0:
+  %b0:i0:u64 = typecast 0:i32 to u64
+  %b0:i1:u64 = add %b0:i0:u64 1:u64
+  %b0:i2:i32 = typecast %b0:i1:u64 to i32
+  %b0:i3:u64 = typecast %b0:i2:i32 to u64
+  %b0:i4:u64 = add %b0:i3:u64 1:u64
+  %b0:i5:i32 = typecast %b0:i4:u64 to i32
+  %b0:i6:i32* = getelementptr %l0:struct color* offset 0:i64
+  %b0:i7:unit = store 1:i32 %b0:i6:i32*
+  %b0:i8:i8* = getelementptr %l0:struct color* offset 4:i64
+  %b0:i9:i8 = typecast 2:i32 to i8
+  %b0:i10:unit = store %b0:i9:i8 %b0:i8:i8*
+  %b0:i11:i8 = load %b0:i8:i8*
+  %b0:i12:i32 = typecast %b0:i11:i8 to i32
+  %b0:i13:i32 = add %b0:i5:i32 %b0:i12:i32
+  %b0:i14:i8 = load %b0:i8:i8*
+  %b0:i15:i32 = typecast %b0:i14:i8 to i32
+  %b0:i16:i32 = add %b0:i13:i32 %b0:i15:i32
+  j b2(%b0:i16:i32, 0:i32)
+
+block b2:
+  %b2:p0:i32:temp
+  %b2:p1:i32:i
+  %b2:i0:u1 = cmp lt %b2:p1:i32 10:i32
+  br %b2:i0:u1, b3(), b5()
+
+block b3:
+  %b3:i0:u1 = cmp eq %b2:p1:i32 2:i32
+  br %b3:i0:u1, b9(), b11(0:u1)
+
+block b5:
+  switch %b2:p0:i32 default b13(%b2:p0:i32) [
+    1:i32 b13(0:i32)
+  ]
+
+block b7:
+  %b7:i0:i32 = add %b2:p0:i32 %b2:p1:i32
+  %b7:i1:i32 = add %b2:p1:i32 1:i32
+  j b2(%b7:i0:i32, %b7:i1:i32)
+
+block b9:
+  %b9:i0:u1 = cmp eq 0:i32 0:i32
+  j b11(%b9:i0:u1)
+
+block b11:
+  %b11:p0:u1:t0
+  br %b11:p0:u1, b5(), b7()
+
+block b13:
+  %b13:p0:i32:temp
+  ret %b13:p0:i32
+}

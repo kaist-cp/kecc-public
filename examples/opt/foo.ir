@@ -1,0 +1,34 @@
+
+fun i32 @foo (i32, i32, i32) {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:p0:i32:x
+  %b0:p1:i32:y
+  %b0:p2:i32:z
+  %b0:i0:u1 = cmp eq %b0:p0:i32 %b0:p1:i32
+  br %b0:i0:u1, b1(), b2()
+
+block b1:
+  ret %b0:p1:i32
+
+block b2:
+  ret %b0:p2:i32
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:i32 = minus 1:i32
+  %b0:i1:i32 = call @foo:[ret:i32 params:(i32, i32, i32)]*(0:i32, 1:i32, %b0:i0:i32)
+  %b0:i2:u1 = cmp eq %b0:i1:i32 %b0:i0:i32
+  %b0:i3:i32 = typecast %b0:i2:u1 to i32
+  ret %b0:i3:i32
+}

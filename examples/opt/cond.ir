@@ -1,0 +1,17 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:u1 = cmp eq 0:i32 1:i32
+  br %b0:i0:u1, b3(2:i32), b3(5:i32)
+
+block b3:
+  %b3:p0:i32:t0
+  %b3:i0:u1 = cmp eq %b3:p0:i32 5:i32
+  %b3:i1:i32 = typecast %b3:i0:u1 to i32
+  ret %b3:i1:i32
+}

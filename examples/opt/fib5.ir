@@ -1,0 +1,40 @@
+
+fun i32 @fibonacci (i32) {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:p0:i32:n
+  %b0:i0:u1 = cmp lt %b0:p0:i32 2:i32
+  br %b0:i0:u1, b1(), b5(1:i32, 0:i32, 1:i32)
+
+block b1:
+  ret %b0:p0:i32
+
+block b5:
+  %b5:p0:i32:i
+  %b5:p1:i32:t1
+  %b5:p2:i32:t2
+  %b5:i0:i32 = add %b5:p1:i32 %b5:p2:i32
+  %b5:i1:i32 = add %b5:p0:i32 1:i32
+  %b5:i2:u1 = cmp lt %b5:i1:i32 %b0:p0:i32
+  br %b5:i2:u1, b5(%b5:i1:i32, %b5:p2:i32, %b5:i0:i32), b7()
+
+block b7:
+  ret %b5:i0:i32
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:i32 = call @fibonacci:[ret:i32 params:(i32)]*(9:i32)
+  %b0:i1:u1 = cmp eq %b0:i0:i32 34:i32
+  %b0:i2:i32 = typecast %b0:i1:u1 to i32
+  ret %b0:i2:i32
+}

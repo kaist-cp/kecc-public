@@ -1,0 +1,21 @@
+
+fun unit @foo () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  ret unit:unit
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:unit = call @foo:[ret:unit params:()]*()
+  ret 1:i32
+}

@@ -1,0 +1,47 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  %b0:i0:u1 = cmp ne 1:i32 0:i32
+  br %b0:i0:u1, b6(0:i32, 1:u1), b6(1:i32, %b0:i0:u1)
+
+block b1:
+  %b1:i0:i32 = add %b6:p0:i32 1:i32
+  j b3(%b1:i0:i32)
+
+block b3:
+  %b3:p0:i32:b
+  br %b0:i0:u1, b12(1:i32, %b0:i0:u1), b12(0:i32, 0:u1)
+
+block b6:
+  %b6:p0:i32:b
+  %b6:p1:u1:t0
+  br %b6:p1:u1, b1(), b3(%b6:p0:i32)
+
+block b7:
+  %b7:i0:i32 = add %b12:p0:i32 1:i32
+  j b9(%b7:i0:i32)
+
+block b9:
+  %b9:p0:i32:d
+  %b9:i0:u1 = cmp eq %b3:p0:i32 1:i32
+  br %b9:i0:u1, b13(), b15(0:u1)
+
+block b12:
+  %b12:p0:i32:d
+  %b12:p1:u1:t1
+  br %b12:p1:u1, b7(), b9(%b12:p0:i32)
+
+block b13:
+  %b13:i0:u1 = cmp eq %b9:p0:i32 2:i32
+  j b15(%b13:i0:u1)
+
+block b15:
+  %b15:p0:u1:t2
+  %b15:i0:i32 = typecast %b15:p0:u1 to i32
+  ret %b15:i0:i32
+}
