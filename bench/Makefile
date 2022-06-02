@@ -26,7 +26,7 @@ driver.o: $(SRCS) driver.cpp
 	$(CXX) $(CFLAGS) -fsigned-char -o driver.o -c -I. driver.cpp
 
 %.s: %.c $(KECC)
-	($(KECC) -O $< >$@) || (rm $@ -rf; exit 1)
+	($(KECC) -O $< -o $@) || (rm $@ -rf; exit 1)
 
 %.o: %.c
 	($(CC) -O -fsigned-char -c $< -o $@) || (rm $@ -rf; exit 1)
