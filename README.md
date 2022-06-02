@@ -165,4 +165,4 @@ make run
 ## Submission
 
 - Submit the corresponding files to [gg.kaist.ac.kr](https://gg.kaist.ac.kr).
-- Run `./scripts/make-submissions.sh` to generate `hw2.zip` to `hw6.zip`, which you should submit for homework 2 to 6.
+- Run `./scripts/make-submissions.sh` to generate `hw2.zip` to `final.zip`, which you should submit for homework 2 to final project.
