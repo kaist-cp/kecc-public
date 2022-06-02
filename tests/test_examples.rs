@@ -37,9 +37,9 @@ fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Pat
             .expect("`from_file _path` must have file name");
         let to_file_path = to.join(file_name);
 
-        assert_eq!(from_file_path.is_file(), true);
-        assert_eq!(to_file_path.exists(), true);
-        assert_eq!(to_file_path.is_file(), true);
+        assert!(from_file_path.is_file());
+        assert!(to_file_path.exists());
+        assert!(to_file_path.is_file());
 
         println!("[testing {:?} to {:?}]", from_file_path, to_file_path);
         test_opt(&from_file_path, &to_file_path, opt);
@@ -84,12 +84,12 @@ const ASMGEN_SMALL_TEST_IGNORE_LIST: [&str; 11] = [
 
 #[test]
 fn test_examples_write_c() {
-    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_write_c);
+    test_dir(Path::new("examples/c"), OsStr::new("c"), test_write_c);
 }
 
 #[test]
 fn test_examples_irgen_small() {
-    test_dir(Path::new("examples/c"), &OsStr::new("c"), |path| {
+    test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
         if !IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
             test_irgen(path)
@@ -99,7 +99,7 @@ fn test_examples_irgen_small() {
 
 #[test]
 fn test_examples_irgen_large() {
-    test_dir(Path::new("examples/c"), &OsStr::new("c"), |path| {
+    test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
         if IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) {
             test_irgen(path)
@@ -109,7 +109,7 @@ fn test_examples_irgen_large() {
 
 #[test]
 fn test_examples_irparse() {
-    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_irparse);
+    test_dir(Path::new("examples/c"), OsStr::new("c"), test_irparse);
 }
 
 #[test]
@@ -139,8 +139,8 @@ fn test_examples_simplify_cfg() {
     );
 
     test_opt_between_dirs(
-        &Path::new("examples/ir0"),
-        &Path::new("examples/ir1"),
+        Path::new("examples/ir0"),
+        Path::new("examples/ir1"),
         &mut SimplifyCfg::default(),
     );
 }
@@ -154,8 +154,8 @@ fn test_examples_mem2reg() {
     );
 
     test_opt_between_dirs(
-        &Path::new("examples/ir1"),
-        &Path::new("examples/ir2"),
+        Path::new("examples/ir1"),
+        Path::new("examples/ir2"),
         &mut Mem2reg::default(),
     );
 }
@@ -169,8 +169,8 @@ fn test_examples_deadcode() {
     );
 
     test_opt_between_dirs(
-        &Path::new("examples/ir2"),
-        &Path::new("examples/ir3"),
+        Path::new("examples/ir2"),
+        Path::new("examples/ir3"),
         &mut Deadcode::default(),
     );
 }
@@ -184,8 +184,8 @@ fn test_examples_gvn() {
     );
 
     test_opt_between_dirs(
-        &Path::new("examples/ir3"),
-        &Path::new("examples/ir4"),
+        Path::new("examples/ir3"),
+        Path::new("examples/ir4"),
         &mut Gvn::default(),
     );
 }
@@ -193,8 +193,8 @@ fn test_examples_gvn() {
 #[test]
 fn test_examples_optimize() {
     test_opt_between_dirs(
-        &Path::new("examples/ir0"),
-        &Path::new("examples/opt"),
+        Path::new("examples/ir0"),
+        Path::new("examples/opt"),
         &mut O1::default(),
     )
 }
@@ -202,7 +202,7 @@ fn test_examples_optimize() {
 #[test]
 fn test_examples_asmgen_small() {
     for dir in ASMGEN_TEST_DIR_LIST.iter() {
-        test_dir(Path::new(dir), &OsStr::new("ir"), |path| {
+        test_dir(Path::new(dir), OsStr::new("ir"), |path| {
             let file_name = &path
                 .file_name()
                 .expect("`path` must have file name")
@@ -218,7 +218,7 @@ fn test_examples_asmgen_small() {
 #[test]
 fn test_examples_asmgen_large() {
     for dir in ASMGEN_TEST_DIR_LIST.iter() {
-        test_dir(Path::new(dir), &OsStr::new("ir"), |path| {
+        test_dir(Path::new(dir), OsStr::new("ir"), |path| {
             let file_name = &path
                 .file_name()
                 .expect("`path` must have file name")
@@ -233,5 +233,5 @@ fn test_examples_asmgen_large() {
 
 #[test]
 fn test_examples_end_to_end() {
-    test_dir(Path::new("examples/c"), &OsStr::new("c"), test_end_to_end);
+    test_dir(Path::new("examples/c"), OsStr::new("c"), test_end_to_end);
 }
