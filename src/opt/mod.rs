@@ -3,7 +3,7 @@ use crate::*;
 mod deadcode;
 mod gvn;
 mod mem2reg;
-mod opt_utils;
+pub mod opt_utils;
 mod simplify_cfg;
 
 pub use deadcode::Deadcode;
