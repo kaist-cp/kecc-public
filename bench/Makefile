@@ -35,4 +35,4 @@ $(KECC):
 	cargo build --manifest-path=../Cargo.toml --features=build-bin --release --bin kecc
 
 clean:
-	$(RM) $(OBJS) $(OBJS_GCC) driver.o bench bench-gcc
+	$(RM) $(KECC) $(OBJS) $(OBJS_GCC) driver.o bench bench-gcc
