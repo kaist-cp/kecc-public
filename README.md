@@ -134,7 +134,7 @@ doesn't, please run the fuzzer in Ubuntu 20.04.
 
 ```sh
 # Ubuntu 20.04
-sudo apt install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu qemu-user-static
+sudo apt install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu qemu-user-static gdb-multiarch
 ```
 
 ### Cross-Compilation and Architecture-Emulation
@@ -153,6 +153,64 @@ qemu-riscv64-static ./hello
 echo $?
 ```
 
+### Debugging Assembly
+
+You can use QEMU's debugging facilities to investigate the generated assembly works correctly.
+
+Open two terminal windows. In one, compile the assembly with `-ggdb` option and starts up gdb server with 8888 port. (If the port 8888 is already in use, then try with different port like 8889, 8890, ...)
+
+```sh
+# Link to an RISC-V executable with `-ggdb` option
+riscv64-linux-gnu-gcc -ggdb -static hello.S -o hello
+
+# Emulate the executable and wait for a debugging connection from GDB
+qemu-riscv64-static -g 8888 hello 
+```
+
+In the second terminal, run `gdb-multiarch` and set some configurations. You should see something like this,
+
+```
+$ gdb-multiarch
+GNU gdb (Ubuntu 9.2-0ubuntu1~20.04.1) 9.2
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word".
+(gdb) set arc riscv:rv64
+The target architecture is assumed to be riscv:rv64
+(gdb) target remote localhost:8888
+Remote debugging using localhost:8888
+warning: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+0x0000000000010348 in ?? ()
+(gdb) file hello 
+A program is being debugged already.
+Are you sure you want to change the file? (y or n) y
+Reading symbols from hello...
+(gdb) disas main
+Dump of assembler code for function main:
+   0x0000000000010446 <+0>:     addi    sp,sp,-104
+   0x000000000001044a <+4>:     sd      ra,88(sp)
+   0x000000000001044c <+6>:     sd      s0,96(sp)
+   0x000000000001044e <+8>:     addi    s0,sp,104
+End of assembler dump.
+(gdb) 
+```
+
+Now you can debug the assembly using the GDB commands. For more information on GDB commands, see:
+
+- Full guide: http://sourceware.org/gdb/current/onlinedocs/gdb/
+- Cheatsheet: https://cs.brown.edu/courses/cs033/docs/guides/gdb.pdf
 
 ## Run Benchmark for Performance Competition
 
