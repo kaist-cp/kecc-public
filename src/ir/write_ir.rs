@@ -5,8 +5,6 @@ use std::io::{Result, Write};
 use crate::write_base::*;
 use crate::*;
 
-use lang_c::ast;
-
 impl WriteLine for TranslationUnit {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
         // TODO: consider KECC IR parser in the future.
@@ -18,21 +16,17 @@ impl WriteLine for TranslationUnit {
                     .as_ref()
                     .expect("`fields` must be `Some`");
 
-                let fields = fields
-                    .iter()
-                    .map(|f| {
-                        format!(
-                            "{}:{}",
-                            if let Some(name) = f.name() {
-                                name
-                            } else {
-                                "%anon"
-                            },
-                            f.deref()
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let fields = fields.iter().format_with(", ", |field, f| {
+                    f(&format_args!(
+                        "{}:{}",
+                        if let Some(name) = field.name() {
+                            name
+                        } else {
+                            "%anon"
+                        },
+                        field.deref()
+                    ))
+                });
 
                 format!("{{ {} }}", fields)
             } else {
@@ -80,12 +74,7 @@ impl WriteLine for (&String, &Declaration) {
                 signature,
                 definition,
             } => {
-                let params = signature
-                    .params
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let params = signature.params.iter().format(", ");
 
                 if let Some(definition) = definition.as_ref() {
                     // print function definition
@@ -99,7 +88,7 @@ impl WriteLine for (&String, &Declaration) {
                             .allocations
                             .iter()
                             .enumerate()
-                            .map(|(i, a)| format!(
+                            .format_with("\n", |(i, a), f| f(&format_args!(
                                 "    %l{}:{}{}",
                                 i,
                                 a.deref(),
@@ -108,9 +97,7 @@ impl WriteLine for (&String, &Declaration) {
                                 } else {
                                     "".into()
                                 }
-                            ))
-                            .collect::<Vec<_>>()
-                            .join("\n")
+                            )))
                     )?;
 
                     for (id, block) in &definition.blocks {
@@ -173,39 +160,7 @@ impl WriteLine for (&BlockId, &Block) {
 
 impl WriteString for Instruction {
     fn write_string(&self) -> String {
-        match self {
-            Instruction::Nop => "nop".into(),
-            Instruction::BinOp { op, lhs, rhs, .. } => format!(
-                "{} {} {}",
-                op.write_operation(),
-                lhs.write_string(),
-                rhs.write_string()
-            ),
-            Instruction::UnaryOp { op, operand, .. } => {
-                format!("{} {}", op.write_operation(), operand.write_string(),)
-            }
-            Instruction::Store { ptr, value } => {
-                format!("store {} {}", value.write_string(), ptr.write_string())
-            }
-            Instruction::Load { ptr } => format!("load {}", ptr.write_string()),
-            Instruction::Call { callee, args, .. } => format!(
-                "call {}({})",
-                callee.write_string(),
-                args.iter()
-                    .map(WriteString::write_string)
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
-            Instruction::TypeCast {
-                value,
-                target_dtype,
-            } => format!("typecast {} to {}", value.write_string(), target_dtype),
-            Instruction::GetElementPtr { ptr, offset, .. } => format!(
-                "getelementptr {} offset {}",
-                ptr.write_string(),
-                offset.write_string()
-            ),
-        }
+        format!("{}", self)
     }
 }
 
@@ -215,79 +170,8 @@ impl WriteString for Operand {
     }
 }
 
-impl WriteOp for ast::BinaryOperator {
-    fn write_operation(&self) -> String {
-        match self {
-            Self::Multiply => "mul",
-            Self::Divide => "div",
-            Self::Modulo => "mod",
-            Self::Plus => "add",
-            Self::Minus => "sub",
-            Self::ShiftLeft => "shl",
-            Self::ShiftRight => "shr",
-            Self::Equals => "cmp eq",
-            Self::NotEquals => "cmp ne",
-            Self::Less => "cmp lt",
-            Self::LessOrEqual => "cmp le",
-            Self::Greater => "cmp gt",
-            Self::GreaterOrEqual => "cmp ge",
-            Self::BitwiseAnd => "and",
-            Self::BitwiseXor => "xor",
-            Self::BitwiseOr => "or",
-            _ => todo!(
-                "ast::BinaryOperator::WriteOp: write operation for {:?} is needed",
-                self
-            ),
-        }
-        .to_string()
-    }
-}
-
-impl WriteOp for ast::UnaryOperator {
-    fn write_operation(&self) -> String {
-        match self {
-            Self::Plus => "plus",
-            Self::Minus => "minus",
-            Self::Negate => "negate",
-            _ => todo!(
-                "ast::UnaryOperator::WriteOp: write operation for {:?} is needed",
-                self
-            ),
-        }
-        .to_string()
-    }
-}
-
 impl WriteString for BlockExit {
     fn write_string(&self) -> String {
-        match self {
-            BlockExit::Jump { arg } => format!("j {}", arg),
-            BlockExit::ConditionalJump {
-                condition,
-                arg_then,
-                arg_else,
-            } => format!(
-                "br {}, {}, {}",
-                condition.write_string(),
-                arg_then,
-                arg_else
-            ),
-            BlockExit::Switch {
-                value,
-                default,
-                cases,
-            } => format!(
-                "switch {} default {} [\n{}\n  ]",
-                value.write_string(),
-                default,
-                cases
-                    .iter()
-                    .map(|(v, b)| format!("    {}:{} {}", v, v.dtype(), b))
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            ),
-            BlockExit::Return { value } => format!("ret {}", value.write_string()),
-            BlockExit::Unreachable => "<unreachable>\t\t\t\t; error state".to_string(),
-        }
+        format!("{}", self)
     }
 }

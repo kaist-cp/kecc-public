@@ -12,11 +12,13 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 use hexf_parse::{parse_hexf32, parse_hexf64};
+use itertools::Itertools;
 use lang_c::ast;
 use ordered_float::OrderedFloat;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{Hash, Hasher};
 
+use crate::write_base::*;
 pub use dtype::{Dtype, DtypeError, HasDtype};
 pub use interp::{interp, Value};
 pub use parse::Parse;
@@ -257,6 +259,96 @@ impl Instruction {
     }
 }
 
+impl WriteOp for ast::BinaryOperator {
+    fn write_operation(&self) -> String {
+        match self {
+            Self::Multiply => "mul",
+            Self::Divide => "div",
+            Self::Modulo => "mod",
+            Self::Plus => "add",
+            Self::Minus => "sub",
+            Self::ShiftLeft => "shl",
+            Self::ShiftRight => "shr",
+            Self::Equals => "cmp eq",
+            Self::NotEquals => "cmp ne",
+            Self::Less => "cmp lt",
+            Self::LessOrEqual => "cmp le",
+            Self::Greater => "cmp gt",
+            Self::GreaterOrEqual => "cmp ge",
+            Self::BitwiseAnd => "and",
+            Self::BitwiseXor => "xor",
+            Self::BitwiseOr => "or",
+            _ => todo!(
+                "ast::BinaryOperator::WriteOp: write operation for {:?} is needed",
+                self
+            ),
+        }
+        .to_string()
+    }
+}
+
+impl WriteOp for ast::UnaryOperator {
+    fn write_operation(&self) -> String {
+        match self {
+            Self::Plus => "plus",
+            Self::Minus => "minus",
+            Self::Negate => "negate",
+            _ => todo!(
+                "ast::UnaryOperator::WriteOp: write operation for {:?} is needed",
+                self
+            ),
+        }
+        .to_string()
+    }
+}
+
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Instruction::Nop => write!(f, "nop"),
+            Instruction::BinOp { op, lhs, rhs, .. } => {
+                write!(
+                    f,
+                    "{} {} {}",
+                    op.write_operation(),
+                    lhs.write_string(),
+                    rhs.write_string()
+                )
+            }
+            Instruction::UnaryOp { op, operand, .. } => {
+                write!(f, "{} {}", op.write_operation(), operand.write_string())
+            }
+            Instruction::Store { ptr, value } => {
+                write!(f, "store {} {}", value.write_string(), ptr.write_string())
+            }
+            Instruction::Load { ptr } => write!(f, "load {}", ptr.write_string()),
+            Instruction::Call { callee, args, .. } => {
+                write!(
+                    f,
+                    "call {}({})",
+                    callee.write_string(),
+                    args.iter().format_with(", ", |operand, f| f(&format_args!(
+                        "{}",
+                        operand.write_string()
+                    )))
+                )
+            }
+            Instruction::TypeCast {
+                value,
+                target_dtype,
+            } => write!(f, "typecast {} to {}", value.write_string(), target_dtype),
+            Instruction::GetElementPtr { ptr, offset, .. } => {
+                write!(
+                    f,
+                    "getelementptr {} offset {}",
+                    ptr.write_string(),
+                    offset.write_string()
+                )
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockExit {
     Jump {
@@ -302,6 +394,43 @@ impl BlockExit {
     }
 }
 
+impl fmt::Display for BlockExit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BlockExit::Jump { arg } => write!(f, "j {}", arg),
+            BlockExit::ConditionalJump {
+                condition,
+                arg_then,
+                arg_else,
+            } => write!(
+                f,
+                "br {}, {}, {}",
+                condition.write_string(),
+                arg_then,
+                arg_else
+            ),
+            BlockExit::Switch {
+                value,
+                default,
+                cases,
+            } => write!(
+                f,
+                "switch {} default {} [\n{}\n  ]",
+                value.write_string(),
+                default,
+                cases.iter().format_with("\n", |(v, b), f| f(&format_args!(
+                    "    {}:{} {}",
+                    v,
+                    v.dtype(),
+                    b
+                )))
+            ),
+            BlockExit::Return { value } => write!(f, "ret {}", value.write_string()),
+            BlockExit::Unreachable => write!(f, "<unreachable>\t\t\t\t; error state"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct JumpArg {
     pub bid: BlockId,
@@ -322,9 +451,7 @@ impl fmt::Display for JumpArg {
             self.bid,
             self.args
                 .iter()
-                .map(|a| format!("{}:{}", a, a.dtype()))
-                .collect::<Vec<_>>()
-                .join(", ")
+                .format_with(", ", |a, f| f(&format_args!("{}:{}", a, a.dtype())))
         )
     }
 }
@@ -878,5 +1005,11 @@ impl<T> Named<T> {
 
     pub fn name(&self) -> Option<&String> {
         self.name.as_ref()
+    }
+}
+
+impl<T: fmt::Display> fmt::Display for Named<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.inner)
     }
 }

@@ -1366,21 +1366,17 @@ impl fmt::Display for Dtype {
                 ..
             } => {
                 let fields = if let Some(fields) = fields {
-                    let fields = fields
-                        .iter()
-                        .map(|f| {
-                            format!(
-                                "{}:{}",
-                                if let Some(name) = f.name() {
-                                    name
-                                } else {
-                                    "%anon"
-                                },
-                                f.deref()
-                            )
-                        })
-                        .collect::<Vec<_>>()
-                        .join(", ");
+                    let fields = fields.iter().format_with(", ", |field, f| {
+                        f(&format_args!(
+                            "{}:{}",
+                            if let Some(name) = field.name() {
+                                name
+                            } else {
+                                "%anon"
+                            },
+                            field.deref()
+                        ))
+                    });
                     format!(":<{}>", fields)
                 } else {
                     "".to_string()
@@ -1393,16 +1389,9 @@ impl fmt::Display for Dtype {
                     fields
                 )
             }
-            Self::Function { ret, params } => write!(
-                f,
-                "[ret:{} params:({})]",
-                ret,
-                params
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
+            Self::Function { ret, params } => {
+                write!(f, "[ret:{} params:({})]", ret, params.iter().format(", "))
+            }
             Self::Typedef { name, is_const } => {
                 write!(f, "{}{}", if *is_const { "const " } else { "" }, name)
             }
