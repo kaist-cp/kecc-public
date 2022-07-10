@@ -1,8 +1,10 @@
 mod write_asm;
 
 use crate::ir;
+use crate::write_base::*;
 
 use core::convert::TryFrom;
+use core::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Todo {}
@@ -21,7 +23,7 @@ pub struct TranslationUnit {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Section<T> {
-    /// Section Headers provice size, offset, type, alignment and flags of the sections
+    /// Section Headers provide size, offset, type, alignment and flags of the sections
     ///
     /// For more details: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#section-header>
     pub header: Vec<Directive>,
@@ -115,6 +117,24 @@ impl Directive {
     }
 }
 
+impl fmt::Display for Directive {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Align(value) => write!(f, ".align\t{}", value),
+            Self::Globl(label) => write!(f, ".globl\t{}", label),
+            Self::Type(symbol, symbol_type) => {
+                write!(f, ".type\t{}, {}", symbol, symbol_type)
+            }
+            Self::Section(section_type) => write!(f, ".section\t{}", section_type),
+            Self::Byte(value) => write!(f, ".byte\t{:#x?}", value),
+            Self::Half(value) => write!(f, ".half\t{:#x?}", value),
+            Self::Word(value) => write!(f, ".word\t{:#x?}", value),
+            Self::Quad(value) => write!(f, ".quad\t{:#x?}", value),
+            Self::Zero(bytes) => write!(f, ".zero\t{:#x?}", bytes),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SectionType {
     Text,
@@ -123,10 +143,38 @@ pub enum SectionType {
     Bss,
 }
 
+impl fmt::Display for SectionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Text => ".text",
+                Self::Data => ".data",
+                Self::Rodata => ".rodata",
+                Self::Bss => ".bss",
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SymbolType {
     Function,
     Object,
+}
+
+impl fmt::Display for SymbolType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Function => "@function",
+                Self::Object => "@object",
+            }
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -173,6 +221,66 @@ pub enum Instruction {
         imm: Immediate,
     },
     Pseudo(Pseudo),
+}
+
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::RType {
+                instr,
+                rd,
+                rs1,
+                rs2,
+            } => {
+                let rounding_mode = if let RType::FcvtFloatToInt { .. } = instr {
+                    ",rtz"
+                } else {
+                    ""
+                }
+                .to_string();
+
+                write!(
+                    f,
+                    "{}\t{},{}{}{}",
+                    instr,
+                    rd,
+                    rs1,
+                    if let Some(rs2) = rs2 {
+                        format!(",{}", rs2)
+                    } else {
+                        "".to_string()
+                    },
+                    rounding_mode
+                )
+            }
+            Self::IType {
+                instr,
+                rd,
+                rs1,
+                imm,
+            } => {
+                if let IType::Load { .. } = instr {
+                    write!(f, "{}\t{},{}({})", instr, rd, imm, rs1)
+                } else {
+                    write!(f, "{}\t{},{},{}", instr, rd, rs1, imm,)
+                }
+            }
+            Self::SType {
+                instr,
+                rs1,
+                rs2,
+                imm,
+            } => write!(f, "{}\t{},{}({})", instr, rs2, imm, rs1),
+            Self::BType {
+                instr,
+                rs1,
+                rs2,
+                imm,
+            } => write!(f, "{}\t{},{}, {}", instr, rs1, rs2, imm.0,),
+            Self::UType { instr, rd, imm } => write!(f, "{}\t{}, {}", instr, rd, imm,),
+            Self::Pseudo(pseudo) => write!(f, "{}", pseudo),
+        }
+    }
 }
 
 /// If the enum variant contains `bool`,
@@ -405,6 +513,114 @@ impl RType {
     }
 }
 
+impl fmt::Display for RType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Add(data_size) => write!(f, "add{}", data_size.word().write_string()),
+            Self::Sub(data_size) => write!(f, "sub{}", data_size.word().write_string()),
+            Self::Sll(data_size) => write!(f, "sll{}", data_size.word().write_string()),
+            Self::Srl(data_size) => write!(f, "srl{}", data_size.word().write_string()),
+            Self::Sra(data_size) => write!(f, "sra{}", data_size.word().write_string()),
+            Self::Mul(data_size) => write!(f, "mul{}", data_size.word().write_string()),
+            Self::Div {
+                data_size,
+                is_signed,
+            } => write!(
+                f,
+                "div{}{}",
+                if *is_signed { "" } else { "u" },
+                data_size.word().write_string()
+            ),
+            Self::Rem {
+                data_size,
+                is_signed,
+            } => write!(
+                f,
+                "rem{}{}",
+                if *is_signed { "" } else { "u" },
+                data_size.word().write_string()
+            ),
+            Self::Slt { is_signed } => write!(f, "slt{}", if *is_signed { "" } else { "u" }),
+            Self::Xor => write!(f, "xor"),
+            Self::Or => write!(f, "or"),
+            Self::And => write!(f, "and"),
+            Self::Fadd(data_size) => write!(f, "fadd.{}", data_size),
+            Self::Fsub(data_size) => write!(f, "fsub.{}", data_size),
+            Self::Fmul(data_size) => write!(f, "fmul.{}", data_size),
+            Self::Fdiv(data_size) => write!(f, "fdiv.{}", data_size),
+            Self::Feq(data_size) => write!(f, "feq.{}", data_size),
+            Self::Flt(data_size) => write!(f, "flt.{}", data_size),
+            Self::FmvFloatToInt { float_data_size } => {
+                assert!(float_data_size.is_floating_point());
+                write!(
+                    f,
+                    "fmv.x.{}",
+                    if *float_data_size == DataSize::SinglePrecision {
+                        "w"
+                    } else {
+                        "d"
+                    }
+                )
+            }
+            Self::FmvIntToFloat { float_data_size } => {
+                assert!(float_data_size.is_floating_point());
+                write!(
+                    f,
+                    "fmv.{}.x",
+                    if *float_data_size == DataSize::SinglePrecision {
+                        "w"
+                    } else {
+                        "d"
+                    }
+                )
+            }
+            Self::FcvtFloatToInt {
+                float_data_size,
+                int_data_size,
+                is_signed,
+            } => {
+                assert!(float_data_size.is_floating_point());
+                assert!(matches!(int_data_size, DataSize::Word | DataSize::Double));
+                write!(
+                    f,
+                    "fcvt.{}{}.{}",
+                    if matches!(int_data_size, DataSize::Word) {
+                        "w"
+                    } else {
+                        "l"
+                    },
+                    if *is_signed { "" } else { "u" },
+                    float_data_size
+                )
+            }
+            Self::FcvtIntToFloat {
+                int_data_size,
+                float_data_size,
+                is_signed,
+            } => {
+                assert!(float_data_size.is_floating_point());
+                assert!(matches!(int_data_size, DataSize::Word | DataSize::Double));
+                write!(
+                    f,
+                    "fcvt.{}.{}{}",
+                    float_data_size,
+                    if matches!(int_data_size, DataSize::Word) {
+                        "w"
+                    } else {
+                        "l"
+                    },
+                    if *is_signed { "" } else { "u" }
+                )
+            }
+            Self::FcvtFloatToFloat { from, to } => {
+                assert!(from.is_floating_point());
+                assert!(to.is_floating_point());
+                write!(f, "fcvt.{}.{}", to, from)
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IType {
     Load {
@@ -481,6 +697,39 @@ impl IType {
     }
 }
 
+impl fmt::Display for IType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Load {
+                data_size,
+                is_signed,
+            } => {
+                if data_size.is_integer() {
+                    write!(f, "l{}{}", data_size, if *is_signed { "" } else { "u" })
+                } else {
+                    write!(
+                        f,
+                        "fl{}",
+                        if *data_size == DataSize::SinglePrecision {
+                            "w"
+                        } else {
+                            "d"
+                        }
+                    )
+                }
+            }
+            Self::Addi(data_size) => write!(f, "addi{}", data_size.word().write_string()),
+            Self::Xori => write!(f, "xori"),
+            Self::Ori => write!(f, "ori"),
+            Self::Andi => write!(f, "andi"),
+            Self::Slli(data_size) => write!(f, "slli{}", data_size.word().write_string()),
+            Self::Srli(data_size) => write!(f, "srli{}", data_size.word().write_string()),
+            Self::Srai(data_size) => write!(f, "srai{}", data_size.word().write_string()),
+            Self::Slti { is_signed } => write!(f, "slti{}", if *is_signed { "" } else { "u" }),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SType {
     Store(DataSize),
@@ -497,6 +746,28 @@ impl SType {
     }
 }
 
+impl fmt::Display for SType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Store(data_size) => {
+                if data_size.is_integer() {
+                    write!(f, "s{}", data_size)
+                } else {
+                    write!(
+                        f,
+                        "fs{}",
+                        if *data_size == DataSize::SinglePrecision {
+                            "w"
+                        } else {
+                            "d"
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BType {
     Beq,
@@ -505,9 +776,32 @@ pub enum BType {
     Bge { is_signed: bool },
 }
 
+impl fmt::Display for BType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Beq => "beq".to_string(),
+                Self::Bne => "bne".to_string(),
+                Self::Blt { is_signed } => format!("blt{}", if *is_signed { "" } else { "u" }),
+                Self::Bge { is_signed } => format!("bge{}", if *is_signed { "" } else { "u" }),
+            }
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UType {
     Lui,
+}
+
+impl fmt::Display for UType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Lui => write!(f, "lui"),
+        }
+    }
 }
 
 /// The assembler implements a number of convenience psuedo-instructions that are formed from
@@ -583,6 +877,31 @@ impl Pseudo {
     }
 }
 
+impl fmt::Display for Pseudo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::La { rd, symbol } => write!(f, "la\t{},{}", rd, symbol),
+            Self::Li { rd, imm } => write!(f, "li\t{},{}", rd, *imm as i64),
+            Self::Mv { rd, rs } => write!(f, "mv\t{},{}", rd, rs),
+            Self::Fmv { data_size, rd, rs } => write!(f, "fmv.{}\t{},{}", data_size, rd, rs),
+            Self::Neg { data_size, rd, rs } => {
+                write!(f, "neg{}\t{},{}", data_size.word().write_string(), rd, rs)
+            }
+            Self::SextW { rs, rd } => {
+                write!(f, "sext.w\t{},{}", rd, rs)
+            }
+            Self::Seqz { rd, rs } => write!(f, "seqz\t{},{}", rd, rs),
+            Self::Snez { rd, rs } => write!(f, "snez\t{},{}", rd, rs),
+            Self::Fneg { data_size, rd, rs } => write!(f, "fneg.{}\t{},{}", data_size, rd, rs),
+            Self::J { offset } => write!(f, "j\t{}", offset),
+            Self::Jr { rs } => write!(f, "jr\t{}", rs),
+            Self::Jalr { rs } => write!(f, "jalr\t{}", rs),
+            Self::Ret => write!(f, "ret"),
+            Self::Call { offset } => write!(f, "call\t{}", offset),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Immediate {
     // TODO: consider architecture dependency (current: 64-bit architecture)
@@ -600,6 +919,21 @@ impl Immediate {
     }
 }
 
+impl fmt::Display for Immediate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Value(value) => format!("{}", *value as i64),
+                Self::Relocation { relocation, symbol } => {
+                    format!("{}({})", relocation, symbol)
+                }
+            }
+        )
+    }
+}
+
 /// The relocation function creates synthesize operand values that are resolved
 /// at program link time and are used as immediate parameters to specific instructions.
 ///
@@ -612,6 +946,19 @@ pub enum RelocationFunction {
     Lo12,
 }
 
+impl fmt::Display for RelocationFunction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Hi20 => "%hi",
+                Self::Lo12 => "%lo",
+            }
+        )
+    }
+}
+
 /// `Label` is used as branch, unconditional jump targets and symbol offsets.
 ///
 /// For more details: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#labels>
@@ -622,6 +969,12 @@ impl Label {
     pub fn new(name: &str, block_id: ir::BlockId) -> Self {
         let id = block_id.0;
         Self(format!(".{}_L{}", name, id))
+    }
+}
+
+impl fmt::Display for Label {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -681,6 +1034,23 @@ impl DataSize {
         } else {
             None
         }
+    }
+}
+
+impl fmt::Display for DataSize {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Byte => "b",
+                Self::Half => "h",
+                Self::Word => "w",
+                Self::Double => "d",
+                Self::SinglePrecision => "s",
+                Self::DoublePrecision => "d",
+            }
+        )
     }
 }
 
@@ -789,8 +1159,37 @@ impl Register {
     }
 }
 
+impl fmt::Display for Register {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let register = match self {
+            Self::Zero => "zero".to_string(),
+            Self::Ra => "ra".to_string(),
+            Self::Sp => "sp".to_string(),
+            Self::Gp => "gp".to_string(),
+            Self::Tp => "tp".to_string(),
+            Self::Temp(register_type, id) => format!("{}t{}", register_type, id),
+            Self::Saved(register_type, id) => format!("{}s{}", register_type, id),
+            Self::Arg(register_type, id) => format!("{}a{}", register_type, id),
+        };
+        write!(f, "{}", register)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum RegisterType {
     Integer,
     FloatingPoint,
+}
+
+impl fmt::Display for RegisterType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::FloatingPoint => "f",
+                Self::Integer => "",
+            },
+        )
+    }
 }
