@@ -29,13 +29,13 @@ required-features = ["build-bin"]
 build-bin = ["clap"]
 
 [dependencies]
-clap = { version = "3.0.10", features = ["derive"], optional = true }
+clap = { version = "3.2.14", features = ["derive"], optional = true }
 thiserror = "1.0.30"
 lang-c = "0.11.0"
 itertools = "0.10.3"
 tempfile = "3.3.0"
-ordered-float = "2.10.0"
+ordered-float = "3.0.0"
 hexf-parse = "0.2.1"
 wait-timeout = "0.2.0"
 peg = "0.8.0"
-rand = "0.8.4"
+rand = "0.8.5"
