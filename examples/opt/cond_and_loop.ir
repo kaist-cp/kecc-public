@@ -66,14 +66,13 @@ block b14:
 
 block b15:
   %b15:i0:i32 = add %b8:p0:i32 2:i32
-  j b17(%b15:i0:i32, %b15:i0:i32)
+  j b17(%b15:i0:i32)
 
 block b16:
   %b16:i0:i32 = add %b8:p0:i32 1:i32
-  j b17(%b16:i0:i32, %b16:i0:i32)
+  j b17(%b16:i0:i32)
 
 block b17:
   %b17:p0:i32:i
-  %b17:p1:i32:t2
   j b8(%b17:p0:i32, %b14:p0:i32)
 }
