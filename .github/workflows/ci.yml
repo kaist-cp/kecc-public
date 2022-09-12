@@ -14,7 +14,7 @@ defaults:
 jobs:
   ci:
     name: ci
-    runs-on: [self-hosted, ubuntu-20.04]
+    runs-on: [self-hosted, ubuntu-22.04]
     steps:
       - uses: actions/checkout@v2
       - name: Install Rust
