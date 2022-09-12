@@ -13,7 +13,7 @@ use crate::ir::*;
 use crate::some_or;
 
 /// TODO(document)
-#[derive(Debug, PartialEq, Error)]
+#[derive(Debug, PartialEq, Eq, Error)]
 pub enum DtypeError {
     /// For uncommon error
     #[error("{message}")]

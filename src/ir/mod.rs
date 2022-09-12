@@ -138,7 +138,7 @@ impl HasDtype for Declaration {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionSignature {
     pub ret: Dtype,
     pub params: Vec<Dtype>,
@@ -162,7 +162,7 @@ impl HasDtype for FunctionSignature {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionDefinition {
     /// Memory allocations for local variables.  The allocation is performed at the beginning of a
     /// function invocation.
@@ -184,14 +184,14 @@ impl fmt::Display for BlockId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Block {
     pub phinodes: Vec<Named<Dtype>>,
     pub instructions: Vec<Named<Instruction>>,
     pub exit: BlockExit,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(clippy::large_enum_variant)]
 pub enum Instruction {
     Nop,
@@ -349,7 +349,7 @@ impl fmt::Display for Instruction {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BlockExit {
     Jump {
         arg: JumpArg,
@@ -431,7 +431,7 @@ impl fmt::Display for BlockExit {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JumpArg {
     pub bid: BlockId,
     pub args: Vec<Operand>,

@@ -7,7 +7,7 @@ use crate::*;
 #[derive(Default, Debug)]
 pub struct Irgen {}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct IrgenError {}
 
 impl fmt::Display for IrgenError {

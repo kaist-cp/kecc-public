@@ -295,7 +295,7 @@ impl Value {
     }
 }
 
-#[derive(Debug, PartialEq, Error)]
+#[derive(Debug, PartialEq, Eq, Error)]
 pub enum InterpreterError {
     #[error("current block is unreachable")]
     Unreachable,
@@ -313,7 +313,7 @@ pub enum InterpreterError {
     },
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Pc {
     pub bid: BlockId,
     pub iid: usize,
