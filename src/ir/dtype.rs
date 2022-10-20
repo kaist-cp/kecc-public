@@ -1117,6 +1117,7 @@ impl Dtype {
                     assert!(kr_func_decl.is_empty());
                     Self::function(self, Vec::new())
                 }
+                ast::DerivedDeclarator::Block(_) => panic!(),
             };
         }
 

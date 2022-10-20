@@ -230,6 +230,7 @@ impl AssertSupported for DerivedDeclarator {
             Self::Function(func_decl) => func_decl.assert_supported(),
             // Support when K&R function has no parameter
             Self::KRFunction(kr_func_decl) => assert!(kr_func_decl.is_empty()),
+            Self::Block(_) => panic!("DerivedDeclarator::Block"),
         }
     }
 }
@@ -488,6 +489,7 @@ impl AssertSupported for Label {
         match self {
             Self::Identifier(_) => panic!("Label::Identifier"),
             Self::Case(_) => (),
+            Self::CaseRange(_) => panic!("Label::CaseRange"),
             Self::Default => (),
         }
     }
