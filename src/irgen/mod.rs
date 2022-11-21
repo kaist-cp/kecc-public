@@ -4,10 +4,10 @@ use lang_c::ast::*;
 
 use crate::*;
 
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Irgen {}
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug)]
 pub struct IrgenError {}
 
 impl fmt::Display for IrgenError {

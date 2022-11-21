@@ -74,7 +74,7 @@ peg::parser! {
         rule named_decl() -> Named<Declaration> =
             "var" __ dtype:dtype() __ var:global_variable() _ "=" _ initializer:initializer() {
                 Named::new(Some(var), Declaration::Variable {
-                    dtype: dtype,
+                    dtype,
                     initializer,
                 })
             }
@@ -218,7 +218,7 @@ peg::parser! {
                 // For this reason, we need to check the dtype of the result to confirm the dtype
                 // of `GetElementPtr` instruction when parsing IR.
                 let instruction = if let Instruction::GetElementPtr { ptr, offset, .. } = instruction {
-                    Instruction::GetElementPtr { ptr, offset, dtype: Box::new(dtype) }
+                    Instruction::GetElementPtr { ptr, offset, dtype }
                 } else {
                     instruction
                 };
@@ -317,7 +317,7 @@ peg::parser! {
                 Instruction::GetElementPtr{
                     ptr,
                     offset,
-                    dtype: Box::new(Dtype::unit()), // TODO
+                    dtype: Dtype::unit(), // TODO
                 }
             }
         /
@@ -375,11 +375,11 @@ peg::parser! {
             }
         /
             "br" __ condition:operand() _ "," _ arg_then:jump_arg() _ "," _ arg_else:jump_arg() {
-                BlockExit::ConditionalJump { condition, arg_then: Box::new(arg_then), arg_else: Box::new(arg_else) }
+                BlockExit::ConditionalJump { condition, arg_then, arg_else }
             }
         /
             "switch" __ value:operand() __ "default" __ default:jump_arg() _ "[" _ cases:(switch_case() ** __) _ "]" {
-                BlockExit::Switch { value, default: Box::new(default), cases }
+                BlockExit::Switch { value, default, cases }
             }
         /
             "ret" __ value:operand() {
@@ -663,12 +663,12 @@ peg::parser! {
 
 #[derive(Debug)]
 pub enum Error {
-    IoError(std::io::Error),
-    ParseError(peg::error::ParseError<peg::str::LineCol>),
-    ResolveError,
+    Io(std::io::Error),
+    Parse(peg::error::ParseError<peg::str::LineCol>),
+    Resolve,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Parse {}
 
 impl<P: AsRef<Path>> Translate<P> for Parse {
@@ -676,8 +676,8 @@ impl<P: AsRef<Path>> Translate<P> for Parse {
     type Error = Error;
 
     fn translate(&mut self, source: &P) -> Result<Self::Target, Self::Error> {
-        let ir = fs::read_to_string(source).map_err(Error::IoError)?;
-        let ir = ir_parse::translation_unit(&ir).map_err(Error::ParseError)?;
+        let ir = fs::read_to_string(source).map_err(Error::Io)?;
+        let ir = ir_parse::translation_unit(&ir).map_err(Error::Parse)?;
         Ok(ir)
     }
 }
@@ -688,7 +688,8 @@ fn resolve_structs(struct_type: Dtype, structs: &mut HashMap<String, Option<Dtyp
         .get_struct_name()
         .expect("`struct_type` must be struct type")
         .as_ref()
-        .expect("`struct_type` must have a name");
+        .expect("`struct_type` must have a name")
+        .clone();
     let fields = struct_type
         .get_struct_fields()
         .expect("`struct_type` must be struct type")
@@ -716,10 +717,9 @@ fn resolve_structs(struct_type: Dtype, structs: &mut HashMap<String, Option<Dtyp
     }
 
     let filled_struct = struct_type
-        .clone()
         .fill_size_align_offsets_of_struct(structs)
         .expect("`struct_type` must be struct type");
 
-    let result = structs.insert(name.clone(), Some(filled_struct));
+    let result = structs.insert(name, Some(filled_struct));
     assert!(result.is_some());
 }

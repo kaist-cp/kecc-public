@@ -59,9 +59,11 @@ RUST_MIN_STACK=33554432 cargo nextest run test_examples_end_to_end    # run irge
 
 ## Fuzzing
 
-We encourage you to do homework using the test-driven development approach (TDD). You randomly
-generate test input, and if it fails, then reduce it as much as possible and manually inspect the
-reduced test input. For example:
+We encourage you to do homework using the test-driven development (TDD)approach. You will
+randomly generate a test input, and if it fails,
+reduce it as much as possible and
+manually inspect the reduced test input.
+For example:
 
 ```sh
 # Randomly generates test inputs and tests them
@@ -75,8 +77,7 @@ cat tests/test_reduced.c
 ```
 
 `<fuzz-option>` can be `--print` or `--irgen`. It shall be the one used in [Run](#run).
-
-For more information on usage, please refer to the [Fuzzer User's Manual](tests/README.md).
+For more information, please refer to the [Fuzzer User's Manual](tests/README.md).
 
 ### Install
 
@@ -95,18 +96,18 @@ python3 tests/fuzz.py --help        # print options
 python3 tests/fuzz.py --print -n10  # test C AST printer for 10 times
 ```
 
-We use `csmith` to randomly generate C source codes. `csmith` will be automatically downloaded and
-built by the test script. For more information, we refer to the
-[Csmith](https://embed.cs.utah.edu/csmith/) homepage.
+We use `csmith` to randomly generate C source codes.
+`csmith` will be automatically downloaded and built by the test script.
+For more information, we refer to the [Csmith](https://embed.cs.utah.edu/csmith/) homepage.
 
 ### Reduce
 
-When the fuzzer finds a buggy input program for your compiler, it is highly likely that the input
-program is too big to manually inspect. We use `creduce` that reduces the buggy input program as
-much as possible.
+When the fuzzer finds a buggy input program for your compiler,
+the input program is likely too big to manually inspect.
+We use `creduce` that reduces the buggy input program as much as possible.
 
-Suppose `tests/test_polished.c` is the buggy input program. Then the following script reduces the
-program to `tests/test_reduced.c`:
+Suppose `tests/test_polished.c` is the buggy input program.
+Then the following script reduces the program to `tests/test_reduced.c`:
 
 ```sh
 python3 tests/fuzz.py <fuzz-option> --reduce
@@ -114,15 +115,17 @@ python3 tests/fuzz.py <fuzz-option> --reduce
 
 `<fuzz-option>` can be `--print` or `--irgen`. It shall be the one used in [Run](#run).
 
-### How it reduces test case?
+### How does it reduces the test case?
 
-The script performs unguided test-case reduction using `creduce`: given a buggy program, it randomly
-reduces the program; check if the reduced program still fails on the test, and if so, replaces the
-given program with the reduced one; repeat until you get a small enough buggy program. For more
-information, we refer to the [Creduce](https://embed.cs.utah.edu/creduce/) homepage.
+The script performs unguided test-case reduction using `creduce`: given a buggy program, it
+randomly reduces the program;
+check if the reduced program still fails on the test, and
+if so, replaces the given program with the reduced one;
+repeat until you get a small enough buggy program.
+For more information, we refer to the [Creduce](https://embed.cs.utah.edu/creduce/) homepage.
 
-**[NOTICE]** The fuzzer supports Ubuntu 20.04 only. It may work for other platforms, but if it
-doesn't, please run the fuzzer in Ubuntu 20.04.
+**[NOTICE]** The fuzzer only supports Ubuntu 20.04.
+It may work for other platforms, but if it doesn't, please run the fuzzer in Ubuntu 20.04.
 
 ## Running RISC-V Binaries
 
@@ -156,19 +159,22 @@ echo $?
 
 ### Debugging Assembly
 
-You can use QEMU's debugging facilities to investigate the generated assembly works correctly.
+You can use QEMU's debugging facilities to investigate whether the generated assembly works correctly.
 
-Open two terminal windows. In one, compile the assembly with `-ggdb` option and starts up gdb server with 8888 port. (If the port 8888 is already in use, then try with different port like 8889, 8890, ...)
+Open two terminal windows.
+In one, compile the assembly with `-ggdb` option and start up a gdb server with 8888 port.
+(If 8888 is already in use, then try with a different port like 8889, 8890, ...)
 
 ```sh
 # Link to an RISC-V executable with `-ggdb` option
 riscv64-linux-gnu-gcc -ggdb -static hello.S -o hello
 
 # Emulate the executable and wait for a debugging connection from GDB
-qemu-riscv64-static -g 8888 hello 
+qemu-riscv64-static -g 8888 hello
 ```
 
-In the second terminal, run `gdb-multiarch` and set some configurations. You should see something like this,
+In the second terminal, run `gdb-multiarch` and set some configurations.
+You should see something like this,
 
 ```
 $ gdb-multiarch
@@ -194,7 +200,7 @@ Remote debugging using localhost:8888
 warning: No executable has been specified and target does not support
 determining executable automatically.  Try using the "file" command.
 0x0000000000010348 in ?? ()
-(gdb) file hello 
+(gdb) file hello
 A program is being debugged already.
 Are you sure you want to change the file? (y or n) y
 Reading symbols from hello...
@@ -205,10 +211,11 @@ Dump of assembler code for function main:
    0x000000000001044c <+6>:     sd      s0,96(sp)
    0x000000000001044e <+8>:     addi    s0,sp,104
 End of assembler dump.
-(gdb) 
+(gdb)
 ```
 
-Now you can debug the assembly using the GDB commands. For more information on GDB commands, see:
+Now you can debug the assembly using the GDB commands.
+For more information on GDB commands, see:
 
 - Full guide: http://sourceware.org/gdb/current/onlinedocs/gdb/
 - Cheatsheet: https://cs.brown.edu/courses/cs033/docs/guides/gdb.pdf
@@ -224,4 +231,5 @@ make run
 ## Submission
 
 - Submit the corresponding files to [gg.kaist.ac.kr](https://gg.kaist.ac.kr).
-- Run `./scripts/make-submissions.sh` to generate `hw2.zip` to `final.zip`, which you should submit for homework 2 to final project.
+- Run `./scripts/make-submissions.sh` to generate `irgen.zip` to `final.zip`,
+  which you should submit for homework 2 to the final project.

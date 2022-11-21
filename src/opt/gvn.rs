@@ -3,7 +3,7 @@ use crate::*;
 
 pub type Gvn = FunctionPass<GvnInner>;
 
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct GvnInner {}
 
 impl Optimize<ir::FunctionDefinition> for GvnInner {

@@ -6,9 +6,6 @@ use crate::write_base::*;
 use core::convert::TryFrom;
 use core::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Todo {}
-
 /// TODO
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asm {
@@ -30,8 +27,8 @@ pub struct Section<T> {
     pub body: T,
 }
 
-/// An object file is made up of multiple sections, with each section corresponding to
-/// distinct types of executable code or data.
+/// An object file is made up of multiple sections, with each section corresponding to distinct
+/// types of executable code or data.
 ///
 /// For more details: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#sections>
 impl<T> Section<T> {
@@ -78,10 +75,10 @@ impl Block {
     }
 }
 
-/// The assembler implements a number of directives that control the assembly of instructions
-/// into an object file.
+/// The assembler implements several directives that control the assembly of instructions into an
+/// object file.
 ///
-/// For more details: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#assembler-directives>
+/// For more information: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#assembler-directives>
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Directive {
     /// .align integer
@@ -135,7 +132,7 @@ impl fmt::Display for Directive {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SectionType {
     Text,
     Data,
@@ -158,7 +155,7 @@ impl fmt::Display for SectionType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SymbolType {
     Function,
     Object,
@@ -286,7 +283,7 @@ impl fmt::Display for Instruction {
 /// If the enum variant contains `bool`,
 /// It means that different instructions exist
 /// depending on whether the operand is signed or not.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RType {
     Add(DataSize),
     Sub(DataSize),
@@ -621,7 +618,7 @@ impl fmt::Display for RType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IType {
     Load {
         data_size: DataSize,
@@ -730,7 +727,7 @@ impl fmt::Display for IType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SType {
     Store(DataSize),
 }
@@ -768,7 +765,7 @@ impl fmt::Display for SType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BType {
     Beq,
     Bne,
@@ -791,7 +788,7 @@ impl fmt::Display for BType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UType {
     Lui,
 }
@@ -804,11 +801,11 @@ impl fmt::Display for UType {
     }
 }
 
-/// The assembler implements a number of convenience psuedo-instructions that are formed from
-/// instructions in the base ISA, but have implicit arguments or in some case reversed arguments,
-/// that result in distinct semantics.
+/// The assembler implements several convenience psuedo-instructions that are formed from multiple
+/// instructions in the base ISA, but have implicit arguments or reversed arguments that result in
+/// distinct semantics.
 ///
-/// For more details:
+/// For more information:
 /// - <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#assembler-pseudo-instructions>
 /// - <https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf> (110p)
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -935,10 +932,10 @@ impl fmt::Display for Immediate {
 }
 
 /// The relocation function creates synthesize operand values that are resolved
-/// at program link time and are used as immediate parameters to specific instructions.
+/// at program link time and are used as immediate parameters for specific instructions.
 ///
 /// For more details: <https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md>
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RelocationFunction {
     /// %hi
     Hi20,
@@ -1054,10 +1051,10 @@ impl fmt::Display for DataSize {
     }
 }
 
-// TODO: Add calling convention information (caller/callee-save registers)
 /// ABI name for RISC-V integer and floating-point register
 ///
 /// For more details: <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf> (109p)
+// TODO: Add calling convention information (caller/callee-save registers)
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum Register {
     Zero,

@@ -205,9 +205,9 @@ fn test_examples_asmgen_small() {
         test_dir(Path::new(dir), OsStr::new("ir"), |path| {
             let file_name = &path
                 .file_name()
-                .expect("`path` must have file name")
+                .expect("`path` must have a file name")
                 .to_str()
-                .expect("must be transformed to `&str`");
+                .expect("must be transformable to `&str`");
             if !ASMGEN_SMALL_TEST_IGNORE_LIST.contains(file_name) {
                 test_asmgen(path)
             }
@@ -221,9 +221,9 @@ fn test_examples_asmgen_large() {
         test_dir(Path::new(dir), OsStr::new("ir"), |path| {
             let file_name = &path
                 .file_name()
-                .expect("`path` must have file name")
+                .expect("`path` must have a file name")
                 .to_str()
-                .expect("must be transformed to `&str`");
+                .expect("must be transformable to `&str`");
             if ASMGEN_SMALL_TEST_IGNORE_LIST.contains(file_name) {
                 test_asmgen(path)
             }

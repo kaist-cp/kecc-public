@@ -212,8 +212,8 @@ fn compile_ir(
         assert_eq!(width, 32);
         assert!(is_signed);
 
-        // When obtain status from `gcc` executable process, status value is truncated to byte size.
-        // So, we also truncate result value to byte size before printing it.
+        // When obtaining status from `gcc` executable process, the status value is truncated to
+        // byte size. So, we also truncate the result value to byte size before printing it.
         println!("[result] {:?}", value as u8);
         return;
     }

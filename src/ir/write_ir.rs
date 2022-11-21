@@ -147,12 +147,12 @@ impl WriteLine for (&BlockId, &Block) {
                 } else {
                     "".into()
                 },
-                instr.write_string()
+                instr
             )?;
         }
 
         write_indent(indent, write)?;
-        writeln!(write, "{}", self.1.exit.write_string())?;
+        writeln!(write, "{}", self.1.exit)?;
 
         Ok(())
     }
@@ -166,7 +166,7 @@ impl WriteString for Instruction {
 
 impl WriteString for Operand {
     fn write_string(&self) -> String {
-        format!("{}:{}", self, self.dtype())
+        format!("{}", self)
     }
 }
 

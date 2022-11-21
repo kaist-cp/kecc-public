@@ -4,7 +4,6 @@ use std::collections::HashMap;
 
 use crate::ir::*;
 use crate::some_or;
-use crate::write_base::*;
 use crate::Translate;
 
 #[derive(Default, Debug)]
@@ -118,7 +117,7 @@ impl Visualizer {
             subgraphs.push(subgraph);
         }
 
-        let _ = self.function_first_instruction.insert(
+        let _unused = self.function_first_instruction.insert(
             name.to_string(),
             self.get_block_first_instruction(name, definition.bid_init),
         );
@@ -196,7 +195,7 @@ impl Visualizer {
             nodes.push(format!(
                 "{} [label=\"{}\"]",
                 self.translate_instruction_node(name, *bid, iid),
-                instruction.write_string()
+                instruction
             ));
         }
 
@@ -204,7 +203,7 @@ impl Visualizer {
         nodes.push(format!(
             "{} [label=\"{}\"]",
             self.translate_block_exit_node(name, *bid),
-            block.exit.write_string()
+            block.exit
         ));
 
         let edges = (0..block.instructions.len())
@@ -218,7 +217,7 @@ impl Visualizer {
         } else {
             self.translate_instruction_node(name, *bid, 0)
         };
-        let _ = self
+        let _unused = self
             .block_first_instruction
             .insert((name.to_string(), *bid), first_instruction);
 

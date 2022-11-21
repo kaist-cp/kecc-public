@@ -289,7 +289,7 @@ fn is_equiv_block_exit(lhs: &BlockExit, rhs: &BlockExit, map: &HashMap<BlockId, 
             if !is_equiv_operand(value, value_other, map) {
                 return false;
             }
-            if !is_equiv_arg(default.deref(), default_other.deref(), map) {
+            if !is_equiv_arg(default, default_other, map) {
                 return false;
             }
             if cases.len() != cases_other.len() {

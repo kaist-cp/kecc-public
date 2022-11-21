@@ -28,7 +28,7 @@ fn ast_initializer(number: i32) -> ast::Initializer {
     let expr = ast::Expression::Constant(Box::new(span::Node::new(
         ast::Constant::Integer(ast::Integer {
             base: ast::IntegerBase::Decimal,
-            number: Box::from(&number.to_string() as &str),
+            number: Box::from(number.to_string()),
             suffix: ast::IntegerSuffix {
                 size: ast::IntegerSize::Int,
                 unsigned: false,
@@ -125,7 +125,7 @@ pub fn test_irgen(path: &Path) {
 
     // Compile c file: If fails, test is vacuously success
     if !Command::new("clang")
-        .args(&[
+        .args([
             "-fsanitize=float-divide-by-zero",
             "-fsanitize=undefined",
             "-fno-sanitize-recover=all",
@@ -149,7 +149,7 @@ pub fn test_irgen(path: &Path) {
 
     let status = some_or!(
         child
-            .wait_timeout_ms(500)
+            .wait_timeout_ms(1000)
             .expect("failed to obtain exit status from child process"),
         {
             println!("timeout occurs");
@@ -177,15 +177,15 @@ pub fn test_irgen(path: &Path) {
     // Interpret resolved ir
     let args = Vec::new();
     let result = ir::interp(&ir, args).unwrap_or_else(|interp_error| panic!("{}", interp_error));
-    // We only allow main function whose return type is `int`
+    // We only allow a main function whose return type is `int`
     let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
     assert_eq!(width, 32);
     assert!(is_signed);
 
-    // When obtain status from `clang` executable process, value is truncated to byte size.
-    // For this reason, we make `fuzzer` generate the C source code which returns value
-    // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
-    // may be deleted. So, we truncate result value to byte size one more time here.
+    // When obtaining status from `clang` executable process, the status value is truncated to byte
+    // size. For this reason, we make `fuzzer` generate the C source code which returns values
+    // typecasted to `unsigned char`. However, during `creduce` to reduce the code, typecasting may
+    // be nullified. So, we truncate the result value to byte size one more time here.
     println!("clang: {}, kecc: {}", status as u8, value as u8);
     assert_eq!(status as u8, value as u8);
 }
@@ -199,7 +199,7 @@ pub fn test_irparse(path: &Path) {
         .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
 
     // Test parse
-    let _ = c::Parse::default()
+    let _unused = c::Parse::default()
         .translate(&path)
         .expect("failed to parse the given program");
 
@@ -226,7 +226,8 @@ pub fn test_irparse(path: &Path) {
         test_irparse_for_optimized_ir(ir1, &temp_dir.path().join("ir2.ir"), Mem2reg::default());
     let ir3 =
         test_irparse_for_optimized_ir(ir2, &temp_dir.path().join("ir3.ir"), Deadcode::default());
-    let _ = test_irparse_for_optimized_ir(ir3, &temp_dir.path().join("ir4.ir"), Gvn::default());
+    let _unused =
+        test_irparse_for_optimized_ir(ir3, &temp_dir.path().join("ir4.ir"), Gvn::default());
 
     temp_dir.close().expect("temp dir deletion failed");
 }
@@ -327,7 +328,7 @@ pub fn test_asmgen(path: &Path) {
 
     // Compile the assembly code
     if !Command::new("riscv64-linux-gnu-gcc")
-        .args(&["-static", &asm_path_str, "-o", &bin_path_str])
+        .args(["-static", &asm_path_str, "-o", &bin_path_str])
         .stderr(Stdio::null())
         .status()
         .unwrap()
@@ -338,14 +339,14 @@ pub fn test_asmgen(path: &Path) {
 
     // Emulate the executable
     let mut child = Command::new("qemu-riscv64-static")
-        .args(&[&bin_path_str])
+        .args([&bin_path_str])
         .stderr(Stdio::piped())
         .spawn()
         .expect("failed to execute the compiled executable");
 
     let status = some_or!(
         child
-            .wait_timeout_ms(500)
+            .wait_timeout_ms(1000)
             .expect("failed to obtain exit status from child process"),
         {
             println!("timeout occurs");
@@ -393,7 +394,7 @@ pub fn test_end_to_end(path: &Path) {
 
     // Compile c file: If fails, test is vacuously success
     if !Command::new("clang")
-        .args(&[
+        .args([
             "-fsanitize=float-divide-by-zero",
             "-fsanitize=undefined",
             "-fno-sanitize-recover=all",
@@ -422,7 +423,7 @@ pub fn test_end_to_end(path: &Path) {
 
     let status = some_or!(
         child
-            .wait_timeout_ms(500)
+            .wait_timeout_ms(1000)
             .expect("failed to obtain exit status from child process"),
         {
             println!("timeout occurs");
@@ -452,15 +453,15 @@ pub fn test_end_to_end(path: &Path) {
     let _ = O1::default().optimize(&mut ir);
     let args = Vec::new();
     let result = ir::interp(&ir, args).unwrap_or_else(|interp_error| panic!("{}", interp_error));
-    // We only allow main function whose return type is `int`
+    // We only allow a main function whose return type is `int`
     let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
     assert_eq!(width, 32);
     assert!(is_signed);
 
-    // When obtain status from `clang` executable process, value is truncated to byte size.
-    // For this reason, we make `fuzzer` generate the C source code which returns value
-    // typecasted to `unsigned char`. However, during `creduce` reduce the code, typecasting
-    // may be deleted. So, we truncate result value to byte size one more time here.
+    // When obtaining status from `clang` executable process, the status value is truncated to byte
+    // size. For this reason, we make `fuzzer` generate the C source code which returns values
+    // typecasted to `unsigned char`. However, during `creduce` to reduce the code, typecasting may
+    // be nullified. So, we truncate the result value to byte size one more time here.
     println!(
         "clang: {}, kecc interp: {}",
         clang_status as u8, value as u8
@@ -487,7 +488,7 @@ pub fn test_end_to_end(path: &Path) {
 
     // Compile the assembly code
     if !Command::new("riscv64-linux-gnu-gcc")
-        .args(&["-static", &asm_path_str, "-o", &bin_path_str])
+        .args(["-static", &asm_path_str, "-o", &bin_path_str])
         .stderr(Stdio::null())
         .status()
         .unwrap()
@@ -498,14 +499,14 @@ pub fn test_end_to_end(path: &Path) {
 
     // Emulate the executable
     let mut child = Command::new("qemu-riscv64-static")
-        .args(&[&bin_path_str])
+        .args([&bin_path_str])
         .stderr(Stdio::piped())
         .spawn()
         .expect("failed to execute the compiled executable");
 
     let status = some_or!(
         child
-            .wait_timeout_ms(500)
+            .wait_timeout_ms(1000)
             .expect("failed to obtain exit status from child process"),
         {
             println!("timeout occurs");

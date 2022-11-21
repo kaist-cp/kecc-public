@@ -16,7 +16,7 @@ pub enum Error {
 }
 
 /// TODO(document)
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Parse {}
 
 impl<P: AsRef<Path>> Translate<P> for Parse {

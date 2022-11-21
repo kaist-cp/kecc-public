@@ -3,7 +3,6 @@
 mod dtype;
 mod equiv;
 mod interp;
-#[allow(clippy::all)]
 mod parse;
 mod visualize;
 mod write_ir;
@@ -49,14 +48,14 @@ impl TryFrom<Dtype> for Declaration {
     ///
     /// # Example
     ///
-    /// If `int g = 0;` is declared, `dtype` is
-    /// `ir::Dtype::Int{ width:32, is_signed:true, is_const:false }`.
-    /// In this case, `ir::Declaration::Variable{ dtype, initializer: Some(Constant::I32(1)) }`
-    /// is generated.
+    /// If `int g = 0;` is declared, `dtype` is `ir::Dtype::Int{ width:32, is_signed:true,
+    /// is_const:false }`.
     ///
-    /// Conversely, if `int foo();` is declared, `dtype` is
-    /// `ir::Dtype::Function{ret: Scalar(Int), params: []}`.
-    /// Thus, in this case, `ir::Declaration::Function` is generated.
+    /// In this case, `ir::Declaration::Variable{ dtype, initializer:
+    /// Some(Constant::I32(1)) }` is generated.
+    ///
+    /// Conversely, if `int foo();` is declared, `dtype` is `ir::Dtype::Function{ret: Scalar(Int),
+    /// params: []}`. Thus, in this case, `ir::Declaration::Function` is generated.
     fn try_from(dtype: Dtype) -> Result<Self, Self::Error> {
         match &dtype {
             Dtype::Unit { .. } => Err(DtypeError::Misc {
@@ -192,7 +191,6 @@ pub struct Block {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(clippy::large_enum_variant)]
 pub enum Instruction {
     Nop,
     BinOp {
@@ -228,27 +226,30 @@ pub enum Instruction {
     GetElementPtr {
         ptr: Operand,
         offset: Operand,
-        dtype: Box<Dtype>,
+        dtype: Dtype,
     },
 }
 
 impl HasDtype for Instruction {
     fn dtype(&self) -> Dtype {
         match self {
-            Self::Nop => Dtype::unit(),
-            Self::BinOp { dtype, .. } => dtype.clone(),
-            Self::UnaryOp { dtype, .. } => dtype.clone(),
-            Self::Store { .. } => Dtype::unit(),
+            Self::Nop | Self::Store { .. } => Dtype::unit(),
+            Self::BinOp { dtype, .. }
+            | Self::UnaryOp { dtype, .. }
+            | Self::Call {
+                return_type: dtype, ..
+            }
+            | Self::TypeCast {
+                target_dtype: dtype,
+                ..
+            }
+            | Self::GetElementPtr { dtype, .. } => dtype.clone(),
             Self::Load { ptr } => ptr
                 .dtype()
                 .get_pointer_inner()
                 .expect("Load instruction must have pointer value as operand")
-                .deref()
                 .clone()
                 .set_const(false),
-            Self::Call { return_type, .. } => return_type.clone(),
-            Self::TypeCast { target_dtype, .. } => target_dtype.clone(),
-            Self::GetElementPtr { dtype, .. } => dtype.deref().clone(),
         }
     }
 }
@@ -307,43 +308,30 @@ impl fmt::Display for Instruction {
         match self {
             Instruction::Nop => write!(f, "nop"),
             Instruction::BinOp { op, lhs, rhs, .. } => {
-                write!(
-                    f,
-                    "{} {} {}",
-                    op.write_operation(),
-                    lhs.write_string(),
-                    rhs.write_string()
-                )
+                write!(f, "{} {} {}", op.write_operation(), lhs, rhs)
             }
             Instruction::UnaryOp { op, operand, .. } => {
-                write!(f, "{} {}", op.write_operation(), operand.write_string())
+                write!(f, "{} {}", op.write_operation(), operand)
             }
             Instruction::Store { ptr, value } => {
-                write!(f, "store {} {}", value.write_string(), ptr.write_string())
+                write!(f, "store {} {}", value, ptr)
             }
-            Instruction::Load { ptr } => write!(f, "load {}", ptr.write_string()),
+            Instruction::Load { ptr } => write!(f, "load {}", ptr),
             Instruction::Call { callee, args, .. } => {
                 write!(
                     f,
                     "call {}({})",
-                    callee.write_string(),
-                    args.iter().format_with(", ", |operand, f| f(&format_args!(
-                        "{}",
-                        operand.write_string()
-                    )))
+                    callee,
+                    args.iter()
+                        .format_with(", ", |operand, f| f(&format_args!("{}", operand)))
                 )
             }
             Instruction::TypeCast {
                 value,
                 target_dtype,
-            } => write!(f, "typecast {} to {}", value.write_string(), target_dtype),
+            } => write!(f, "typecast {} to {}", value, target_dtype),
             Instruction::GetElementPtr { ptr, offset, .. } => {
-                write!(
-                    f,
-                    "getelementptr {} offset {}",
-                    ptr.write_string(),
-                    offset.write_string()
-                )
+                write!(f, "getelementptr {} offset {}", ptr, offset)
             }
         }
     }
@@ -356,12 +344,12 @@ pub enum BlockExit {
     },
     ConditionalJump {
         condition: Operand,
-        arg_then: Box<JumpArg>,
-        arg_else: Box<JumpArg>,
+        arg_then: JumpArg,
+        arg_else: JumpArg,
     },
     Switch {
         value: Operand,
-        default: Box<JumpArg>,
+        default: JumpArg,
         cases: Vec<(Constant, JumpArg)>,
     },
     Return {
@@ -402,13 +390,7 @@ impl fmt::Display for BlockExit {
                 condition,
                 arg_then,
                 arg_else,
-            } => write!(
-                f,
-                "br {}, {}, {}",
-                condition.write_string(),
-                arg_then,
-                arg_else
-            ),
+            } => write!(f, "br {}, {}, {}", condition, arg_then, arg_else),
             BlockExit::Switch {
                 value,
                 default,
@@ -416,7 +398,7 @@ impl fmt::Display for BlockExit {
             } => write!(
                 f,
                 "switch {} default {} [\n{}\n  ]",
-                value.write_string(),
+                value,
                 default,
                 cases.iter().format_with("\n", |(v, b), f| f(&format_args!(
                     "    {}:{} {}",
@@ -425,7 +407,7 @@ impl fmt::Display for BlockExit {
                     b
                 )))
             ),
-            BlockExit::Return { value } => write!(f, "ret {}", value.write_string()),
+            BlockExit::Return { value } => write!(f, "ret {}", value),
             BlockExit::Unreachable => write!(f, "<unreachable>\t\t\t\t; error state"),
         }
     }
@@ -499,8 +481,8 @@ impl Operand {
 impl fmt::Display for Operand {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Constant(value) => write!(f, "{}", value),
-            Self::Register { rid, .. } => write!(f, "{}", rid),
+            Self::Constant(value) => write!(f, "{}:{}", value, value.dtype()),
+            Self::Register { rid, dtype } => write!(f, "{}:{}", rid, dtype),
         }
     }
 }
@@ -514,7 +496,7 @@ impl HasDtype for Operand {
     }
 }
 
-#[derive(Debug, Eq, Clone)]
+#[derive(Debug, Eq, Clone, Copy)]
 pub enum RegisterId {
     /// Registers holding pointers to local allocations.
     ///
@@ -747,11 +729,12 @@ impl TryFrom<&ast::Expression> for Constant {
             ast::Expression::UnaryOperator(unary) => {
                 let constant = Self::try_from(&unary.node.operand.node)?;
                 // When an IR is generated, there are cases where some expressions must be
-                // interpreted unconditionally as compile-time constant value. In this case,
-                // we need to translate also the expression applied `minus` unary operator
-                // to compile-time constant value directly.
-                // Let's say expression is `case -1: { .. }`,
-                // `-1` must be interpreted to compile-time constant value.
+                // interpreted unconditionally as a compile-time constant value. In this case, we
+                // need to also translate the expression applied `minus` unary operator to  a
+                // compile-time constant value directly.
+                //
+                // Let's say the expression is `case -1: { .. }`, `-1` must be interpreted to a
+                // compile-time constant value.
                 match &unary.node.operator.node {
                     ast::UnaryOperator::Minus => Ok(constant.minus()),
                     ast::UnaryOperator::Plus => Ok(constant),
@@ -1005,6 +988,14 @@ impl<T> Named<T> {
 
     pub fn name(&self) -> Option<&String> {
         self.name.as_ref()
+    }
+
+    pub fn destruct(self) -> (T, Option<String>) {
+        (self.inner, self.name)
+    }
+
+    pub fn into_inner(self) -> T {
+        self.inner
     }
 }
 

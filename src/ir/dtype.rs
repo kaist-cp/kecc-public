@@ -116,17 +116,15 @@ pub enum Dtype {
 }
 
 impl BaseDtype {
-    /// Apply `StorageClassSpecifier` to `BaseDtype`
+    /// Apply `StorageClassSpecifier` to `BaseDtype`.
     ///
-    /// let's say declaration is `typedef int i32_t;`, if `self` represents `int`
-    /// and `type_qualifier` represents `typedef`, `self` is transformed to
-    /// representing `typedef int` after function performs.
+    /// Let's say declaration is `typedef int i32_t;`, if `self` represents `int` and
+    /// `type_qualifier` represents `typedef`, `self` is transformed to representing `typedef int`.
     ///
     /// # Arguments
     ///
-    /// * `self` - Part that has been converted to 'BaseDtype' on the declaration
-    /// * `storage_class` - storage class requiring apply to 'self' immediately
-    ///
+    /// * `self` - Part that has been converted to 'BaseDtype' on the declaration.
+    /// * `storage_class` - storage class requiring to apply to 'self' immediately.
     #[inline]
     fn apply_storage_class(
         &mut self,
@@ -136,24 +134,23 @@ impl BaseDtype {
             ast::StorageClassSpecifier::Typedef => {
                 // duplicate `typedef` is allowed
                 self.is_typedef = true;
+                Ok(())
             }
-            _ => panic!("unsupported storage class"),
+            scs => Err(DtypeError::Misc {
+                message: format!("unsupported storage class specifier: {scs:#?}"),
+            }),
         }
-
-        Ok(())
     }
 
-    /// Apply `TypeSpecifier` to `BaseDtype`
+    /// Apply `TypeSpecifier` to `BaseDtype`.
     ///
-    /// let's say declaration is `const int a;`, if `self` represents `int`
-    /// and `type_specifier` represents `const`, `self` is transformed to
-    /// representing `const int` after function performs.
+    /// Let's say the declaration is `const int a;`, if `self` represents `int`  and
+    /// `type_specifier` represents `const`, `self` is transformed to representing `const int`.
     ///
     /// # Arguments
     ///
-    /// * `self` - Part that has been converted to 'BaseDtype' on the declaration
-    /// * `type_qualifier` - type qualifiers requiring apply to 'self' immediately
-    ///
+    /// * `self` - Part that has been converted to 'BaseDtype' on the declaration.
+    /// * `type_qualifier` - type qualifiers requiring to apply to 'self' immediately.
     #[inline]
     fn apply_type_specifier(
         &mut self,
@@ -206,17 +203,15 @@ impl BaseDtype {
         Ok(())
     }
 
-    /// Apply `Typequalifier` to `BaseDtype`
+    /// Apply `Typequalifier` to `BaseDtype`.
     ///
-    /// let's say declaration is `const int a;`, if `self` represents `int`
-    /// and `type_qualifier` represents `const`, `self` is transformed to
-    /// representing `const int` after function performs.
+    /// Let's say the declaration is `const int a;`, if `self` represents `int` and `type_qualifier`
+    /// represents `const`, `self` is transformed to representing `const int`.
     ///
     /// # Arguments
     ///
-    /// * `self` - Part that has been converted to 'BaseDtype' on the declaration
-    /// * `type_qualifier` - type qualifiers requiring apply to 'self' immediately
-    ///
+    /// * `self` - Part that has been converted to 'BaseDtype' on the declaration.
+    /// * `type_qualifier` - type qualifiers requiring to apply to 'self' immediately.
     #[inline]
     fn apply_type_qualifier(
         &mut self,
@@ -227,9 +222,12 @@ impl BaseDtype {
                 // duplicate `const` is allowed
                 self.is_const = true;
             }
-            _ => panic!("type qualifier is unsupported except `const`"),
+            tq => {
+                return Err(DtypeError::Misc {
+                    message: format!("unsupported typq qualifier: {tq:#?}"),
+                })
+            }
         }
-
         Ok(())
     }
 
@@ -244,7 +242,11 @@ impl BaseDtype {
             ast::SpecifierQualifier::TypeQualifier(type_qualifier) => {
                 self.apply_type_qualifier(&type_qualifier.node)?
             }
-            ast::SpecifierQualifier::Extension(_) => panic!("unsupported specifier qualifier"),
+            sq => {
+                return Err(DtypeError::Misc {
+                    message: format!("unsupported specifier qualifier: {sq:#?}"),
+                })
+            }
         }
 
         Ok(())
@@ -264,25 +266,27 @@ impl BaseDtype {
             ast::DeclarationSpecifier::TypeQualifier(type_qualifier) => {
                 self.apply_type_qualifier(&type_qualifier.node)?
             }
-            _ => panic!("is_unsupported"),
+            ds => {
+                return Err(DtypeError::Misc {
+                    message: format!("unsupported declaration qualifier: {ds:#?}"),
+                })
+            }
         }
 
         Ok(())
     }
 
-    /// Apply `PointerQualifier` to `BaseDtype`
+    /// Apply `PointerQualifier` to `BaseDtype`.
     ///
-    /// let's say pointer declarator is `* const` of `const int * const a;`.
-    /// If `self` represents nothing, and `pointer_qualifier` represents `const`
-    /// between first and second asterisk, `self` is transformed to
-    /// representing `const` after function performs. This information is used later
-    /// when generating `Dtype`.
+    /// let's say pointer declarator is `* const` of `const int * const a;`.  If `self` represents
+    /// nothing, and `pointer_qualifier` represents `const` between the first and second asterisk,
+    /// `self` is transformed to representing `const`. This information is used later  when
+    /// generating `Dtype`.
     ///
     /// # Arguments
     ///
-    /// * `self` - Part that has been converted to 'BaseDtype' on the pointer declarator
-    /// * `pointer_qualifier` - Pointer qualifiers requiring apply to 'BaseDtype' immediately
-    ///
+    /// * `self` - Part that has been converted to 'BaseDtype' on the pointer declarator.
+    /// * `pointer_qualifier` - Pointer qualifiers required to apply to 'BaseDtype' immediately.
     pub fn apply_pointer_qualifier(
         &mut self,
         pointer_qualifier: &ast::PointerQualifier,
@@ -291,8 +295,10 @@ impl BaseDtype {
             ast::PointerQualifier::TypeQualifier(type_qualifier) => {
                 self.apply_type_qualifier(&type_qualifier.node)?;
             }
-            ast::PointerQualifier::Extension(_) => {
-                panic!("ast::PointerQualifier::Extension is unsupported")
+            pq => {
+                return Err(DtypeError::Misc {
+                    message: format!("unsupported pointer qualifier: {pq:#?}"),
+                })
             }
         }
 
@@ -329,8 +335,8 @@ impl TryFrom<BaseDtype> for Dtype {
     ///
     /// # Example
     ///
-    /// For declaration is `const unsigned int * p`, `specifiers` is `const unsigned int`,
-    /// and the result is `Dtype::Int{ width: 4, is_signed: false, is_const: ture }`
+    /// For declaration is `const unsigned int * p`, `specifiers` is `const unsigned int`, and the
+    /// result is `Dtype::Int { width: 4, is_signed: false, is_const: true }`.
     fn try_from(spec: BaseDtype) -> Result<Self, DtypeError> {
         assert!(
             !(spec.scalar.is_none()
@@ -398,7 +404,7 @@ impl TryFrom<BaseDtype> for Dtype {
             return Ok(dtype);
         }
 
-        // Creates `dtype` from scalar.
+        // Creates `dtype` from the scalar.
         let mut dtype = if let Some(t) = spec.scalar {
             match t {
                 ast::TypeSpecifier::Void => Self::unit(),
@@ -420,7 +426,7 @@ impl TryFrom<BaseDtype> for Dtype {
                 ast::TypeSpecifier::Short => Self::SHORT,
                 ast::TypeSpecifier::Long => Self::LONG,
                 _ => panic!(
-                    "Dtype::try_from::<BaseDtype>: {:?} is not a size modifiers",
+                    "Dtype::try_from::<BaseDtype>: {:?} is not a size modifier",
                     spec.size_modifiers
                 ),
             },
@@ -470,14 +476,14 @@ impl TryFrom<BaseDtype> for Dtype {
 impl TryFrom<&ast::TypeName> for Dtype {
     type Error = DtypeError;
 
-    /// Derive a data type from typename.
+    /// Derive a data type from `type_name`.
     fn try_from(type_name: &ast::TypeName) -> Result<Self, Self::Error> {
         let mut spec = BaseDtype::default();
         BaseDtype::apply_specifier_qualifiers(&mut spec, &type_name.specifiers)?;
         let mut dtype = Self::try_from(spec)?;
 
         if let Some(declarator) = &type_name.declarator {
-            dtype = dtype.with_ast_declarator(&declarator.node)?.deref().clone();
+            dtype = dtype.with_ast_declarator(&declarator.node)?.into_inner();
         }
         Ok(dtype)
     }
@@ -486,19 +492,20 @@ impl TryFrom<&ast::TypeName> for Dtype {
 impl TryFrom<&ast::ParameterDeclaration> for Dtype {
     type Error = DtypeError;
 
-    /// Generate `Dtype` based on parameter declaration
+    /// Generate `Dtype` based on parameter declaration.
     fn try_from(parameter_decl: &ast::ParameterDeclaration) -> Result<Self, Self::Error> {
         let mut spec = BaseDtype::default();
         BaseDtype::apply_declaration_specifiers(&mut spec, &parameter_decl.specifiers)?;
         let mut dtype = Self::try_from(spec)?;
 
         if let Some(declarator) = &parameter_decl.declarator {
-            dtype = dtype.with_ast_declarator(&declarator.node)?.deref().clone();
+            dtype = dtype.with_ast_declarator(&declarator.node)?.into_inner();
 
-            // A function call with an array argument performs array-to-pointer conversion.
-            // For this reason, when `declarator` is from function parameter declaration
-            // and `base_dtype` is `Dtype::Array`, `base_dtype` is transformed to pointer type.
-            // https://www.eskimo.com/~scs/cclass/notes/sx10f.html
+            // A function call with an array argument performs array-to-pointer conversion. For this
+            // reason, when `declarator` is from function parameter declaration and `base_dtype` is
+            // `Dtype::Array`, `base_dtype` is transformed to pointer type.
+            //
+            // For more information: <https://www.eskimo.com/~scs/cclass/notes/sx10f.html>
             if let Some(inner) = dtype.get_array_inner() {
                 dtype = Self::pointer(inner.clone());
             }
@@ -540,7 +547,7 @@ impl Dtype {
     pub const SIZE_OF_DOUBLE: usize = 8;
 
     /// TODO(document)
-    // signed option cannot be applied to boolean value
+    /// A boolean value cannot be signed.
     pub const BOOL: Self = Self::Int {
         width: 1,
         is_signed: false,
@@ -607,17 +614,16 @@ impl Dtype {
     /// # Examples
     ///
     /// Suppose the C declaration is `int *a[2][3]`. Then `a`'s `ir::Dtype` should be `[2 x [3 x
-    /// int*]]`.  But in the AST, it is parsed as `Array(3, Array(2, Pointer(int)))`, reversing the
-    /// order of `2` and `3`.  In the recursive translation of declaration into Dtype, we need to
-    /// insert `3` inside `[2 * int*]`.
+    /// int*]]`.  But in the AST, it is parsed as `Array(3, Array(2, Pointer(int)))`, reversing
+    /// the order of `2` and `3`.  In the recursive translation of a declaration into Dtype, we
+    /// need to insert `3` inside `[2 * int*]`.
     pub fn array(base_dtype: Dtype, size: usize) -> Self {
         match base_dtype {
             Self::Array {
                 inner,
                 size: old_size,
             } => {
-                let inner = inner.deref().clone();
-                let inner = Self::array(inner, size);
+                let inner = Self::array(*inner, size);
                 Self::Array {
                     inner: Box::new(inner),
                     size: old_size,
@@ -669,17 +675,17 @@ impl Dtype {
 
             let align_of = fields
                 .iter()
-                .map(|f| f.deref().size_align_of(structs))
+                .map(|f| f.size_align_of(structs))
                 .collect::<Result<Vec<_>, _>>()?
-                .iter()
-                .map(|(_, a)| *a)
+                .into_iter()
+                .map(|(_, a)| a)
                 .max()
                 .unwrap_or(0);
 
             let mut offsets = Vec::new();
             let mut offset = 0;
             for field in &fields {
-                let (size_of_dtype, align_of_dtype) = field.deref().size_align_of(structs)?;
+                let (size_of_dtype, align_of_dtype) = field.size_align_of(structs)?;
 
                 let pad = if (offset % align_of_dtype) != 0 {
                     align_of_dtype - (offset % align_of_dtype)
@@ -702,7 +708,9 @@ impl Dtype {
                 size_align_offsets: Some((size_of, align_of, offsets)),
             })
         } else {
-            panic!("struct type is needed")
+            Err(DtypeError::Misc {
+                message: "struct type is needed".to_string(),
+            })
         }
     }
 
@@ -801,9 +809,7 @@ impl Dtype {
     pub fn is_scalar(&self) -> bool {
         match self {
             Self::Unit { .. } => todo!(),
-            Self::Int { .. } => true,
-            Self::Float { .. } => true,
-            Self::Pointer { .. } => true,
+            Self::Int { .. } | Self::Float { .. } | Self::Pointer { .. } => true,
             _ => false,
         }
     }
@@ -812,20 +818,19 @@ impl Dtype {
     pub fn is_int_signed(&self) -> bool {
         match self {
             Self::Int { is_signed, .. } => *is_signed,
-            _ => panic!("only `Dtype::Int` can be judged whether it is sigend"),
+            _ => panic!("only `Dtype::Int` can be judged whether it is signed"),
         }
     }
 
     pub fn is_const(&self) -> bool {
         match self {
-            Self::Unit { is_const } => *is_const,
-            Self::Int { is_const, .. } => *is_const,
-            Self::Float { is_const, .. } => *is_const,
-            Self::Pointer { is_const, .. } => *is_const,
-            Self::Array { .. } => true,
-            Self::Struct { is_const, .. } => *is_const,
-            Self::Function { .. } => true,
-            Self::Typedef { is_const, .. } => *is_const,
+            Self::Unit { is_const }
+            | Self::Int { is_const, .. }
+            | Self::Float { is_const, .. }
+            | Self::Typedef { is_const, .. }
+            | Self::Pointer { is_const, .. }
+            | Self::Struct { is_const, .. } => *is_const,
+            Self::Function { .. } | Self::Array { .. } => true,
         }
     }
 
@@ -833,11 +838,11 @@ impl Dtype {
     /// Check if `Dtype` is constant. if it is constant, the variable of `Dtype` is not assignable.
     pub fn is_immutable(&self, structs: &HashMap<String, Option<Dtype>>) -> bool {
         match self {
-            Self::Unit { is_const } => *is_const,
-            Self::Int { is_const, .. } => *is_const,
-            Self::Float { is_const, .. } => *is_const,
-            Self::Pointer { is_const, .. } => *is_const,
-            Self::Array { .. } => true,
+            Self::Unit { is_const }
+            | Self::Int { is_const, .. }
+            | Self::Float { is_const, .. }
+            | Self::Pointer { is_const, .. } => *is_const,
+            Self::Array { .. } | Self::Function { .. } => true,
             Self::Struct { name, is_const, .. } => {
                 let name = name.as_ref().expect("`name` must be exist");
                 let struct_type = structs
@@ -856,7 +861,7 @@ impl Dtype {
                     || fields
                         .iter()
                         .any(|f| {
-                        // If an array is wrapped in a struct and the array's inner type is not 
+                        // If an array is wrapped in a struct and the array's inner type is not
                         // constant, it is assignable to another object of the same struct type.
                         if let Self::Array { inner, .. } = f.deref() {
                             inner.is_immutable_for_array_struct_field_inner(structs)
@@ -865,7 +870,6 @@ impl Dtype {
                         }
                     })
             }
-            Self::Function { .. } => true,
             Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
         }
     }
@@ -943,14 +947,16 @@ impl Dtype {
                     .expect("`struct_type` must have its definition");
                 let (size_of, align_of, _) = struct_type
                     .get_struct_size_align_offsets()
-                    .expect("`struct_type` must be stcut type")
+                    .expect("`struct_type` must be struct type")
                     .as_ref()
                     .unwrap();
 
                 Ok((*size_of, *align_of))
             }
             Self::Function { .. } => Ok((0, 1)),
-            Self::Typedef { .. } => panic!("typedef should be replaced by real dtype"),
+            Self::Typedef { .. } => Err(DtypeError::Misc {
+                message: "typedef should be replaced by real dtype".to_string(),
+            }),
         }
     }
 
@@ -978,10 +984,10 @@ impl Dtype {
                 .expect("`offsets` must be `Some`");
 
             assert_eq!(fields.len(), offsets.len());
-            for (field, offset) in izip!(fields, offsets) {
+            for (field, &offset) in izip!(fields, offsets) {
                 if let Some(name) = field.name() {
                     if name == field_name {
-                        return Some((*offset, field.deref().clone()));
+                        return Some((offset, field.deref().clone()));
                     }
                 } else {
                     let field_dtype = field.deref();
@@ -989,7 +995,7 @@ impl Dtype {
                         field_dtype.get_offset_struct_field(field_name, structs),
                         continue
                     );
-                    return Some((*offset + offset_inner, dtype));
+                    return Some((offset + offset_inner, dtype));
                 }
             }
 
@@ -1000,14 +1006,14 @@ impl Dtype {
     }
 
     #[must_use]
-    pub fn set_signed(self, is_signed: bool) -> Self {
+    pub fn set_signed(&self, is_signed: bool) -> Self {
         match self {
             Self::Int {
                 width, is_const, ..
             } => Self::Int {
-                width,
+                width: *width,
                 is_signed,
-                is_const,
+                is_const: *is_const,
             },
             _ => panic!("`signed` and `unsigned` only be applied to `Dtype::Int`"),
         }
@@ -1025,14 +1031,16 @@ impl Dtype {
         Ok((dtype, is_typedef))
     }
 
-    /// Derive a data type and its name from struct declaration
+    /// Derive a data type and its name from the struct declaration.
     pub fn try_from_ast_struct_declaration(
         declaration: &ast::StructDeclaration,
     ) -> Result<Vec<Named<Self>>, DtypeError> {
         let field_decl = if let ast::StructDeclaration::Field(field_decl) = declaration {
             &field_decl.node
         } else {
-            panic!("ast::StructDeclaration::StaticAssert is unsupported")
+            return Err(DtypeError::Misc {
+                message: "ast::StructDeclaration::StaticAssert is unsupported".to_string(),
+            });
         };
 
         let mut spec = BaseDtype::default();
@@ -1050,9 +1058,11 @@ impl Dtype {
             .collect::<Result<Vec<_>, _>>()?;
 
         if fields.is_empty() {
-            // If anonymous field is `Dtype::Struct`, structure type of this field
-            // can use this field's field as its field.
-            // For exampe, let's `struct A { struct { int f; }} t;`, `t.f` is valid.
+            // If an anonymous field is `Dtype::Struct`, the structure type of this field can use
+            // this field's field as its field.
+            //
+            // For example, let's `struct A { struct {
+            // int f; }} t;`, `t.f` is valid.
             if let Self::Struct { name, .. } = &dtype {
                 if name.is_none() {
                     // Note that `const` qualifier has no effect in this time.
@@ -1068,18 +1078,15 @@ impl Dtype {
         }
     }
 
-    /// Generate `Dtype` based on declarator and `self` which has scalar type.
+    /// Generate `Dtype` based on declarator and `self` which has a scalar type.
     ///
-    /// let's say declaration is `const int * const * const a;`.
-    /// In general `self` start with `const int` which has scalar type and
-    /// `declarator` represents `* const * const` with `ast::Declarator`
+    /// Let's say declaration is `const int * const * const a;`. In general `self` start with `const
+    /// int` which has a scalar type and `declarator` represents `* const * const` with
+    /// `ast::Declarator`.
     ///
     /// # Arguments
     ///
-    /// * `declarator` - Parts requiring conversion to 'Dtype' on the declaration
-    /// * `decl_spec`  - Containing information that should be referenced
-    ///                  when creating `Dtype` from `Declarator`.
-    ///
+    /// * `declarator` - Parts requiring conversion to 'Dtype' on the declaration.
     pub fn with_ast_declarator(
         mut self,
         declarator: &ast::Declarator,
@@ -1107,7 +1114,7 @@ impl Dtype {
 
                     // If function parameter is (void), remove it
                     if params.len() == 1 && params[0] == Dtype::unit() {
-                        let _ = params.pop();
+                        let _unused = params.pop();
                     }
 
                     Self::function(self, params)
@@ -1133,20 +1140,22 @@ impl Dtype {
         }
     }
 
-    /// Generates `Dtype` based on declarator and `self` which has scalar type.
+    /// Generates `Dtype` based on declarator and `self` which has a scalar type.
     ///
     /// Let's say the AST declaration is `int a[2][3]`; `self` represents `int [2]`; and
     /// `array_size` is `[3]`. Then this function should return `int [2][3]`.
     ///
     /// # Arguments
     ///
-    /// * `array_size` - the array size to add to the dtype `self`
-    ///
+    /// * `array_size` - the array size to add to `self`.
     pub fn with_ast_array_size(self, array_size: &ast::ArraySize) -> Result<Self, DtypeError> {
         let expr = if let ast::ArraySize::VariableExpression(expr) = array_size {
             &expr.node
         } else {
-            panic!("`ArraySize` is unsupported except `ArraySize::VariableExpression`")
+            return Err(DtypeError::Misc {
+                message: "`ArraySize` is unsupported except `ArraySize::VariableExpression`"
+                    .to_string(),
+            });
         };
 
         let constant = Constant::try_from(expr)
@@ -1165,22 +1174,18 @@ impl Dtype {
         Ok(Self::array(self, value as usize))
     }
 
-    pub fn resolve_typedefs(
-        self,
-        typedefs: &HashMap<String, Dtype>,
-        structs: &HashMap<String, Option<Dtype>>,
-    ) -> Result<Self, DtypeError> {
-        let dtype = match &self {
+    pub fn resolve_typedefs(self, typedefs: &HashMap<String, Dtype>) -> Result<Self, DtypeError> {
+        let dtype = match self {
             Self::Unit { .. } | Self::Int { .. } | Self::Float { .. } => self,
             Self::Pointer { inner, is_const } => {
-                let inner = inner.deref().clone().resolve_typedefs(typedefs, structs)?;
-                Self::pointer(inner).set_const(*is_const)
+                let inner = inner.resolve_typedefs(typedefs)?;
+                Self::pointer(inner).set_const(is_const)
             }
             Self::Array { inner, size } => {
-                let inner = inner.deref().clone().resolve_typedefs(typedefs, structs)?;
+                let inner = inner.resolve_typedefs(typedefs)?;
                 Self::Array {
                     inner: Box::new(inner),
-                    size: *size,
+                    size,
                 }
             }
             Self::Struct {
@@ -1189,40 +1194,39 @@ impl Dtype {
                 is_const,
                 ..
             } => {
-                if let Some(fields) = fields {
-                    let resolved_dtypes = fields
-                        .iter()
-                        .map(|f| f.deref().clone().resolve_typedefs(typedefs, structs))
-                        .collect::<Result<Vec<_>, _>>()?;
-
-                    assert_eq!(fields.len(), resolved_dtypes.len());
-                    let fields = izip!(fields, resolved_dtypes)
-                        .map(|(f, d)| Named::new(f.name().cloned(), d))
+                let (name, fields) = if let Some(fields) = fields {
+                    let fields = fields
+                        .into_iter()
+                        .map(|f| {
+                            let (d, name) = f.destruct();
+                            let d = d.resolve_typedefs(typedefs).unwrap();
+                            Named::new(name, d)
+                        })
                         .collect::<Vec<_>>();
-
-                    Self::structure(name.clone(), Some(fields)).set_const(*is_const)
+                    (name, Some(fields))
                 } else {
                     assert!(name.is_some());
-                    self
-                }
+                    (name, fields)
+                };
+                Self::structure(name, fields).set_const(is_const)
             }
             Self::Function { ret, params } => {
-                let ret = ret.deref().clone().resolve_typedefs(typedefs, structs)?;
+                let ret = ret.resolve_typedefs(typedefs)?;
                 let params = params
-                    .iter()
-                    .map(|p| p.clone().resolve_typedefs(typedefs, structs))
+                    .into_iter()
+                    .map(|p| p.resolve_typedefs(typedefs))
                     .collect::<Result<Vec<_>, _>>()?;
 
                 Self::function(ret, params)
             }
             Self::Typedef { name, is_const } => {
                 let dtype = typedefs
-                    .get(name)
+                    .get(&name)
                     .ok_or_else(|| DtypeError::Misc {
                         message: format!("unknown type name `{}`", name),
                     })?
                     .clone();
-                let is_const = dtype.is_const() || *is_const;
+                let is_const = dtype.is_const() || is_const;
 
                 dtype.set_const(is_const)
             }
@@ -1238,33 +1242,29 @@ impl Dtype {
         structs: &mut HashMap<String, Option<Dtype>>,
         tempid_counter: &mut usize,
     ) -> Result<Self, DtypeError> {
-        let dtype = match &self {
+        let dtype = match self {
             Self::Unit { .. } | Self::Int { .. } | Self::Float { .. } => self,
             Self::Pointer { inner, is_const } => {
-                let inner = inner.deref();
-
-                // the pointer type can have undeclared struct type as inner.
-                // For example, let's `struct A { struct B *p }`, even if `struct B` has not been
-                // declared before, it can be used as inner type of the pointer.
-                if let Self::Struct { name, fields, .. } = inner {
+                // Pointer types can have an undeclared struct type as inner.
+                //
+                // For example, consider `struct A { struct B *p }`, even if `struct B` has not
+                // been declared before, it can be used as the inner type of the pointer.
+                if let Self::Struct { name, fields, .. } = inner.deref() {
                     if fields.is_none() {
                         let name = name.as_ref().expect("`name` must be `Some`");
                         let _ = structs.entry(name.to_string()).or_insert(None);
-                        return Ok(self.clone());
+                        return Ok(Self::pointer(*inner).set_const(is_const));
                     }
                 }
 
-                let resolved_inner = inner.clone().resolve_structs(structs, tempid_counter)?;
-                Self::pointer(resolved_inner).set_const(*is_const)
+                let resolved_inner = inner.resolve_structs(structs, tempid_counter)?;
+                Self::pointer(resolved_inner).set_const(is_const)
             }
             Self::Array { inner, size } => {
-                let inner = inner
-                    .deref()
-                    .clone()
-                    .resolve_structs(structs, tempid_counter)?;
+                let inner = inner.resolve_structs(structs, tempid_counter)?;
                 Self::Array {
                     inner: Box::new(inner),
-                    size: *size,
+                    size,
                 }
             }
             Self::Struct {
@@ -1273,19 +1273,18 @@ impl Dtype {
                 is_const,
                 ..
             } => {
-                if let Some(fields) = fields {
-                    let resolved_dtypes = fields
-                        .iter()
-                        .map(|f| f.deref().clone().resolve_structs(structs, tempid_counter))
-                        .collect::<Result<Vec<_>, _>>()?;
-
-                    assert_eq!(fields.len(), resolved_dtypes.len());
-                    let fields = izip!(fields, resolved_dtypes)
-                        .map(|(f, d)| Named::new(f.name().cloned(), d))
+                let (name, fields) = if let Some(fields) = fields {
+                    let fields = fields
+                        .into_iter()
+                        .map(|f| {
+                            let (d, name) = f.destruct();
+                            let d = d.resolve_structs(structs, tempid_counter).unwrap();
+                            Named::new(name, d)
+                        })
                         .collect::<Vec<_>>();
 
                     let name = if let Some(name) = name {
-                        name.clone()
+                        name
                     } else {
                         let tempid = *tempid_counter;
                         *tempid_counter += 1;
@@ -1295,8 +1294,7 @@ impl Dtype {
                     let filled_struct =
                         resolved_struct.fill_size_align_offsets_of_struct(structs)?;
 
-                    let prev_dtype = structs.insert(name.clone(), Some(filled_struct));
-                    if let Some(prev_dtype) = prev_dtype {
+                    if let Some(prev_dtype) = structs.insert(name.clone(), Some(filled_struct)) {
                         if prev_dtype.is_some() {
                             return Err(DtypeError::Misc {
                                 message: format!("redefinition of {}", name),
@@ -1304,10 +1302,10 @@ impl Dtype {
                         }
                     }
 
-                    Self::structure(Some(name), None).set_const(*is_const)
+                    (name, None)
                 } else {
-                    let name = name.as_ref().expect("`name` must be exist");
-                    let struct_type = structs.get(name).ok_or_else(|| DtypeError::Misc {
+                    let name = name.expect("`name` must exist");
+                    let struct_type = structs.get(&name).ok_or_else(|| DtypeError::Misc {
                         message: format!("unknown struct name `{}`", name),
                     })?;
                     if struct_type.is_none() {
@@ -1316,17 +1314,15 @@ impl Dtype {
                         });
                     }
 
-                    self
-                }
+                    (name, fields)
+                };
+                Self::structure(Some(name), fields).set_const(is_const)
             }
             Self::Function { ret, params } => {
-                let ret = ret
-                    .deref()
-                    .clone()
-                    .resolve_structs(structs, tempid_counter)?;
+                let ret = ret.resolve_structs(structs, tempid_counter)?;
                 let params = params
-                    .iter()
-                    .map(|p| p.clone().resolve_structs(structs, tempid_counter))
+                    .into_iter()
+                    .map(|p| p.resolve_structs(structs, tempid_counter))
                     .collect::<Result<Vec<_>, _>>()?;
 
                 Self::function(ret, params)
@@ -1418,7 +1414,7 @@ fn check_no_duplicate_field(fields: &[Named<Dtype>], field_names: &mut HashSet<S
             let field_dtype = field.deref();
             let fields = field_dtype
                 .get_struct_fields()
-                .expect("`field_dtype` must be struct type")
+                .expect("`field_dtype` must be a struct type")
                 .as_ref()
                 .expect("struct type must have its definition");
             if !check_no_duplicate_field(fields, field_names) {

@@ -1,4 +1,4 @@
-/target
-/hw*.zip
-/final.zip
+target
+*.zip
+rustfmt.toml
 **/*.rs.bk

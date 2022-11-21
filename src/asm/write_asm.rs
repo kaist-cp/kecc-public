@@ -29,7 +29,7 @@ impl<T: WriteLine> WriteLine for Section<T> {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
         for directive in &self.header {
             write_indent(indent + INDENT, write)?;
-            writeln!(write, "{}", directive.write_string())?;
+            writeln!(write, "{}", directive)?;
         }
         self.body.write_line(indent, write)?;
 
@@ -52,7 +52,7 @@ impl WriteLine for Variable {
         writeln!(write, "{}:", self.label.0)?;
         for directive in &self.directives {
             write_indent(indent + INDENT, write)?;
-            writeln!(write, "{}", directive.write_string())?;
+            writeln!(write, "{}", directive)?;
         }
 
         Ok(())
@@ -67,7 +67,7 @@ impl WriteLine for Block {
 
         for instruction in &self.instructions {
             write_indent(indent + INDENT, write)?;
-            writeln!(write, "{}", instruction.write_string())?;
+            writeln!(write, "{}", instruction)?;
         }
 
         Ok(())

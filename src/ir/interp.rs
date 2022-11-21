@@ -142,14 +142,14 @@ impl Value {
     }
 
     #[inline]
-    pub fn get_int(self) -> Option<(u128, usize, bool)> {
+    pub fn get_int(&self) -> Option<(u128, usize, bool)> {
         if let Value::Int {
             value,
             width,
             is_signed,
         } = self
         {
-            Some((value, width, is_signed))
+            Some((*value, *width, *is_signed))
         } else {
             None
         }
@@ -221,6 +221,7 @@ impl Value {
         Ok(value)
     }
 
+    #[allow(clippy::result_unit_err)]
     pub fn try_from_initializer(
         initializer: &ast::Initializer,
         dtype: &Dtype,
@@ -348,20 +349,19 @@ impl RegisterMap {
     }
 
     fn write(&mut self, rid: RegisterId, value: Value) {
-        let _ = self.inner.insert(rid, value);
+        let _unused = self.inner.insert(rid, value);
     }
 }
 
 /// Bidirectional map between the name of a global variable and memory box id
 #[derive(Default, Debug, PartialEq, Clone)]
 struct GlobalMap {
-    /// Map name of a global variable to memory box id
+    /// Map the name of a global variable to the memory box id
     ///
-    /// Since IR treats global variable as `Constant::GlobalVariable`,
-    /// the interpreter should be able to generate pointer values by infer 'bid'
-    /// from the 'name' of the global variable.
+    /// Since IR treats global variables as `Constant::GlobalVariable`, the interpreter should be
+    /// able to generate pointer values by inferring `bid` from the `name` of the global variable.
     var_to_bid: HashMap<String, usize>,
-    /// Map memory box id to the name of a global variable
+    /// Map the memory box id to the name of a global variable
     ///
     /// When a function call occurs, the interpreter should be able to find `name` of the function
     /// from `bid` of the `callee` which is a function pointer.
@@ -481,11 +481,11 @@ mod calculator {
             ast::BinaryOperator::BitwiseXor => lhs ^ rhs,
             ast::BinaryOperator::BitwiseOr => lhs | rhs,
             ast::BinaryOperator::Equals => {
-                let result = if lhs == rhs { 1 } else { 0 };
+                let result = (lhs == rhs).into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::NotEquals => {
-                let result = if lhs != rhs { 1 } else { 0 };
+                let result = (lhs != rhs).into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::Less => {
@@ -494,7 +494,7 @@ mod calculator {
                 } else {
                     lhs < rhs
                 };
-                let result = if condition { 1 } else { 0 };
+                let result = condition.into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::Greater => {
@@ -503,7 +503,7 @@ mod calculator {
                 } else {
                     lhs > rhs
                 };
-                let result = if condition { 1 } else { 0 };
+                let result = condition.into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::LessOrEqual => {
@@ -512,7 +512,7 @@ mod calculator {
                 } else {
                     lhs <= rhs
                 };
-                let result = if condition { 1 } else { 0 };
+                let result = condition.into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::GreaterOrEqual => {
@@ -521,7 +521,7 @@ mod calculator {
                 } else {
                     lhs >= rhs
                 };
-                let result = if condition { 1 } else { 0 };
+                let result = condition.into();
                 return Ok(Value::int(result, 1, false));
             }
             _ => todo!(
@@ -566,30 +566,30 @@ mod calculator {
                 let order = lhs
                     .partial_cmp(&rhs)
                     .expect("`lhs` and `rhs` must be not NAN");
-                let result = if Ordering::Equal == order { 1 } else { 0 };
+                let result = (Ordering::Equal == order).into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::NotEquals => {
                 let order = lhs
                     .partial_cmp(&rhs)
                     .expect("`lhs` and `rhs` must be not NAN");
-                let result = if Ordering::Equal != order { 1 } else { 0 };
+                let result = (Ordering::Equal != order).into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::Less => {
-                let result = if lhs.lt(&rhs) { 1 } else { 0 };
+                let result = lhs.lt(&rhs).into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::Greater => {
-                let result = if lhs.gt(&rhs) { 1 } else { 0 };
+                let result = lhs.gt(&rhs).into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::LessOrEqual => {
-                let result = if lhs.le(&rhs) { 1 } else { 0 };
+                let result = lhs.le(&rhs).into();
                 return Ok(Value::int(result, 1, false));
             }
             ast::BinaryOperator::GreaterOrEqual => {
-                let result = if lhs.ge(&rhs) { 1 } else { 0 };
+                let result = lhs.ge(&rhs).into();
                 return Ok(Value::int(result, 1, false));
             }
             _ => todo!(
@@ -653,19 +653,11 @@ mod calculator {
                 },
             ) => match op {
                 ast::BinaryOperator::Equals => {
-                    let result = if bid == other_bid && offset == other_offset {
-                        1
-                    } else {
-                        0
-                    };
+                    let result = (bid == other_bid && offset == other_offset).into();
                     Ok(Value::int(result, 1, false))
                 }
                 ast::BinaryOperator::NotEquals => {
-                    let result = if !(bid == other_bid && offset == other_offset) {
-                        1
-                    } else {
-                        0
-                    };
+                    let result = (!(bid == other_bid && offset == other_offset)).into();
                     Ok(Value::int(result, 1, false))
                 }
                 _ => todo!(
@@ -708,7 +700,7 @@ mod calculator {
                     ast::UnaryOperator::Negate => {
                         // Check if it is boolean
                         assert!(width == 1);
-                        let result = if value == 0 { 1 } else { 0 };
+                        let result = (value == 0).into();
                         Ok(Value::int(result, width, is_signed))
                     }
                     _ => todo!(
@@ -786,7 +778,7 @@ mod calculator {
             }
             (Value::Int { value, .. }, Dtype::Pointer { inner, .. }) => {
                 if value == 0 {
-                    Ok(Value::pointer(None, 0, inner.deref().clone()))
+                    Ok(Value::pointer(None, 0, *inner))
                 } else {
                     panic!(
                         "calculate_typecast: not support case \
@@ -1074,7 +1066,7 @@ impl Byte {
                 izip!(fields, offsets).for_each(|(f, o)| {
                     let result = Self::value_to_bytes(f.deref(), structs);
                     let size_of_data = f.deref().dtype().size_align_of(structs).unwrap().0;
-                    let _ = values.splice(*o..(*o + size_of_data), result.iter().cloned());
+                    let _unused = values.splice(*o..(*o + size_of_data), result.into_iter());
                 });
 
                 values
@@ -1144,7 +1136,7 @@ impl Memory {
         let block = self.inner[bid].as_mut().unwrap();
 
         if 0 <= offset && end <= block.len() {
-            let _ = block.splice(offset as usize..end, bytes.iter().cloned());
+            let _unused = block.splice(offset as usize..end, bytes.into_iter());
             Ok(())
         } else {
             Err(())
@@ -1154,8 +1146,9 @@ impl Memory {
 
 #[derive(Debug, PartialEq)]
 struct State<'i> {
-    /// A data structure that maps each global variable to a pointer value
-    /// When function call occurs, `registers` can be initialized by `global_registers`
+    /// Maps each global variable to a pointer value.
+    ///
+    /// When a function call occurs, `registers` can be initialized by `global_registers`
     pub global_map: GlobalMap,
     pub stack_frame: StackFrame<'i>,
     pub stack: Vec<StackFrame<'i>>,
@@ -1330,7 +1323,7 @@ impl<'i> State<'i> {
         }
 
         args.iter()
-            .map(|a| self.interp_operand(a.clone()))
+            .map(|a| self.interp_operand(a))
             .collect::<Result<Vec<_>, _>>()
     }
 
@@ -1349,7 +1342,7 @@ impl<'i> State<'i> {
 
         arg.args
             .iter()
-            .map(|a| self.interp_operand(a.clone()).unwrap())
+            .map(|a| self.interp_operand(a).unwrap())
             .collect::<Vec<_>>()
             .into_iter()
             .enumerate()
@@ -1374,7 +1367,7 @@ impl<'i> State<'i> {
                 arg_then,
                 arg_else,
             } => {
-                let value = self.interp_operand(condition.clone())?;
+                let value = self.interp_operand(condition)?;
                 let (value, width, _) = value.get_int().expect("`condition` must be `Value::Int`");
                 // Check if it is boolean
                 assert!(width == 1);
@@ -1386,7 +1379,7 @@ impl<'i> State<'i> {
                 default,
                 cases,
             } => {
-                let value = self.interp_operand(value.clone())?;
+                let value = self.interp_operand(value)?;
 
                 // TODO: consider different integer `width` in the future
                 let arg = cases
@@ -1396,7 +1389,7 @@ impl<'i> State<'i> {
                     .unwrap_or_else(|| default);
                 self.interp_jump(arg)
             }
-            BlockExit::Return { value } => Ok(Some(self.interp_operand(value.clone())?)),
+            BlockExit::Return { value } => Ok(Some(self.interp_operand(value)?)),
             BlockExit::Unreachable => Err(InterpreterError::Unreachable),
         }
     }
@@ -1405,8 +1398,8 @@ impl<'i> State<'i> {
         let result = match instruction {
             Instruction::Nop => Value::unit(),
             Instruction::BinOp { op, lhs, rhs, .. } => {
-                let lhs = self.interp_operand(lhs.clone())?;
-                let rhs = self.interp_operand(rhs.clone())?;
+                let lhs = self.interp_operand(lhs)?;
+                let rhs = self.interp_operand(rhs)?;
 
                 calculator::calculate_binary_operator_expression(op, lhs, rhs).map_err(|_| {
                     InterpreterError::Misc {
@@ -1417,7 +1410,7 @@ impl<'i> State<'i> {
                 })?
             }
             Instruction::UnaryOp { op, operand, .. } => {
-                let operand = self.interp_operand(operand.clone())?;
+                let operand = self.interp_operand(operand)?;
 
                 calculator::calculate_unary_operator_expression(op, operand).map_err(|_| {
                     InterpreterError::Misc {
@@ -1428,8 +1421,8 @@ impl<'i> State<'i> {
                 })?
             }
             Instruction::Store { ptr, value, .. } => {
-                let ptr = self.interp_operand(ptr.clone())?;
-                let value = self.interp_operand(value.clone())?;
+                let ptr = self.interp_operand(ptr)?;
+                let value = self.interp_operand(value)?;
                 let (bid, offset, _) = self.interp_ptr(&ptr)?;
                 self.memory
                     .store(bid, offset, &value, &self.ir.structs)
@@ -1444,12 +1437,12 @@ impl<'i> State<'i> {
                 Value::Unit
             }
             Instruction::Load { ptr, .. } => {
-                let ptr = self.interp_operand(ptr.clone())?;
+                let ptr = self.interp_operand(ptr)?;
                 let (bid, offset, dtype) = self.interp_ptr(&ptr)?;
                 self.memory.load(bid, offset, &dtype, &self.ir.structs)?
             }
             Instruction::Call { callee, args, .. } => {
-                let ptr = self.interp_operand(callee.clone())?;
+                let ptr = self.interp_operand(callee)?;
 
                 // Get function name from pointer
                 let (bid, _, _) = ptr.get_pointer().expect("`ptr` must be `Value::Pointer`");
@@ -1503,7 +1496,7 @@ impl<'i> State<'i> {
                 value,
                 target_dtype,
             } => {
-                let value = self.interp_operand(value.clone())?;
+                let value = self.interp_operand(value)?;
                 calculator::calculate_typecast(value, target_dtype.clone()).map_err(|_| {
                     InterpreterError::Misc {
                         func_name: self.stack_frame.func_name.clone(),
@@ -1513,10 +1506,10 @@ impl<'i> State<'i> {
                 })?
             }
             Instruction::GetElementPtr { ptr, offset, dtype } => {
-                let ptr = self.interp_operand(ptr.clone())?;
+                let ptr = self.interp_operand(ptr)?;
 
                 let (value, _, _) = self
-                    .interp_operand(offset.clone())?
+                    .interp_operand(offset)?
                     .get_int()
                     .expect("`idx` must be `Value::Int`");
 
@@ -1542,12 +1535,10 @@ impl<'i> State<'i> {
         Ok(())
     }
 
-    fn interp_operand(&self, operand: Operand) -> Result<Value, InterpreterError> {
-        match &operand {
+    fn interp_operand(&self, operand: &Operand) -> Result<Value, InterpreterError> {
+        match operand {
             Operand::Constant(value) => Ok(self.interp_constant(value.clone())),
-            Operand::Register { rid, .. } => {
-                Ok(self.stack_frame.registers.read(rid.clone()).clone())
-            }
+            Operand::Register { rid, .. } => Ok(self.stack_frame.registers.read(*rid).clone()),
         }
     }
 

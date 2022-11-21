@@ -8,4 +8,4 @@ cargo fmt --all -- --check # run `cargo fmt` to auto-correct format.
 cargo clippy
 
 # Run tests.
-RUST_MIN_STACK=33554432 cargo test --release test_examples_simplify_cfg
+RUST_MIN_STACK=33554432 cargo test --release test_examples_asmgen_small -- --nocapture

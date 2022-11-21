@@ -22,7 +22,7 @@ pub trait Optimize<T> {
 pub type O0 = Null;
 pub type O1 = Repeat<(SimplifyCfg, (Mem2reg, (Gvn, Deadcode)))>;
 
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Null {}
 
 #[derive(Default, Debug)]
@@ -66,9 +66,9 @@ where
 {
     fn optimize(&mut self, code: &mut ir::TranslationUnit) -> bool {
         code.decls
-            .iter_mut()
-            .map(|(_, decl)| self.optimize(decl))
-            .fold(false, |l, r| l || r)
+            .values_mut()
+            .map(|decl| self.optimize(decl))
+            .fold(false, |l, r| l | r)
     }
 }
 

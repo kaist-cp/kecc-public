@@ -495,11 +495,7 @@ impl IsEquiv for Enumerator {
 
 impl IsEquiv for TypeQualifier {
     fn is_equiv(&self, other: &Self) -> bool {
-        #[allow(clippy::match_like_matches_macro)]
-        match (self, other) {
-            (Self::Const, Self::Const) => true,
-            _ => false,
-        }
+        matches!((self, other), (Self::Const, Self::Const))
     }
 }
 
