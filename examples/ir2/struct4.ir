@@ -1,0 +1,33 @@
+struct Foo : { x:i32 }
+var i32 @nonce = 1
+
+fun struct Foo @f () {
+init:
+  bid: b0
+  allocations: 
+    %l0:struct Foo:x
+
+block b0:
+  %b0:i0:i32* = getelementptr %l0:struct Foo* offset 0:i64
+  %b0:i1:i32 = load @nonce:i32*
+  %b0:i2:unit = store %b0:i1:i32 %b0:i0:i32*
+  %b0:i3:struct Foo = load %l0:struct Foo*
+  ret %b0:i3:struct Foo
+}
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:x
+    %l1:struct Foo:t0
+
+block b0:
+  %b0:i0:struct Foo = call @f:[ret:struct Foo params:()]*()
+  %b0:i1:unit = store %b0:i0:struct Foo %l1:struct Foo*
+  %b0:i2:i32* = getelementptr %l1:struct Foo* offset 0:i64
+  %b0:i3:i32 = load %b0:i2:i32*
+  %b0:i4:unit = nop
+  %b0:i5:unit = nop
+  ret %b0:i3:i32
+}

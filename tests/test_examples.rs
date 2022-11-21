@@ -46,7 +46,7 @@ fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Pat
     }
 }
 
-const IRGEN_SMALL_TEST_IGNORE_LIST: [&str; 11] = [
+const IRGEN_SMALL_TEST_IGNORE_LIST: [&str; 12] = [
     "examples/c/array.c",
     "examples/c/array2.c",
     "examples/c/array3.c",
@@ -57,6 +57,7 @@ const IRGEN_SMALL_TEST_IGNORE_LIST: [&str; 11] = [
     "examples/c/struct.c",
     "examples/c/struct2.c",
     "examples/c/struct3.c",
+    "examples/c/struct4.c",
     "examples/c/temp2.c",
 ];
 
@@ -68,7 +69,7 @@ const ASMGEN_TEST_DIR_LIST: [&str; 5] = [
     "examples/ir4",
 ];
 
-const ASMGEN_SMALL_TEST_IGNORE_LIST: [&str; 11] = [
+const ASMGEN_SMALL_TEST_IGNORE_LIST: [&str; 12] = [
     "array.ir",
     "array2.ir",
     "array3.ir",
@@ -79,6 +80,7 @@ const ASMGEN_SMALL_TEST_IGNORE_LIST: [&str; 11] = [
     "struct.ir",
     "struct2.ir",
     "struct3.ir",
+    "struct4.ir",
     "temp2.ir",
 ];
 
