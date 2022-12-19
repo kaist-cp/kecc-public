@@ -1,7 +1,7 @@
 //! KECC: KAIST Educational C Compiler.
 
 #![deny(clippy::all)]
-#![deny(rustdoc::all)]
+// #![deny(rustdoc::all)]
 #![deny(warnings)]
 // Tries to deny all rustc allow lints.
 // <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>

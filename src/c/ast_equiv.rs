@@ -527,9 +527,8 @@ pub fn assert_ast_equiv(lhs: &TranslationUnit, rhs: &TranslationUnit) {
     if !lhs.is_equiv(rhs) {
         panic!(
             r#"assertion failed: `(left.is_equiv(right))`
-             left: `{:?}`,
-            right: `{:?}`"#,
-            lhs, rhs
+             left: `{lhs:?}`,
+            right: `{rhs:?}`"#
         )
     }
 }

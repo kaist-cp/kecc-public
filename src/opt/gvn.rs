@@ -8,6 +8,6 @@ pub struct GvnInner {}
 
 impl Optimize<ir::FunctionDefinition> for GvnInner {
     fn optimize(&mut self, _code: &mut ir::FunctionDefinition) -> bool {
-        todo!("homework 5")
+        todo!("Homework: Global Variable Numbering")
     }
 }

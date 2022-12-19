@@ -23,7 +23,7 @@ pub type O0 = Null;
 pub type O1 = Repeat<(SimplifyCfg, (Mem2reg, (Gvn, Deadcode)))>;
 
 #[derive(Default, Clone, Copy, Debug)]
-pub struct Null {}
+pub struct Null;
 
 #[derive(Default, Debug)]
 pub struct Repeat<O> {

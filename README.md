@@ -12,6 +12,12 @@ cargo build            # debug build
 cargo build --release  # release build
 ```
 
+## Documentation
+
+```sh
+cargo doc --document-private-items          # built in target/doc
+cargo doc --open --document-private-items   # opens in default broswer. Firefox or Chrome recommended.
+```
 
 ## Run
 

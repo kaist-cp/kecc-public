@@ -17,7 +17,7 @@ pub enum Error {
 
 /// TODO(document)
 #[derive(Default, Clone, Copy, Debug)]
-pub struct Parse {}
+pub struct Parse;
 
 impl<P: AsRef<Path>> Translate<P> for Parse {
     type Target = TranslationUnit;

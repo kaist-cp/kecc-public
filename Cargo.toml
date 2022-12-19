@@ -29,8 +29,8 @@ required-features = ["build-bin"]
 build-bin = ["clap"]
 
 [dependencies]
-clap = { version = "4.0.22", features = ["derive"], optional = true }
-thiserror = "1.0.37"
+clap = { version = "4.0.29", features = ["derive"], optional = true }
+thiserror = "1.0.38"
 lang-c = "0.14.0"
 itertools = "0.10.5"
 tempfile = "3.3.0"

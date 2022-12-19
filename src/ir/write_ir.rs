@@ -28,12 +28,12 @@ impl WriteLine for TranslationUnit {
                     ))
                 });
 
-                format!("{{ {} }}", fields)
+                format!("{{ {fields} }}")
             } else {
                 "opaque".to_string()
             };
 
-            writeln!(write, "struct {} : {}", name, definition)?;
+            writeln!(write, "struct {name} : {definition}")?;
         }
 
         for (name, decl) in &self.decls {
@@ -93,7 +93,7 @@ impl WriteLine for (&String, &Declaration) {
                                 i,
                                 a.deref(),
                                 if let Some(name) = a.name() {
-                                    format!(":{}", name)
+                                    format!(":{name}")
                                 } else {
                                     "".into()
                                 }
@@ -101,7 +101,7 @@ impl WriteLine for (&String, &Declaration) {
                     )?;
 
                     for (id, block) in &definition.blocks {
-                        writeln!(write, "\nblock {}:", id)?;
+                        writeln!(write, "\nblock {id}:")?;
                         (id, block).write_line(indent + 1, write)?;
                     }
 
@@ -128,7 +128,7 @@ impl WriteLine for (&BlockId, &Block) {
                 RegisterId::arg(*self.0, i),
                 phi.deref(),
                 if let Some(name) = phi.name() {
-                    format!(":{}", name)
+                    format!(":{name}")
                 } else {
                     "".into()
                 }
@@ -143,7 +143,7 @@ impl WriteLine for (&BlockId, &Block) {
                 RegisterId::temp(*self.0, i),
                 instr.dtype(),
                 if let Some(name) = instr.name() {
-                    format!(":{}", name)
+                    format!(":{name}")
                 } else {
                     "".into()
                 },
@@ -160,18 +160,18 @@ impl WriteLine for (&BlockId, &Block) {
 
 impl WriteString for Instruction {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for Operand {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for BlockExit {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }

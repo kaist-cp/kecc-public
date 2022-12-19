@@ -97,7 +97,7 @@ fn main() {
         let mut input = ok_or_exit!(IrParse::default().translate(&input), 1);
         compile_ir(&mut input, &mut output, &matches);
     } else {
-        panic!("Unsupported file extension: {:?}", ext);
+        panic!("Unsupported file extension: {ext:?}");
     }
 }
 
@@ -114,7 +114,7 @@ fn compile_c(input: &TranslationUnit, output: &mut dyn ::std::io::Write, matches
     let mut ir = match Irgen::default().translate(input) {
         Ok(ir) => ir,
         Err(irgen_error) => {
-            println!("{}", irgen_error);
+            println!("{irgen_error}");
             return;
         }
     };
@@ -159,16 +159,16 @@ fn compile_ir(
         // Create the dot file
         let mut buffer =
             ::std::fs::File::create(dot_path.as_path()).expect("need to success creating file");
-        buffer
+        let _ = buffer
             .write(dot.as_bytes())
             .expect("failed to write to dot file");
 
         // Create the image file
-        let img = ::std::fs::File::create(&img_path_str).expect("need to success creating file");
+        let img = ::std::fs::File::create(img_path_str).expect("need to success creating file");
 
         // Translate dot file into image
         if !Command::new("dot")
-            .args(&["-Tpng", &dot_path_str])
+            .args(["-Tpng", &dot_path_str])
             .stdout(unsafe { Stdio::from_raw_fd(img.into_raw_fd()) })
             .status()
             .unwrap()

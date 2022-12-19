@@ -117,17 +117,17 @@ impl Directive {
 impl fmt::Display for Directive {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Align(value) => write!(f, ".align\t{}", value),
-            Self::Globl(label) => write!(f, ".globl\t{}", label),
+            Self::Align(value) => write!(f, ".align\t{value}"),
+            Self::Globl(label) => write!(f, ".globl\t{label}"),
             Self::Type(symbol, symbol_type) => {
-                write!(f, ".type\t{}, {}", symbol, symbol_type)
+                write!(f, ".type\t{symbol}, {symbol_type}")
             }
-            Self::Section(section_type) => write!(f, ".section\t{}", section_type),
-            Self::Byte(value) => write!(f, ".byte\t{:#x?}", value),
-            Self::Half(value) => write!(f, ".half\t{:#x?}", value),
-            Self::Word(value) => write!(f, ".word\t{:#x?}", value),
-            Self::Quad(value) => write!(f, ".quad\t{:#x?}", value),
-            Self::Zero(bytes) => write!(f, ".zero\t{:#x?}", bytes),
+            Self::Section(section_type) => write!(f, ".section\t{section_type}"),
+            Self::Byte(value) => write!(f, ".byte\t{value:#x?}"),
+            Self::Half(value) => write!(f, ".half\t{value:#x?}"),
+            Self::Word(value) => write!(f, ".word\t{value:#x?}"),
+            Self::Quad(value) => write!(f, ".quad\t{value:#x?}"),
+            Self::Zero(bytes) => write!(f, ".zero\t{bytes:#x?}"),
         }
     }
 }
@@ -243,7 +243,7 @@ impl fmt::Display for Instruction {
                     rd,
                     rs1,
                     if let Some(rs2) = rs2 {
-                        format!(",{}", rs2)
+                        format!(",{rs2}")
                     } else {
                         "".to_string()
                     },
@@ -257,9 +257,9 @@ impl fmt::Display for Instruction {
                 imm,
             } => {
                 if let IType::Load { .. } = instr {
-                    write!(f, "{}\t{},{}({})", instr, rd, imm, rs1)
+                    write!(f, "{instr}\t{rd},{imm}({rs1})")
                 } else {
-                    write!(f, "{}\t{},{},{}", instr, rd, rs1, imm,)
+                    write!(f, "{instr}\t{rd},{rs1},{imm}",)
                 }
             }
             Self::SType {
@@ -267,15 +267,15 @@ impl fmt::Display for Instruction {
                 rs1,
                 rs2,
                 imm,
-            } => write!(f, "{}\t{},{}({})", instr, rs2, imm, rs1),
+            } => write!(f, "{instr}\t{rs2},{imm}({rs1})"),
             Self::BType {
                 instr,
                 rs1,
                 rs2,
                 imm,
             } => write!(f, "{}\t{},{}, {}", instr, rs1, rs2, imm.0,),
-            Self::UType { instr, rd, imm } => write!(f, "{}\t{}, {}", instr, rd, imm,),
-            Self::Pseudo(pseudo) => write!(f, "{}", pseudo),
+            Self::UType { instr, rd, imm } => write!(f, "{instr}\t{rd}, {imm}",),
+            Self::Pseudo(pseudo) => write!(f, "{pseudo}"),
         }
     }
 }
@@ -541,12 +541,12 @@ impl fmt::Display for RType {
             Self::Xor => write!(f, "xor"),
             Self::Or => write!(f, "or"),
             Self::And => write!(f, "and"),
-            Self::Fadd(data_size) => write!(f, "fadd.{}", data_size),
-            Self::Fsub(data_size) => write!(f, "fsub.{}", data_size),
-            Self::Fmul(data_size) => write!(f, "fmul.{}", data_size),
-            Self::Fdiv(data_size) => write!(f, "fdiv.{}", data_size),
-            Self::Feq(data_size) => write!(f, "feq.{}", data_size),
-            Self::Flt(data_size) => write!(f, "flt.{}", data_size),
+            Self::Fadd(data_size) => write!(f, "fadd.{data_size}"),
+            Self::Fsub(data_size) => write!(f, "fsub.{data_size}"),
+            Self::Fmul(data_size) => write!(f, "fmul.{data_size}"),
+            Self::Fdiv(data_size) => write!(f, "fdiv.{data_size}"),
+            Self::Feq(data_size) => write!(f, "feq.{data_size}"),
+            Self::Flt(data_size) => write!(f, "flt.{data_size}"),
             Self::FmvFloatToInt { float_data_size } => {
                 assert!(float_data_size.is_floating_point());
                 write!(
@@ -612,7 +612,7 @@ impl fmt::Display for RType {
             Self::FcvtFloatToFloat { from, to } => {
                 assert!(from.is_floating_point());
                 assert!(to.is_floating_point());
-                write!(f, "fcvt.{}.{}", to, from)
+                write!(f, "fcvt.{to}.{from}")
             }
         }
     }
@@ -748,7 +748,7 @@ impl fmt::Display for SType {
         match self {
             Self::Store(data_size) => {
                 if data_size.is_integer() {
-                    write!(f, "s{}", data_size)
+                    write!(f, "s{data_size}")
                 } else {
                     write!(
                         f,
@@ -877,24 +877,22 @@ impl Pseudo {
 impl fmt::Display for Pseudo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::La { rd, symbol } => write!(f, "la\t{},{}", rd, symbol),
+            Self::La { rd, symbol } => write!(f, "la\t{rd},{symbol}"),
             Self::Li { rd, imm } => write!(f, "li\t{},{}", rd, *imm as i64),
-            Self::Mv { rd, rs } => write!(f, "mv\t{},{}", rd, rs),
-            Self::Fmv { data_size, rd, rs } => write!(f, "fmv.{}\t{},{}", data_size, rd, rs),
+            Self::Mv { rd, rs } => write!(f, "mv\t{rd},{rs}"),
+            Self::Fmv { data_size, rd, rs } => write!(f, "fmv.{data_size}\t{rd},{rs}"),
             Self::Neg { data_size, rd, rs } => {
                 write!(f, "neg{}\t{},{}", data_size.word().write_string(), rd, rs)
             }
-            Self::SextW { rs, rd } => {
-                write!(f, "sext.w\t{},{}", rd, rs)
-            }
-            Self::Seqz { rd, rs } => write!(f, "seqz\t{},{}", rd, rs),
-            Self::Snez { rd, rs } => write!(f, "snez\t{},{}", rd, rs),
-            Self::Fneg { data_size, rd, rs } => write!(f, "fneg.{}\t{},{}", data_size, rd, rs),
-            Self::J { offset } => write!(f, "j\t{}", offset),
-            Self::Jr { rs } => write!(f, "jr\t{}", rs),
-            Self::Jalr { rs } => write!(f, "jalr\t{}", rs),
+            Self::SextW { rs, rd } => write!(f, "sext.w\t{rd},{rs}"),
+            Self::Seqz { rd, rs } => write!(f, "seqz\t{rd},{rs}"),
+            Self::Snez { rd, rs } => write!(f, "snez\t{rd},{rs}"),
+            Self::Fneg { data_size, rd, rs } => write!(f, "fneg.{data_size}\t{rd},{rs}"),
+            Self::J { offset } => write!(f, "j\t{offset}"),
+            Self::Jr { rs } => write!(f, "jr\t{rs}"),
+            Self::Jalr { rs } => write!(f, "jalr\t{rs}"),
             Self::Ret => write!(f, "ret"),
-            Self::Call { offset } => write!(f, "call\t{}", offset),
+            Self::Call { offset } => write!(f, "call\t{offset}"),
         }
     }
 }
@@ -924,7 +922,7 @@ impl fmt::Display for Immediate {
             match self {
                 Self::Value(value) => format!("{}", *value as i64),
                 Self::Relocation { relocation, symbol } => {
-                    format!("{}({})", relocation, symbol)
+                    format!("{relocation}({symbol})")
                 }
             }
         )
@@ -965,7 +963,7 @@ pub struct Label(pub String);
 impl Label {
     pub fn new(name: &str, block_id: ir::BlockId) -> Self {
         let id = block_id.0;
-        Self(format!(".{}_L{}", name, id))
+        Self(format!(".{name}_L{id}"))
     }
 }
 
@@ -1164,11 +1162,11 @@ impl fmt::Display for Register {
             Self::Sp => "sp".to_string(),
             Self::Gp => "gp".to_string(),
             Self::Tp => "tp".to_string(),
-            Self::Temp(register_type, id) => format!("{}t{}", register_type, id),
-            Self::Saved(register_type, id) => format!("{}s{}", register_type, id),
-            Self::Arg(register_type, id) => format!("{}a{}", register_type, id),
+            Self::Temp(register_type, id) => format!("{register_type}t{id}"),
+            Self::Saved(register_type, id) => format!("{register_type}s{id}"),
+            Self::Arg(register_type, id) => format!("{register_type}a{id}"),
         };
-        write!(f, "{}", register)
+        write!(f, "{register}")
     }
 }
 

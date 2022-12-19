@@ -413,7 +413,7 @@ impl TryFrom<BaseDtype> for Dtype {
                 ast::TypeSpecifier::Int => Self::INT,
                 ast::TypeSpecifier::Float => Self::FLOAT,
                 ast::TypeSpecifier::Double => Self::DOUBLE,
-                _ => panic!("Dtype::try_from::<BaseDtype>: {:?} is not a scalar type", t),
+                _ => panic!("Dtype::try_from::<BaseDtype>: {t:?} is not a scalar type"),
             }
         } else {
             Self::default()
@@ -452,10 +452,9 @@ impl TryFrom<BaseDtype> for Dtype {
             let is_signed = match signed_option {
                 ast::TypeSpecifier::Signed => true,
                 ast::TypeSpecifier::Unsigned => false,
-                _ => panic!(
-                    "Dtype::try_from::<BaseDtype>: {:?} is not a signed option",
-                    signed_option
-                ),
+                _ => {
+                    panic!("Dtype::try_from::<BaseDtype>: {signed_option:?} is not a signed option")
+                }
             };
 
             if dtype.get_int_width().is_none() {
@@ -941,7 +940,7 @@ impl Dtype {
                 let struct_type = structs
                     .get(name)
                     .ok_or_else(|| DtypeError::Misc {
-                        message: format!("unknown struct name `{}`", name),
+                        message: format!("unknown struct name `{name}`"),
                     })?
                     .as_ref()
                     .expect("`struct_type` must have its definition");
@@ -1223,7 +1222,7 @@ impl Dtype {
                 let dtype = typedefs
                     .get(&name)
                     .ok_or_else(|| DtypeError::Misc {
-                        message: format!("unknown type name `{}`", name),
+                        message: format!("unknown type name `{name}`"),
                     })?
                     .clone();
                 let is_const = dtype.is_const() || is_const;
@@ -1288,7 +1287,7 @@ impl Dtype {
                     } else {
                         let tempid = *tempid_counter;
                         *tempid_counter += 1;
-                        format!("%t{}", tempid)
+                        format!("%t{tempid}")
                     };
                     let resolved_struct = Self::structure(Some(name.clone()), Some(fields));
                     let filled_struct =
@@ -1297,7 +1296,7 @@ impl Dtype {
                     if let Some(prev_dtype) = structs.insert(name.clone(), Some(filled_struct)) {
                         if prev_dtype.is_some() {
                             return Err(DtypeError::Misc {
-                                message: format!("redefinition of {}", name),
+                                message: format!("redefinition of {name}"),
                             });
                         }
                     }
@@ -1306,11 +1305,11 @@ impl Dtype {
                 } else {
                     let name = name.expect("`name` must exist");
                     let struct_type = structs.get(&name).ok_or_else(|| DtypeError::Misc {
-                        message: format!("unknown struct name `{}`", name),
+                        message: format!("unknown struct name `{name}`"),
                     })?;
                     if struct_type.is_none() {
                         return Err(DtypeError::Misc {
-                            message: format!("variable has incomplete type 'struct {}'", name),
+                            message: format!("variable has incomplete type 'struct {name}'"),
                         });
                     }
 
@@ -1355,7 +1354,7 @@ impl fmt::Display for Dtype {
             Self::Pointer { inner, is_const } => {
                 write!(f, "{}*{}", inner, if *is_const { "const" } else { "" })
             }
-            Self::Array { inner, size, .. } => write!(f, "[{} x {}]", size, inner,),
+            Self::Array { inner, size, .. } => write!(f, "[{size} x {inner}]",),
             Self::Struct {
                 name,
                 fields,
@@ -1374,7 +1373,7 @@ impl fmt::Display for Dtype {
                             field.deref()
                         ))
                     });
-                    format!(":<{}>", fields)
+                    format!(":<{fields}>")
                 } else {
                     "".to_string()
                 };

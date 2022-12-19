@@ -27,24 +27,24 @@ pub struct SimplifyCfgEmpty {}
 
 impl Optimize<FunctionDefinition> for SimplifyCfgConstProp {
     fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("homework 3")
+        todo!("Homework: Simplify CFG")
     }
 }
 
 impl Optimize<FunctionDefinition> for SimplifyCfgReach {
     fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("homework 3")
+        todo!("Homework: Simplify CFG")
     }
 }
 
 impl Optimize<FunctionDefinition> for SimplifyCfgMerge {
     fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("homework 3")
+        todo!("Homework: Simplify CFG")
     }
 }
 
 impl Optimize<FunctionDefinition> for SimplifyCfgEmpty {
     fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("homework 3")
+        todo!("Homework: Simplify CFG")
     }
 }

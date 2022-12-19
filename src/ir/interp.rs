@@ -770,8 +770,7 @@ mod calculator {
                     (false, Dtype::SIZE_OF_DOUBLE) => value as f64,
                     _ => panic!(
                         "calculate_typecast: not supported case \
-                            typecast int to float when `width` is {}",
-                        width
+                            typecast int to float when `width` is {width}"
                     ),
                 };
                 Ok(Value::float(casted_value, width))
@@ -782,8 +781,7 @@ mod calculator {
                 } else {
                     panic!(
                         "calculate_typecast: not support case \
-                            typecast int to pointer when `value` is {}",
-                        value
+                            typecast int to pointer when `value` is {value}"
                     )
                 }
             }
@@ -1023,7 +1021,7 @@ impl Byte {
                 let value_bits: u128 = match size {
                     Dtype::SIZE_OF_FLOAT => (float_value.into_inner() as f32).to_bits() as u128,
                     Dtype::SIZE_OF_DOUBLE => (float_value.into_inner()).to_bits() as u128,
-                    _ => panic!("value_to_bytes: {} is not a valid float size", size),
+                    _ => panic!("value_to_bytes: {size} is not a valid float size"),
                 };
 
                 Self::u128_to_bytes(value_bits, size)
@@ -1206,8 +1204,7 @@ impl<'i> State<'i> {
                                 func_name: self.stack_frame.func_name.clone(),
                                 pc: self.stack_frame.pc,
                                 msg: format!(
-                                    "fail to translate `Initializer` and `{}` to `Value`",
-                                    dtype
+                                    "fail to translate `Initializer` and `{dtype}` to `Value`"
                                 ),
                             },
                         )?
@@ -1430,8 +1427,7 @@ impl<'i> State<'i> {
                         func_name: self.stack_frame.func_name.clone(),
                         pc: self.stack_frame.pc,
                         msg: format!(
-                            "fail to store {:?} into memory with bid: {}, offset: {}",
-                            value, bid, offset,
+                            "fail to store {value:?} into memory with bid: {bid}, offset: {offset}",
                         ),
                     })?;
                 Value::Unit

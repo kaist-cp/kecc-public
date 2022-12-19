@@ -29,7 +29,7 @@ impl<T: WriteLine> WriteLine for Section<T> {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
         for directive in &self.header {
             write_indent(indent + INDENT, write)?;
-            writeln!(write, "{}", directive)?;
+            writeln!(write, "{directive}")?;
         }
         self.body.write_line(indent, write)?;
 
@@ -52,7 +52,7 @@ impl WriteLine for Variable {
         writeln!(write, "{}:", self.label.0)?;
         for directive in &self.directives {
             write_indent(indent + INDENT, write)?;
-            writeln!(write, "{}", directive)?;
+            writeln!(write, "{directive}")?;
         }
 
         Ok(())
@@ -67,7 +67,7 @@ impl WriteLine for Block {
 
         for instruction in &self.instructions {
             write_indent(indent + INDENT, write)?;
-            writeln!(write, "{}", instruction)?;
+            writeln!(write, "{instruction}")?;
         }
 
         Ok(())
@@ -76,84 +76,84 @@ impl WriteLine for Block {
 
 impl WriteString for Directive {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for SectionType {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for SymbolType {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for Instruction {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for RType {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for IType {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for SType {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for BType {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for UType {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for Pseudo {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for Immediate {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for RelocationFunction {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for DataSize {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
 impl WriteString for Register {
     fn write_string(&self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }

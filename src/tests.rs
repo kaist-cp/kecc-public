@@ -19,8 +19,8 @@ fn modify_c(path: &Path, rand_num: i32) -> String {
         .expect("`src` must be converted to string");
     drop(src);
 
-    let from = format!("int {} = 1", NONCE_NAME);
-    let to = format!("int {} = {}", NONCE_NAME, rand_num);
+    let from = format!("int {NONCE_NAME} = 1");
+    let to = format!("int {NONCE_NAME} = {rand_num}");
     data.replace(&from, &to)
 }
 

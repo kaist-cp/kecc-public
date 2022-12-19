@@ -9,6 +9,6 @@ pub struct DeadcodeInner {}
 
 impl Optimize<FunctionDefinition> for DeadcodeInner {
     fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("homework 6")
+        todo!("Homework: Deadcode Elimination")
     }
 }

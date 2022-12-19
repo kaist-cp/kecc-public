@@ -313,25 +313,23 @@ impl fmt::Display for Instruction {
             Instruction::UnaryOp { op, operand, .. } => {
                 write!(f, "{} {}", op.write_operation(), operand)
             }
-            Instruction::Store { ptr, value } => {
-                write!(f, "store {} {}", value, ptr)
-            }
-            Instruction::Load { ptr } => write!(f, "load {}", ptr),
+            Instruction::Store { ptr, value } => write!(f, "store {value} {ptr}"),
+            Instruction::Load { ptr } => write!(f, "load {ptr}"),
             Instruction::Call { callee, args, .. } => {
                 write!(
                     f,
                     "call {}({})",
                     callee,
                     args.iter()
-                        .format_with(", ", |operand, f| f(&format_args!("{}", operand)))
+                        .format_with(", ", |operand, f| f(&format_args!("{operand}")))
                 )
             }
             Instruction::TypeCast {
                 value,
                 target_dtype,
-            } => write!(f, "typecast {} to {}", value, target_dtype),
+            } => write!(f, "typecast {value} to {target_dtype}"),
             Instruction::GetElementPtr { ptr, offset, .. } => {
-                write!(f, "getelementptr {} offset {}", ptr, offset)
+                write!(f, "getelementptr {ptr} offset {offset}")
             }
         }
     }
@@ -385,12 +383,12 @@ impl BlockExit {
 impl fmt::Display for BlockExit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            BlockExit::Jump { arg } => write!(f, "j {}", arg),
+            BlockExit::Jump { arg } => write!(f, "j {arg}"),
             BlockExit::ConditionalJump {
                 condition,
                 arg_then,
                 arg_else,
-            } => write!(f, "br {}, {}, {}", condition, arg_then, arg_else),
+            } => write!(f, "br {condition}, {arg_then}, {arg_else}"),
             BlockExit::Switch {
                 value,
                 default,
@@ -407,7 +405,7 @@ impl fmt::Display for BlockExit {
                     b
                 )))
             ),
-            BlockExit::Return { value } => write!(f, "ret {}", value),
+            BlockExit::Return { value } => write!(f, "ret {value}"),
             BlockExit::Unreachable => write!(f, "<unreachable>\t\t\t\t; error state"),
         }
     }
@@ -482,7 +480,7 @@ impl fmt::Display for Operand {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Constant(value) => write!(f, "{}:{}", value, value.dtype()),
-            Self::Register { rid, dtype } => write!(f, "{}:{}", rid, dtype),
+            Self::Register { rid, dtype } => write!(f, "{rid}:{dtype}"),
         }
     }
 }
@@ -548,9 +546,9 @@ impl RegisterId {
 impl fmt::Display for RegisterId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Local { aid } => write!(f, "%l{}", aid),
-            Self::Arg { bid, aid } => write!(f, "%{}:p{}", bid, aid),
-            Self::Temp { bid, iid } => write!(f, "%{}:i{}", bid, iid),
+            Self::Local { aid } => write!(f, "%l{aid}"),
+            Self::Arg { bid, aid } => write!(f, "%{bid}:p{aid}"),
+            Self::Temp { bid, iid } => write!(f, "%{bid}:i{iid}"),
         }
     }
 }
@@ -678,8 +676,7 @@ impl TryFrom<&ast::Constant> for Constant {
                             }
                             _ => panic!(
                                 "Constant::try_from::<&ast::Constant>: \
-                                 {:?} is not a pattern of `pat`",
-                                pat
+                                 {pat:?} is not a pattern of `pat`"
                             ),
                         };
                         (Dtype::FLOAT, value)
@@ -694,8 +691,7 @@ impl TryFrom<&ast::Constant> for Constant {
                             }
                             _ => panic!(
                                 "Constant::try_from::<&ast::Constant>: \
-                                 {:?} is not a pattern of `pat`",
-                                pat
+                                 {pat:?} is not a pattern of `pat`"
                             ),
                         };
                         (Dtype::DOUBLE, value)
@@ -942,8 +938,8 @@ impl fmt::Display for Constant {
                     value.to_string()
                 }
             ),
-            Self::Float { value, .. } => write!(f, "{}", value),
-            Self::GlobalVariable { name, .. } => write!(f, "@{}", name),
+            Self::Float { value, .. } => write!(f, "{value}"),
+            Self::GlobalVariable { name, .. } => write!(f, "@{name}"),
         }
     }
 }

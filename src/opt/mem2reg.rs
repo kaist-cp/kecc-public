@@ -9,6 +9,6 @@ pub struct Mem2regInner {}
 
 impl Optimize<FunctionDefinition> for Mem2regInner {
     fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("homework 4")
+        todo!("Homework: Register Promotion")
     }
 }

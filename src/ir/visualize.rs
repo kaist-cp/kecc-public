@@ -50,7 +50,7 @@ impl Translate<TranslationUnit> for Visualizer {
                             let from = self.translate_instruction_node(name, *bid, iid);
                             let to = self.translate_callee(name, callee)?;
 
-                            edges.push(format!("{} -> {};", from, to));
+                            edges.push(format!("{from} -> {to};"));
                         }
                     }
                 }
@@ -59,7 +59,7 @@ impl Translate<TranslationUnit> for Visualizer {
 
         let inner = vec![subgraphs, edges].concat().join("\n");
 
-        Ok(format!("digraph G {{\n{}\n}}", inner))
+        Ok(format!("digraph G {{\n{inner}\n}}"))
     }
 }
 
@@ -82,12 +82,12 @@ impl Visualizer {
 
     #[inline]
     fn translate_instruction_node(&self, name: &str, bid: BlockId, iid: usize) -> String {
-        format!("\"{}:{}:i{}\"", name, bid, iid)
+        format!("\"{name}:{bid}:i{iid}\"")
     }
 
     #[inline]
     fn translate_block_exit_node(&self, name: &str, bid: BlockId) -> String {
-        format!("\"{}:{}:exit\"", name, bid)
+        format!("\"{name}:{bid}:exit\"")
     }
 
     #[inline]
@@ -178,7 +178,7 @@ impl Visualizer {
         // TODO: Add init information (bid_init, allocations)
         let inner = vec![subgraphs, vec![label], edges].concat().join("\n");
 
-        Ok(format!("subgraph \"cluster.{}\" {{\n{}\n}}", name, inner))
+        Ok(format!("subgraph \"cluster.{name}\" {{\n{inner}\n}}"))
     }
 
     fn translate_block(&mut self, name: &str, bid: &BlockId, block: &Block) -> Result<String, ()> {
@@ -186,7 +186,7 @@ impl Visualizer {
         header.push("style=filled;".to_string());
         header.push("color=lightgrey;".to_string());
         header.push("node [shape=record];".to_string());
-        header.push(format!("label=\"{}\";", bid));
+        header.push(format!("label=\"{bid}\";"));
 
         let mut nodes = Vec::new();
 
@@ -223,9 +223,6 @@ impl Visualizer {
 
         let inner = vec![header, nodes, vec![edges]].concat().join("\n");
 
-        Ok(format!(
-            "subgraph \"cluster.{}.{}\" {{\n{}\n}}",
-            name, bid, inner
-        ))
+        Ok(format!("subgraph \"cluster.{name}.{bid}\" {{\n{inner}\n}}"))
     }
 }

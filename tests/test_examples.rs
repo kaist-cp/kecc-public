@@ -16,7 +16,7 @@ where
             continue;
         }
 
-        println!("[testing {:?}]", path);
+        println!("[testing {path:?}]");
         f(&path);
     }
 }
@@ -41,7 +41,7 @@ fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Pat
         assert!(to_file_path.exists());
         assert!(to_file_path.is_file());
 
-        println!("[testing {:?} to {:?}]", from_file_path, to_file_path);
+        println!("[testing {from_file_path:?} to {to_file_path:?}]");
         test_opt(&from_file_path, &to_file_path, opt);
     }
 }

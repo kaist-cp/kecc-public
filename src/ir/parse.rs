@@ -677,8 +677,7 @@ impl<P: AsRef<Path>> Translate<P> for Parse {
 
     fn translate(&mut self, source: &P) -> Result<Self::Target, Self::Error> {
         let ir = fs::read_to_string(source).map_err(Error::Io)?;
-        let ir = ir_parse::translation_unit(&ir).map_err(Error::Parse)?;
-        Ok(ir)
+        ir_parse::translation_unit(&ir).map_err(Error::Parse)
     }
 }
 
