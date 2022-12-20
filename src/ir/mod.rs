@@ -938,7 +938,14 @@ impl fmt::Display for Constant {
                     value.to_string()
                 }
             ),
-            Self::Float { value, .. } => write!(f, "{value}"),
+            Self::Float { value, .. } => {
+                let mut val_str = value.to_string();
+                // For floats with integral values, ".0" is added.
+                if !val_str.contains('.') {
+                    val_str += ".0"
+                };
+                write!(f, "{val_str}")
+            }
             Self::GlobalVariable { name, .. } => write!(f, "@{name}"),
         }
     }
