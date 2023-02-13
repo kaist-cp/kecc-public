@@ -186,7 +186,7 @@ pub fn test_irgen(path: &Path) {
     // size. For this reason, we make `fuzzer` generate the C source code which returns values
     // typecasted to `unsigned char`. However, during `creduce` to reduce the code, typecasting may
     // be nullified. So, we truncate the result value to byte size one more time here.
-    println!("clang: {}, kecc: {}", status as u8, value as u8);
+    println!("clang (expected): {}, kecc: {}", status as u8, value as u8);
     assert_eq!(status as u8, value as u8);
 }
 
@@ -371,7 +371,10 @@ pub fn test_asmgen(path: &Path) {
     drop(buffer);
     temp_dir.close().expect("temp dir deletion failed");
 
-    println!("kecc interp: {}, qemu: {}", value as u8, qemu_status as u8);
+    println!(
+        "kecc interp (expected): {}, qemu: {}",
+        value as u8, qemu_status as u8
+    );
     assert_eq!(value as u8, qemu_status as u8);
 }
 
@@ -463,7 +466,7 @@ pub fn test_end_to_end(path: &Path) {
     // typecasted to `unsigned char`. However, during `creduce` to reduce the code, typecasting may
     // be nullified. So, we truncate the result value to byte size one more time here.
     println!(
-        "clang: {}, kecc interp: {}",
+        "clang (expected): {}, kecc interp: {}",
         clang_status as u8, value as u8
     );
     assert_eq!(clang_status as u8, value as u8);
@@ -531,6 +534,9 @@ pub fn test_end_to_end(path: &Path) {
     drop(buffer);
     temp_dir.close().expect("temp dir deletion failed");
 
-    println!("clang: {}, qemu: {}", clang_status as u8, qemu_status as u8);
+    println!(
+        "clang (expected): {}, qemu: {}",
+        clang_status as u8, qemu_status as u8
+    );
     assert_eq!(clang_status as u8, qemu_status as u8);
 }
