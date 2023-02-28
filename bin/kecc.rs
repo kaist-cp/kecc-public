@@ -141,6 +141,26 @@ fn compile_ir(
         return;
     }
 
+    if matches.optimize {
+        O1::default().optimize(input);
+    } else {
+        if matches.simplify_cfg {
+            SimplifyCfg::default().optimize(input);
+        }
+
+        if matches.mem2reg {
+            Mem2reg::default().optimize(input);
+        }
+
+        if matches.deadcode {
+            Deadcode::default().optimize(input);
+        }
+
+        if matches.gvn {
+            Gvn::default().optimize(input);
+        }
+    }
+
     if let Some(path) = &matches.irviz {
         assert_eq!(
             Path::new(&path).extension(),
@@ -179,26 +199,6 @@ fn compile_ir(
 
         drop(buffer);
         temp_dir.close().expect("temp dir deletion failed");
-    }
-
-    if matches.optimize {
-        O1::default().optimize(input);
-    } else {
-        if matches.simplify_cfg {
-            SimplifyCfg::default().optimize(input);
-        }
-
-        if matches.mem2reg {
-            Mem2reg::default().optimize(input);
-        }
-
-        if matches.deadcode {
-            Deadcode::default().optimize(input);
-        }
-
-        if matches.gvn {
-            Gvn::default().optimize(input);
-        }
     }
 
     if matches.iroutput {
