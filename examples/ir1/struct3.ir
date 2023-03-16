@@ -1,5 +1,5 @@
-struct Big : { m1:struct Sub, m2:struct Sub, m3:struct Sub }
 struct Sub : { m1:i64, m2:i64, m3:i64, m4:i64 }
+struct Big : { m1:struct Sub, m2:struct Sub, m3:struct Sub }
 
 fun struct Big @foo (struct Big) {
 init:

@@ -431,7 +431,7 @@ impl fmt::Display for JumpArg {
             self.bid,
             self.args
                 .iter()
-                .format_with(", ", |a, f| f(&format_args!("{}:{}", a, a.dtype())))
+                .format_with(", ", |a, f| f(&format_args!("{}", a)))
         )
     }
 }

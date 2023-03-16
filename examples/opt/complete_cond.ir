@@ -1,3 +1,4 @@
+
 fun i32 @func_0 () {
 init:
   bid: b0

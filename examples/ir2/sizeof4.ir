@@ -1,0 +1,17 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:a
+    %l1:i32:b
+
+block b0:
+  %b0:i0:unit = nop
+  %b0:i1:i32 = typecast 4:u64 to i32
+  %b0:i2:unit = nop
+  %b0:i3:unit = nop
+  %b0:i4:unit = nop
+  %b0:i5:i32 = add 3:i32 %b0:i1:i32
+  ret %b0:i5:i32
+}
