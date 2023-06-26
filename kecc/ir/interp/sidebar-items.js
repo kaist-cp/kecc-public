@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Byte",""],["InterpreterError",""],["Value",""]],"fn":[["interp",""]],"mod":[["calculator",""]],"struct":[["GlobalMap","Bidirectional map between the name of a global variable and memory box id"],["Memory",""],["Pc",""],["RegisterMap",""],["StackFrame",""],["State",""]]};

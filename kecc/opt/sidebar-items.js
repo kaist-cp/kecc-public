@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["deadcode",""],["gvn",""],["mem2reg",""],["opt_utils","Utilities for implementing optimizations."],["simplify_cfg",""]],"struct":[["FunctionPass",""],["Null",""],["Repeat",""]],"trait":[["Optimize",""]],"type":[["O0",""],["O1",""]]};

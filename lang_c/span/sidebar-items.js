@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Node","Associate a span with an arbitrary type"],["Span","Byte offset of a node start and end positions in the input stream"]]};

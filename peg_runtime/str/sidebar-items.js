@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["LineCol","Line and column within a string"]]};

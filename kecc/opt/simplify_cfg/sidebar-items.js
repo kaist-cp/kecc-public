@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["SimplifyCfgConstProp","Simplifies block exits by propagating constants."],["SimplifyCfgEmpty","Removes empty blocks"],["SimplifyCfgMerge","Merges two blocks if a block is pointed to only by another"],["SimplifyCfgReach","Retains only those blocks that are reachable from the init."]],"type":[["SimplifyCfg",""]]};

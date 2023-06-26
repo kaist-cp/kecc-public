@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Error","TODO(document)"]],"fn":[["is_valid_global_variable_declaration",""],["is_valid_global_variable_initializer",""]],"struct":[["Parse","TODO(document)"]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["write","TODO(document)"],["write_indent","TODO(document)"]],"trait":[["WriteLine","TODO(document)"],["WriteOp","TODO(document)"],["WriteString","TODO(document)"]]};

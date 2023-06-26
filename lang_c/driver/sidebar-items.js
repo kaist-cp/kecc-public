@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Error","Error type returned from `parse`"],["Flavor","C language flavors"]],"fn":[["parse","Parse a C file"],["parse_preprocessed",""]],"struct":[["Config","Parser configuration"],["Parse","Result of a successful parse"],["SyntaxError","Syntax error during parsing"]]};

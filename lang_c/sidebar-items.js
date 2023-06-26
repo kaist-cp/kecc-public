@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["ast","Abstract syntax tree"],["driver","Preprocess and parse C source file into an abstract syntax tree"],["loc","Convert byte offsets into line numbers"],["print","Debug printer for abstract syntax tree"],["span","Source text location tracking"],["visit","Recursive abstract syntax tree traversal"]]};
