@@ -1064,7 +1064,7 @@ impl Byte {
                 izip!(fields, offsets).for_each(|(f, o)| {
                     let result = Self::value_to_bytes(f.deref(), structs);
                     let size_of_data = f.deref().dtype().size_align_of(structs).unwrap().0;
-                    let _unused = values.splice(*o..(*o + size_of_data), result.into_iter());
+                    let _unused = values.splice(*o..(*o + size_of_data), result);
                 });
 
                 values
@@ -1134,7 +1134,7 @@ impl Memory {
         let block = self.inner[bid].as_mut().unwrap();
 
         if 0 <= offset && end <= block.len() {
-            let _unused = block.splice(offset as usize..end, bytes.into_iter());
+            let _unused = block.splice(offset as usize..end, bytes);
             Ok(())
         } else {
             Err(())

@@ -1,0 +1,37 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+    %l0:i32:i
+    %l1:i32:c
+
+block b0:
+  %b0:i0:unit = store 0:i32 %l0:i32*
+  %b0:i1:unit = store 0:i32 %l1:i32*
+  j b1()
+
+block b1:
+  %b1:i0:i32 = load %l0:i32*
+  %b1:i1:u1 = cmp lt %b1:i0:i32 10:i32
+  br %b1:i1:u1, b2(), b3()
+
+block b2:
+  %b2:i0:i32 = load %l0:i32*
+  %b2:i1:i32 = add %b2:i0:i32 1:i32
+  %b2:i2:unit = store %b2:i1:i32 %l0:i32*
+  %b2:i3:i32 = load %l0:i32*
+  switch %b2:i3:i32 default b7() [
+    1:i32 b1()
+  ]
+
+block b3:
+  %b3:i0:i32 = load %l1:i32*
+  ret %b3:i0:i32
+
+block b7:
+  %b7:i0:i32 = load %l1:i32*
+  %b7:i1:i32 = add %b7:i0:i32 1:i32
+  %b7:i2:unit = store %b7:i1:i32 %l1:i32*
+  j b1()
+}

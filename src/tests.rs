@@ -76,7 +76,7 @@ const SKIP_TEST: i32 = 102;
 pub fn test_write_c(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
-    let unit = c::Parse::default()
+    let unit = Parse
         .translate(&path)
         .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
 
@@ -86,7 +86,7 @@ pub fn test_write_c(path: &Path) {
 
     write(&unit, &mut temp_file).unwrap();
 
-    let new_unit = c::Parse::default()
+    let new_unit = Parse
         .translate(&temp_file_path.as_path())
         .expect("parse failed while parsing the output from implemented printer");
     drop(temp_file);
@@ -98,7 +98,7 @@ pub fn test_write_c(path: &Path) {
 pub fn test_irgen(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
-    let unit = c::Parse::default()
+    let unit = Parse
         .translate(&path)
         .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
 
@@ -194,12 +194,12 @@ pub fn test_irgen(path: &Path) {
 pub fn test_irparse(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
-    let unit = c::Parse::default()
+    let unit = Parse
         .translate(&path)
         .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
 
     // Test parse
-    let _unused = c::Parse::default()
+    let _unused = Parse
         .translate(&path)
         .expect("failed to parse the given program");
 
@@ -384,7 +384,7 @@ pub fn test_end_to_end(path: &Path) {
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
 
     // Test parse
-    let unit = c::Parse::default()
+    let unit = Parse
         .translate(&path)
         .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
 

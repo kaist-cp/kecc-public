@@ -635,7 +635,7 @@ impl IrgenFunc<'_> {
     ///     %b0:i1:unit = store %b0:p1:i32 %l1:i32*
     ///     %b0:i2:unit = store %b0:p2:i32 %l2:i32*
     /// ```
-    ///
+    /// 
     /// In particular, note that it is added to the local allocation list and store them to the
     /// initial phinodes.
     ///

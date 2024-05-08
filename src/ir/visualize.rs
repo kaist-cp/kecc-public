@@ -57,7 +57,7 @@ impl Translate<TranslationUnit> for Visualizer {
             }
         }
 
-        let inner = vec![subgraphs, edges].concat().join("\n");
+        let inner = [subgraphs, edges].concat().join("\n");
 
         Ok(format!("digraph G {{\n{inner}\n}}"))
     }
@@ -176,7 +176,7 @@ impl Visualizer {
         }
 
         // TODO: Add init information (bid_init, allocations)
-        let inner = vec![subgraphs, vec![label], edges].concat().join("\n");
+        let inner = [subgraphs, vec![label], edges].concat().join("\n");
 
         Ok(format!("subgraph \"cluster.{name}\" {{\n{inner}\n}}"))
     }
@@ -208,7 +208,7 @@ impl Visualizer {
 
         let edges = (0..block.instructions.len())
             .map(|iid| self.translate_instruction_node(name, *bid, iid))
-            .chain([self.translate_block_exit_node(name, *bid)].into_iter())
+            .chain([self.translate_block_exit_node(name, *bid)])
             .collect::<Vec<String>>()
             .join(" -> ");
 
@@ -221,7 +221,7 @@ impl Visualizer {
             .block_first_instruction
             .insert((name.to_string(), *bid), first_instruction);
 
-        let inner = vec![header, nodes, vec![edges]].concat().join("\n");
+        let inner = [header, nodes, vec![edges]].concat().join("\n");
 
         Ok(format!("subgraph \"cluster.{name}.{bid}\" {{\n{inner}\n}}"))
     }

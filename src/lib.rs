@@ -43,7 +43,6 @@
 #![deny(unused_macro_rules)]
 #![deny(unused_qualifications)]
 #![deny(unused_results)]
-#![deny(unused_tuple_struct_fields)]
 // Allowed for more flexible variants.
 // #![deny(variant_size_differences)]
 
