@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Dtype","DtypeError"],"fn":["check_no_duplicate_field"],"struct":["BaseDtype"],"trait":["HasDtype"]};
