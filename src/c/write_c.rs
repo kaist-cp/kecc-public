@@ -18,31 +18,9 @@ impl<T: WriteString> WriteString for Node<T> {
     }
 }
 
-impl<T: WriteString> WriteString for Box<T> {
-    fn write_string(&self) -> String {
-        self.deref().write_string()
-    }
-}
-
-impl<T: WriteString> WriteString for &T {
-    fn write_string(&self) -> String {
-        (*self).write_string()
-    }
-}
-
-impl<T: WriteString> WriteString for Option<T> {
-    fn write_string(&self) -> String {
-        if let Some(this) = self {
-            this.write_string()
-        } else {
-            "".to_string()
-        }
-    }
-}
-
 impl WriteLine for TranslationUnit {
     fn write_line(&self, _indent: usize, _write: &mut dyn Write) -> Result<()> {
-        todo!("homework 1")
+        todo!("Homework: write C")
     }
 }
 

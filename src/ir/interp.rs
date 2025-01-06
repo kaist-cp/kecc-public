@@ -1155,7 +1155,7 @@ struct State<'i> {
 }
 
 impl<'i> State<'i> {
-    fn new(ir: &'i TranslationUnit, args: Vec<Value>) -> Result<State<'_>, InterpreterError> {
+    fn new(ir: &'i TranslationUnit, args: Vec<Value>) -> Result<State<'i>, InterpreterError> {
         // Interpreter starts with the main function
         let func_name = String::from("main");
         let func = ir

@@ -590,8 +590,11 @@ impl IrgenFunc<'_> {
     ///
     /// ```C
     /// int foo(int x, int y, int z) {
-    ///    if (x == y) { return y; }
-    ///    else { return z; }
+    ///    if (x == y) {
+    ///       return y;
+    ///    } else {
+    ///       return z;
+    ///    }
     /// }
     /// ```
     ///
@@ -615,9 +618,10 @@ impl IrgenFunc<'_> {
     /// bid_init = 0
     /// name_of_params = ["x", "y", "z"]
     /// context = // omitted
-    ///  ```
+    /// ```
     ///
-    /// Resulting IR after this function should be roughly follows:
+    /// The resulting IR after this function should be roughly follows :
+    ///
     /// ```text
     /// fun i32 @foo (i32, i32, i32) {
     ///   init:
@@ -635,7 +639,7 @@ impl IrgenFunc<'_> {
     ///     %b0:i1:unit = store %b0:p1:i32 %l1:i32*
     ///     %b0:i2:unit = store %b0:p2:i32 %l2:i32*
     /// ```
-    /// 
+    ///
     /// In particular, note that it is added to the local allocation list and store them to the
     /// initial phinodes.
     ///

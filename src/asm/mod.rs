@@ -1,12 +1,11 @@
 mod write_asm;
 
 use crate::ir;
-use crate::write_base::*;
 
 use core::convert::TryFrom;
 use core::fmt;
 
-/// TODO
+/// An assembly file.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Asm {
     pub unit: TranslationUnit,
@@ -20,9 +19,9 @@ pub struct TranslationUnit {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Section<T> {
-    /// Section Headers provide size, offset, type, alignment and flags of the sections
+    /// Headers provide size, offset, type, alignment and flag information.
     ///
-    /// For more details: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#section-header>
+    /// For more information: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#section-header>
     pub header: Vec<Directive>,
     pub body: T,
 }
@@ -30,7 +29,7 @@ pub struct Section<T> {
 /// An object file is made up of multiple sections, with each section corresponding to distinct
 /// types of executable code or data.
 ///
-/// For more details: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#sections>
+/// For more information: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#sections>
 impl<T> Section<T> {
     pub fn new(header: Vec<Directive>, body: T) -> Self {
         Self { header, body }
@@ -174,38 +173,29 @@ impl fmt::Display for SymbolType {
     }
 }
 
+/// RISC-V Base Instructions Set.
+///
+/// See Volume 1 of [RISC-V Technical Specifications](https://lf-riscv.atlassian.net/wiki/spaces/HOME/pages/16154769/RISC-V+Technical+Specifications).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
-    /// R-type instruction format
-    ///
-    /// For more details: <https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf> (104p)
     RType {
         instr: RType,
         rd: Register,
         rs1: Register,
         rs2: Option<Register>,
     },
-    /// I-type instruction format
-    ///
-    /// For more details: <https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf> (104p)
     IType {
         instr: IType,
         rd: Register,
         rs1: Register,
         imm: Immediate,
     },
-    /// S-type instruction format
-    ///
-    /// For more details: <https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf> (104p)
     SType {
         instr: SType,
         rs1: Register,
         rs2: Register,
         imm: Immediate,
     },
-    /// B-type instruction format
-    ///
-    /// For more details: <https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf> (104p)
     BType {
         instr: BType,
         rs1: Register,
@@ -280,8 +270,7 @@ impl fmt::Display for Instruction {
     }
 }
 
-/// If the enum variant contains `bool`,
-/// It means that different instructions exist
+/// If the enum variant contains `is_signed : bool`, it corresponds to different instructions
 /// depending on whether the operand is signed or not.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RType {
@@ -512,13 +501,20 @@ impl RType {
 
 impl fmt::Display for RType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let filter_word = |data_size: &DataSize| -> String {
+            if data_size.is_word() {
+                data_size.to_string()
+            } else {
+                "".to_string()
+            }
+        };
         match self {
-            Self::Add(data_size) => write!(f, "add{}", data_size.word().write_string()),
-            Self::Sub(data_size) => write!(f, "sub{}", data_size.word().write_string()),
-            Self::Sll(data_size) => write!(f, "sll{}", data_size.word().write_string()),
-            Self::Srl(data_size) => write!(f, "srl{}", data_size.word().write_string()),
-            Self::Sra(data_size) => write!(f, "sra{}", data_size.word().write_string()),
-            Self::Mul(data_size) => write!(f, "mul{}", data_size.word().write_string()),
+            Self::Add(data_size) => write!(f, "add{}", filter_word(data_size)),
+            Self::Sub(data_size) => write!(f, "sub{}", filter_word(data_size)),
+            Self::Sll(data_size) => write!(f, "sll{}", filter_word(data_size)),
+            Self::Srl(data_size) => write!(f, "srl{}", filter_word(data_size)),
+            Self::Sra(data_size) => write!(f, "sra{}", filter_word(data_size)),
+            Self::Mul(data_size) => write!(f, "mul{}", filter_word(data_size)),
             Self::Div {
                 data_size,
                 is_signed,
@@ -526,7 +522,7 @@ impl fmt::Display for RType {
                 f,
                 "div{}{}",
                 if *is_signed { "" } else { "u" },
-                data_size.word().write_string()
+                filter_word(data_size)
             ),
             Self::Rem {
                 data_size,
@@ -535,7 +531,7 @@ impl fmt::Display for RType {
                 f,
                 "rem{}{}",
                 if *is_signed { "" } else { "u" },
-                data_size.word().write_string()
+                filter_word(data_size)
             ),
             Self::Slt { is_signed } => write!(f, "slt{}", if *is_signed { "" } else { "u" }),
             Self::Xor => write!(f, "xor"),
@@ -696,6 +692,13 @@ impl IType {
 
 impl fmt::Display for IType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let filter_word = |data_size: &DataSize| -> String {
+            if data_size.is_word() {
+                data_size.to_string()
+            } else {
+                "".to_string()
+            }
+        };
         match self {
             Self::Load {
                 data_size,
@@ -715,13 +718,13 @@ impl fmt::Display for IType {
                     )
                 }
             }
-            Self::Addi(data_size) => write!(f, "addi{}", data_size.word().write_string()),
+            Self::Addi(data_size) => write!(f, "addi{}", filter_word(data_size)),
             Self::Xori => write!(f, "xori"),
             Self::Ori => write!(f, "ori"),
             Self::Andi => write!(f, "andi"),
-            Self::Slli(data_size) => write!(f, "slli{}", data_size.word().write_string()),
-            Self::Srli(data_size) => write!(f, "srli{}", data_size.word().write_string()),
-            Self::Srai(data_size) => write!(f, "srai{}", data_size.word().write_string()),
+            Self::Slli(data_size) => write!(f, "slli{}", filter_word(data_size)),
+            Self::Srli(data_size) => write!(f, "srli{}", filter_word(data_size)),
+            Self::Srai(data_size) => write!(f, "srai{}", filter_word(data_size)),
             Self::Slti { is_signed } => write!(f, "slti{}", if *is_signed { "" } else { "u" }),
         }
     }
@@ -805,9 +808,7 @@ impl fmt::Display for UType {
 /// instructions in the base ISA, but have implicit arguments or reversed arguments that result in
 /// distinct semantics.
 ///
-/// For more information:
-/// - <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#assembler-pseudo-instructions>
-/// - <https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf> (110p)
+/// For more information: <https://github.com/michaeljclark/michaeljclark.github.io/blob/master/asm.md#assembler-pseudo-instructions>
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Pseudo {
     /// la rd, symbol
@@ -876,13 +877,20 @@ impl Pseudo {
 
 impl fmt::Display for Pseudo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let filter_word = |data_size: &DataSize| -> String {
+            if data_size.is_word() {
+                data_size.to_string()
+            } else {
+                "".to_string()
+            }
+        };
         match self {
             Self::La { rd, symbol } => write!(f, "la\t{rd},{symbol}"),
             Self::Li { rd, imm } => write!(f, "li\t{},{}", rd, *imm as i64),
             Self::Mv { rd, rs } => write!(f, "mv\t{rd},{rs}"),
             Self::Fmv { data_size, rd, rs } => write!(f, "fmv.{data_size}\t{rd},{rs}"),
             Self::Neg { data_size, rd, rs } => {
-                write!(f, "neg{}\t{},{}", data_size.word().write_string(), rd, rs)
+                write!(f, "neg{}\t{},{}", filter_word(data_size), rd, rs)
             }
             Self::SextW { rs, rd } => write!(f, "sext.w\t{rd},{rs}"),
             Self::Seqz { rd, rs } => write!(f, "seqz\t{rd},{rs}"),
@@ -929,8 +937,8 @@ impl fmt::Display for Immediate {
     }
 }
 
-/// The relocation function creates synthesize operand values that are resolved
-/// at program link time and are used as immediate parameters for specific instructions.
+/// The relocation function creates synthesize operand values that are resolved at program link time
+/// and are used as immediate parameters for specific instructions.
 ///
 /// For more details: <https://github.com/riscv-non-isa/riscv-asm-manual/blob/master/riscv-asm.md>
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1023,12 +1031,8 @@ impl DataSize {
         matches!(self, Self::SinglePrecision | Self::DoublePrecision)
     }
 
-    fn word(self) -> Option<Self> {
-        if self == DataSize::Word {
-            Some(self)
-        } else {
-            None
-        }
+    fn is_word(&self) -> bool {
+        matches!(self, Self::Word)
     }
 }
 
@@ -1049,7 +1053,7 @@ impl fmt::Display for DataSize {
     }
 }
 
-/// ABI name for RISC-V integer and floating-point register
+/// ABI name for RISC-V integer and floating-point register.
 ///
 /// For more details: <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf> (109p)
 // TODO: Add calling convention information (caller/callee-save registers)

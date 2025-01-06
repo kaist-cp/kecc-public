@@ -1,7 +1,10 @@
 [package]
 name = "kecc"
 version = "0.1.0"
-authors = ["Chunmyong Park <chunmyong.park@kaist.ac.kr>", "Jeehoon Kang <jeehoon.kang@kaist.ac.kr>"]
+authors = [
+  "Chunmyong Park <chunmyong.park@kaist.ac.kr>",
+  "Jeehoon Kang <jeehoon.kang@kaist.ac.kr>",
+]
 edition = "2021"
 default-run = "kecc"
 
@@ -29,13 +32,13 @@ required-features = ["build-bin"]
 build-bin = ["clap"]
 
 [dependencies]
-clap = { version = "4.5.4", features = ["derive"], optional = true }
-thiserror = "1.0.60"
+clap = { version = "4.5.23", features = ["derive"], optional = true }
+thiserror = "2.0.9"
 lang-c = "0.15.1"
-itertools = "0.12.1"
-tempfile = "3.10.1"
-ordered-float = "4.2.0"
+itertools = "0.14.0"
+tempfile = "3.14.0"
+ordered-float = "4.6.0"
 hexf-parse = "0.2.1"
 wait-timeout = "0.2.0"
-peg = "0.8.3"
+peg = "0.8.4"
 rand = "0.8.5"

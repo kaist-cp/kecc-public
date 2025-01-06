@@ -921,7 +921,7 @@ impl Dtype {
         match self {
             Self::Unit { .. } => Ok((0, 1)),
             Self::Int { width, .. } | Self::Float { width, .. } => {
-                let size_of = (*width + Self::BITS_OF_BYTE - 1) / Self::BITS_OF_BYTE;
+                let size_of = (*width).div_ceil(Self::BITS_OF_BYTE);
                 let align_of = size_of;
 
                 Ok((size_of, align_of))

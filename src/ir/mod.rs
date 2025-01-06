@@ -17,7 +17,6 @@ use ordered_float::OrderedFloat;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{Hash, Hasher};
 
-use crate::write_base::*;
 pub use dtype::{Dtype, DtypeError, HasDtype};
 pub use interp::{interp, Value};
 pub use parse::Parse;
@@ -258,6 +257,16 @@ impl Instruction {
     pub fn has_no_side_effects(&self) -> bool {
         !matches!(self, Self::Store { .. } | Self::Call { .. })
     }
+}
+
+/// Format `lang_c::ast::{Binary,Unary}Operations` into KECC-IR.
+///
+/// Most cases, `fmt::Display` is used to format a type to a string. However, in some cases, we
+/// can't implement `fmt::Display` for a type as it is defined in another crate. In such cases, we
+/// can implement this trait to format the type to a string.
+pub trait WriteOp {
+    /// Change operations into a String.
+    fn write_operation(&self) -> String;
 }
 
 impl WriteOp for ast::BinaryOperator {

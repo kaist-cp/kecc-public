@@ -157,21 +157,3 @@ impl WriteLine for (&BlockId, &Block) {
         Ok(())
     }
 }
-
-impl WriteString for Instruction {
-    fn write_string(&self) -> String {
-        format!("{self}")
-    }
-}
-
-impl WriteString for Operand {
-    fn write_string(&self) -> String {
-        format!("{self}")
-    }
-}
-
-impl WriteString for BlockExit {
-    fn write_string(&self) -> String {
-        format!("{self}")
-    }
-}
