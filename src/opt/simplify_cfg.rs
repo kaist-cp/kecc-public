@@ -1,6 +1,11 @@
+use std::collections::{HashMap, HashSet};
+use std::ops::Deref;
+
+use itertools::izip;
+
 use crate::ir::*;
-use crate::opt::FunctionPass;
-use crate::*;
+use crate::opt::opt_utils::*;
+use crate::opt::*;
 
 pub type SimplifyCfg = FunctionPass<
     Repeat<(
@@ -26,25 +31,25 @@ pub struct SimplifyCfgMerge {}
 pub struct SimplifyCfgEmpty {}
 
 impl Optimize<FunctionDefinition> for SimplifyCfgConstProp {
-    fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("Homework: Simplify CFG")
+    fn optimize(&mut self, code: &mut FunctionDefinition) -> bool {
+        todo!()
     }
 }
 
 impl Optimize<FunctionDefinition> for SimplifyCfgReach {
-    fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("Homework: Simplify CFG")
+    fn optimize(&mut self, code: &mut FunctionDefinition) -> bool {
+        todo!()
     }
 }
 
 impl Optimize<FunctionDefinition> for SimplifyCfgMerge {
-    fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("Homework: Simplify CFG")
+    fn optimize(&mut self, code: &mut FunctionDefinition) -> bool {
+        todo!()
     }
 }
 
 impl Optimize<FunctionDefinition> for SimplifyCfgEmpty {
-    fn optimize(&mut self, _code: &mut FunctionDefinition) -> bool {
-        todo!("Homework: Simplify CFG")
+    fn optimize(&mut self, code: &mut FunctionDefinition) -> bool {
+        todo!()
     }
 }

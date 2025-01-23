@@ -3,8 +3,7 @@
 use std::collections::HashMap;
 
 use crate::ir::*;
-use crate::some_or;
-use crate::Translate;
+use crate::{some_or, Translate};
 
 #[derive(Default, Debug)]
 pub struct Visualizer {

@@ -8,14 +8,14 @@ use lang_c::span::Node;
 use crate::utils::AssertSupported;
 use crate::Translate;
 
-/// TODO(document)
+/// Parse Error
 #[derive(Debug)]
 pub enum Error {
     ParseError(ParseError),
     Unsupported,
 }
 
-/// TODO(document)
+/// C file Parser.
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Parse;
 

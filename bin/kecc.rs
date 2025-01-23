@@ -1,18 +1,16 @@
-use clap::Parser;
-
 use std::ffi::OsStr;
 use std::io::Write;
 use std::os::unix::io::{FromRawFd, IntoRawFd};
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use lang_c::ast::TranslationUnit;
-use tempfile::tempdir;
-
+use clap::Parser;
 use kecc::{
     ir, ok_or_exit, write, Asmgen, Deadcode, Gvn, IrParse, IrVisualizer, Irgen, Mem2reg, Optimize,
     Parse, SimplifyCfg, Translate, O1,
 };
+use lang_c::ast::TranslationUnit;
+use tempfile::tempdir;
 
 #[derive(Debug, Parser)]
 #[clap(name = "kecc", version, author, about)]

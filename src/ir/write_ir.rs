@@ -1,7 +1,6 @@
-use crate::ir::*;
-
 use std::io::{Result, Write};
 
+use crate::ir::*;
 use crate::write_base::*;
 use crate::*;
 

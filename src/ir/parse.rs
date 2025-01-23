@@ -5,8 +5,7 @@ use lang_c::*;
 
 use crate::ir::*;
 use crate::utils::AssertSupported;
-use crate::Translate;
-use crate::*;
+use crate::{Translate, *};
 
 peg::parser! {
     grammar ir_parse() for str {

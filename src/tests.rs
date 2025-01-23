@@ -1,9 +1,10 @@
-use lang_c::*;
-use rand::Rng;
 use std::fs::{self, File};
 use std::io::{stderr, Read, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
+
+use lang_c::*;
+use rand::Rng;
 use tempfile::tempdir;
 use wait_timeout::ChildExt;
 

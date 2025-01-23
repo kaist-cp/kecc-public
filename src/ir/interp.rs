@@ -1,11 +1,9 @@
-use core::fmt;
-use core::iter;
-use core::mem;
-use ordered_float::OrderedFloat;
+use core::{fmt, iter, mem};
 use std::collections::HashMap;
-use thiserror::Error;
 
 use itertools::izip;
+use ordered_float::OrderedFloat;
+use thiserror::Error;
 
 use crate::ir::*;
 use crate::*;
@@ -410,10 +408,12 @@ impl<'i> StackFrame<'i> {
 }
 
 mod calculator {
+    use std::cmp::Ordering;
+
+    use lang_c::ast;
+
     use super::Value;
     use crate::ir::*;
-    use lang_c::ast;
-    use std::cmp::Ordering;
 
     fn calculate_integer_binary_operator_expression(
         op: &ast::BinaryOperator,

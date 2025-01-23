@@ -1,11 +1,7 @@
-use itertools::izip;
-
-use core::ops::Deref;
-
 #[macro_export]
 /// Ok or executing the given expression.
 macro_rules! ok_or {
-    ($e:expr, $err:expr) => {{
+    ($e:expr_2021, $err:expr_2021) => {{
         match $e {
             Ok(r) => r,
             Err(_) => $err,
@@ -16,7 +12,7 @@ macro_rules! ok_or {
 #[macro_export]
 /// Some or executing the given expression.
 macro_rules! some_or {
-    ($e:expr, $err:expr) => {{
+    ($e:expr_2021, $err:expr_2021) => {{
         match $e {
             Some(r) => r,
             None => $err,
@@ -27,7 +23,7 @@ macro_rules! some_or {
 #[macro_export]
 /// Ok or exiting the process.
 macro_rules! ok_or_exit {
-    ($e:expr, $code:expr) => {{
+    ($e:expr_2021, $code:expr_2021) => {{
         match $e {
             Ok(r) => r,
             Err(e) => {
@@ -41,7 +37,7 @@ macro_rules! ok_or_exit {
 #[macro_export]
 /// Ok or exiting the process.
 macro_rules! some_or_exit {
-    ($e:expr, $code:expr) => {{
+    ($e:expr_2021, $code:expr_2021) => {{
         match $e {
             Some(r) => r,
             None => ::std::process::exit($code),
@@ -49,33 +45,41 @@ macro_rules! some_or_exit {
     }};
 }
 
-/// TODO(document)
+/// Translates `S` to [`Translate::Target`].
+// TODO: Should this be in utils?
 pub trait Translate<S> {
-    /// TODO(document)
+    /// The type to translate to.
     type Target;
 
-    /// TODO(document)
+    /// The error type.
     type Error;
 
-    /// TODO(document)
+    /// Translate `source` to `Self::Target`.
     fn translate(&mut self, source: &S) -> Result<Self::Target, Self::Error>;
 }
 
-/// TODO(document)
+/// Trait to check if a type can be translated.
 pub trait AssertSupported {
-    /// TODO(document)
+    /// Assert that the type can be translated.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the type can't be translated.
+    // TODO: should return a boolean.
     fn assert_supported(&self);
 }
 
-/// TODO(document)
+/// Essentially the same as [`PartialEq`].
+///
+/// Exists to check equaility on some foreign types.
 pub trait IsEquiv {
-    /// TODO(document)
+    /// See [`PartialEq::eq`].
     fn is_equiv(&self, other: &Self) -> bool;
 }
 
 impl<T: IsEquiv> IsEquiv for Box<T> {
     fn is_equiv(&self, other: &Self) -> bool {
-        self.deref().is_equiv(other.deref())
+        (**self).is_equiv(&**other)
     }
 }
 
@@ -97,6 +101,6 @@ impl<T: IsEquiv> IsEquiv for Option<T> {
 
 impl<T: IsEquiv> IsEquiv for Vec<T> {
     fn is_equiv(&self, other: &Self) -> bool {
-        self.len() == other.len() && izip!(self, other).all(|(lhs, rhs)| lhs.is_equiv(rhs))
+        self.len() == other.len() && self.iter().zip(other).all(|(lhs, rhs)| lhs.is_equiv(rhs))
     }
 }

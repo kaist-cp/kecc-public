@@ -34,22 +34,21 @@
 //! [irgen-stmt-1]: https://youtu.be/jFahkyxm994
 //! [irgen-stmt-2]: https://youtu.be/UkaXaNw462U
 //! [github-qna-irgen]: https://github.com/kaist-cp/cs420/labels/homework%20-%20irgen
-#![allow(dead_code)]
+use core::cmp::Ordering;
 use core::convert::TryFrom;
-use core::fmt;
-use core::mem;
+use core::{fmt, mem};
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 
+use itertools::izip;
 use lang_c::ast::*;
 use lang_c::driver::Parse;
 use lang_c::span::Node;
 use thiserror::Error;
 
 use crate::ir::{DtypeError, HasDtype, Named};
+use crate::write_base::WriteString;
 use crate::*;
-
-use itertools::izip;
 
 #[derive(Debug)]
 pub struct IrgenError {
@@ -69,6 +68,9 @@ impl fmt::Display for IrgenError {
     }
 }
 
+/// Error format when a compiler error happens.
+///
+/// Feel free to add more kinds of errors.
 #[derive(Debug, PartialEq, Eq, Error)]
 pub enum IrgenErrorMessage {
     /// For uncommon error
@@ -89,11 +91,17 @@ pub enum IrgenErrorMessage {
     RequireLvalue { message: String },
 }
 
+/// A C file going through IR generation.
 #[derive(Default, Debug)]
 pub struct Irgen {
+    /// Declarations made in the C file (e.g, global variables and functions)
     decls: BTreeMap<String, ir::Declaration>,
+    /// Type definitions made in the C file (e.g, typedef my_type = int;)
     typedefs: HashMap<String, ir::Dtype>,
+    /// Structs defined in the C file,
+    // TODO: explain how to use this.
     structs: HashMap<String, Option<ir::Dtype>>,
+    /// Temporary counter for anonymous structs. One should not need to use this any more.
     struct_tempid_counter: usize,
 }
 
@@ -112,14 +120,14 @@ impl Translate<TranslationUnit> for Irgen {
 
     fn translate(&mut self, source: &TranslationUnit) -> Result<Self::Target, Self::Error> {
         for ext_decl in &source.0 {
-            match ext_decl.node {
-                ExternalDeclaration::Declaration(ref var) => {
+            match &ext_decl.node {
+                ExternalDeclaration::Declaration(var) => {
                     self.add_declaration(&var.node)?;
                 }
                 ExternalDeclaration::StaticAssert(_) => {
                     panic!("ExternalDeclaration::StaticAssert is unsupported")
                 }
-                ExternalDeclaration::FunctionDefinition(ref func) => {
+                ExternalDeclaration::FunctionDefinition(func) => {
                     self.add_function_definition(&func.node)?;
                 }
             }
@@ -513,9 +521,10 @@ impl IrgenFunc<'_> {
     }
 
     /// Create a new allocation with type given by `alloc`.
-    fn insert_alloc(&mut self, alloc: Named<ir::Dtype>) -> usize {
+    fn insert_alloc(&mut self, alloc: Named<ir::Dtype>) -> ir::RegisterId {
         self.allocations.push(alloc);
-        self.allocations.len() - 1
+        let id = self.allocations.len() - 1;
+        ir::RegisterId::local(id)
     }
 
     /// Insert a new block `context` with exit instruction `exit`.
@@ -551,6 +560,7 @@ impl IrgenFunc<'_> {
     /// Panics if there are no scopes to exit, i.e, the function has a unmatched `}`.
     fn exit_scope(&mut self) {
         let _unused = self.symbol_table.pop().unwrap();
+        debug_assert!(!self.symbol_table.is_empty())
     }
 
     /// Inserts `var` with `value` to the current symbol table.
@@ -576,15 +586,15 @@ impl IrgenFunc<'_> {
     /// `bid_continue` and break block `bid_break`.
     fn translate_stmt(
         &mut self,
-        _stmt: &Statement,
-        _context: &mut Context,
-        _bid_continue: Option<ir::BlockId>,
-        _bid_break: Option<ir::BlockId>,
+        stmt: &Statement,
+        context: &mut Context,
+        bid_continue: Option<ir::BlockId>,
+        bid_break: Option<ir::BlockId>,
     ) -> Result<(), IrgenError> {
-        todo!("Homework: IR Generation")
+        todo!()
     }
 
-    /// Translate parameter declaration of the functions to IR.
+    /// Translate initial parameter declarations of the functions to IR.
     ///
     /// For example, given the following C function from [`foo.c`][foo]:
     ///
@@ -610,9 +620,11 @@ impl IrgenFunc<'_> {
     ///     %b0:p0:i32:x
     ///     %b0:p1:i32:y
     ///     %b0:p2:i32:z
+    ///   ...
     /// ```
     ///
     /// With the following arguments :
+    ///
     /// ```ignore
     /// signature = FunctionSignature { ret: ir::INT, params: vec![ir::INT, ir::INT, ir::INT] }
     /// bid_init = 0
@@ -638,6 +650,7 @@ impl IrgenFunc<'_> {
     ///     %b0:i0:unit = store %b0:p0:i32 %l0:i32*
     ///     %b0:i1:unit = store %b0:p1:i32 %l1:i32*
     ///     %b0:i2:unit = store %b0:p2:i32 %l2:i32*
+    ///   ...
     /// ```
     ///
     /// In particular, note that it is added to the local allocation list and store them to the
@@ -649,12 +662,12 @@ impl IrgenFunc<'_> {
     /// [foo]: https://github.com/kaist-cp/kecc-public/blob/main/examples/c/foo.c
     fn translate_parameter_decl(
         &mut self,
-        _signature: &ir::FunctionSignature,
-        _bid_init: ir::BlockId,
-        _name_of_params: &[String],
-        _context: &mut Context,
+        signature: &ir::FunctionSignature,
+        bid_init: ir::BlockId,
+        name_of_params: &[String],
+        context: &mut Context,
     ) -> Result<(), IrgenErrorMessage> {
-        todo!("Homework: IR Generation")
+        todo!()
     }
 }
 

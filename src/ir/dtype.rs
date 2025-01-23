@@ -1,13 +1,13 @@
 use core::convert::TryFrom;
 use core::fmt;
 use core::ops::Deref;
-use lang_c::ast;
-use lang_c::span::Node;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
-use thiserror::Error;
 
 use itertools::izip;
+use lang_c::ast;
+use lang_c::span::Node;
+use thiserror::Error;
 
 use crate::ir::*;
 use crate::some_or;

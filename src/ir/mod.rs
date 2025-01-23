@@ -10,15 +10,15 @@ mod write_ir;
 use core::convert::TryFrom;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
-use hexf_parse::{parse_hexf32, parse_hexf64};
-use itertools::Itertools;
-use lang_c::ast;
-use ordered_float::OrderedFloat;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{Hash, Hasher};
 
 pub use dtype::{Dtype, DtypeError, HasDtype};
+use hexf_parse::{parse_hexf32, parse_hexf64};
 pub use interp::{interp, Value};
+use itertools::Itertools;
+use lang_c::ast;
+use ordered_float::OrderedFloat;
 pub use parse::Parse;
 pub use visualize::Visualizer;
 

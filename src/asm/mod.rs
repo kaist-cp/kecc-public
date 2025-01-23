@@ -1,9 +1,9 @@
 mod write_asm;
 
-use crate::ir;
-
 use core::convert::TryFrom;
 use core::fmt;
+
+use crate::ir;
 
 /// An assembly file.
 #[derive(Debug, Clone, PartialEq, Eq)]
