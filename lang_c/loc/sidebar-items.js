@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_location_for_offset"],"struct":["Location"]};
