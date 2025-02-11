@@ -2,7 +2,6 @@ use std::io::{Result, Write};
 
 use crate::ir::*;
 use crate::write_base::*;
-use crate::*;
 
 impl WriteLine for TranslationUnit {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
@@ -36,14 +35,16 @@ impl WriteLine for TranslationUnit {
         }
 
         for (name, decl) in &self.decls {
-            let _ = some_or!(decl.get_variable(), continue);
-            (name, decl).write_line(indent, write)?;
+            if decl.get_variable().is_some() {
+                (name, decl).write_line(indent, write)?;
+            }
         }
 
         for (name, decl) in &self.decls {
-            let _ = some_or!(decl.get_function(), continue);
-            writeln!(write)?;
-            (name, decl).write_line(indent, write)?;
+            if decl.get_function().is_some() {
+                writeln!(write)?;
+                (name, decl).write_line(indent, write)?;
+            }
         }
 
         Ok(())

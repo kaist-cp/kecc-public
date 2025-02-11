@@ -77,7 +77,7 @@ where
     T: Optimize<ir::FunctionDefinition>,
 {
     fn optimize(&mut self, code: &mut ir::Declaration) -> bool {
-        let (_fsig, fdef) = some_or!(code.get_function_mut(), return false);
+        let (_, fdef) = some_or!(code.get_function_mut(), return false);
         let fdef = some_or!(fdef, return false);
         self.inner.optimize(fdef)
     }

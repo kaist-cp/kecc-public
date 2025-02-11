@@ -86,9 +86,11 @@ pub enum Dtype {
     /// TODO(document)
     Struct {
         /// TODO(document)
+        // FIXME: Why is this an option?
         name: Option<String>,
 
         /// TODO(document)
+        // FIXME: Just use vec for empty set of fields, no need for option?
         fields: Option<Vec<Named<Dtype>>>,
 
         /// TODO(document)

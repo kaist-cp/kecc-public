@@ -725,7 +725,7 @@ fn name_of_params_from_derived_declarators(
 
 #[inline]
 fn name_of_parameter_declaration(parameter_declaration: &ParameterDeclaration) -> Option<String> {
-    let declarator = some_or!(parameter_declaration.declarator.as_ref(), return None);
+    let declarator = parameter_declaration.declarator.as_ref()?;
     Some(name_of_declarator(&declarator.node))
 }
 

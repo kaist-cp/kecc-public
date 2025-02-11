@@ -1,15 +1,4 @@
 #[macro_export]
-/// Ok or executing the given expression.
-macro_rules! ok_or {
-    ($e:expr_2021, $err:expr_2021) => {{
-        match $e {
-            Ok(r) => r,
-            Err(_) => $err,
-        }
-    }};
-}
-
-#[macro_export]
 /// Some or executing the given expression.
 macro_rules! some_or {
     ($e:expr_2021, $err:expr_2021) => {{

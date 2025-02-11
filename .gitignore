@@ -2,3 +2,4 @@ target
 *.zip
 rustfmt.toml
 **/*.rs.bk
+csmith

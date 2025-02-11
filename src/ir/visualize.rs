@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use crate::ir::*;
-use crate::{some_or, Translate};
+use crate::Translate;
 
 #[derive(Default, Debug)]
 pub struct Visualizer {
@@ -29,7 +29,9 @@ impl Translate<TranslationUnit> for Visualizer {
                     signature,
                     definition,
                 } => {
-                    let definition = some_or!(definition, continue);
+                    let Some(definition) = definition else {
+                        continue;
+                    };
                     let subgraph = self.translate_function(name, signature, definition)?;
                     subgraphs.push(subgraph);
                 }
@@ -41,7 +43,9 @@ impl Translate<TranslationUnit> for Visualizer {
         // Add edges between subgraphs
         for (name, decl) in &source.decls {
             if let Declaration::Function { definition, .. } = decl {
-                let definition = some_or!(definition, continue);
+                let Some(definition) = definition else {
+                    continue;
+                };
 
                 for (bid, block) in &definition.blocks {
                     for (iid, instruction) in block.instructions.iter().enumerate() {

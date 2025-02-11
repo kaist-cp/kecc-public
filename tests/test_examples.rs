@@ -8,8 +8,7 @@ where
     F: Fn(&Path),
 {
     let dir = path.read_dir().expect("read_dir call failed");
-    for entry in dir {
-        let entry = ok_or!(entry, continue);
+    for entry in dir.filter_map(Result::ok) {
         let path = entry.path();
 
         if !(path.is_file() && path.extension() == Some(ext)) {
@@ -24,8 +23,7 @@ where
 fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Path, opt: &mut O) {
     let from_dir = from.read_dir().expect("read_dir call failed");
 
-    for entry in from_dir {
-        let entry = ok_or!(entry, continue);
+    for entry in from_dir.filter_map(Result::ok) {
         let from_file_path = entry.path();
 
         if !(from_file_path.is_file() && from_file_path.extension() == Some(OsStr::new("ir"))) {
@@ -34,7 +32,7 @@ fn test_opt_between_dirs<O: Optimize<ir::TranslationUnit>>(from: &Path, to: &Pat
 
         let file_name = from_file_path
             .strip_prefix(from)
-            .expect("`from_file _path` must have file name");
+            .expect("`from_file_path` must have file name");
         let to_file_path = to.join(file_name);
 
         assert!(from_file_path.is_file());
