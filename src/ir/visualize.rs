@@ -2,8 +2,8 @@
 
 use std::collections::HashMap;
 
-use crate::ir::*;
 use crate::Translate;
+use crate::ir::*;
 
 #[derive(Default, Debug)]
 pub struct Visualizer {

@@ -30,18 +30,19 @@ block b2:
   %b2:i1:unit = nop
   %b2:i2:i32 = add 2:i32 5:i32
   %b2:i3:unit = nop
-  j b3(2:i32, %b2:i2:i32)
+  j b3(2:i32, undef:i32, %b2:i2:i32)
 
 block b3:
   %b3:p0:i32:p
-  %b3:p1:i32:t1
+  %b3:p1:i32:t0
+  %b3:p2:i32:t1
   %b3:i0:unit = nop
   %b3:i1:unit = nop
   %b3:i2:i32 = load @nonce:i32*
   %b3:i3:i32 = mod %b3:i2:i32 100:i32
   %b3:i4:unit = nop
   %b3:i5:unit = nop
-  j b8(0:i32, %b3:p0:i32)
+  j b8(0:i32, %b3:p0:i32, undef:i32)
 
 block b4:
   %b4:i0:unit = nop
@@ -62,11 +63,12 @@ block b6:
   %b6:p1:i32:t0
   %b6:i0:unit = nop
   %b6:i1:unit = nop
-  j b3(%b6:p0:i32, %b6:p1:i32)
+  j b3(%b6:p0:i32, %b6:p1:i32, %b6:p1:i32)
 
 block b8:
   %b8:p0:i32:i
   %b8:p1:i32:p
+  %b8:p2:i32:t2
   %b8:i0:unit = nop
   %b8:i1:unit = nop
   %b8:i2:u1 = cmp lt %b8:p0:i32 %b3:i3:i32
@@ -92,7 +94,7 @@ block b12:
 block b13:
   %b13:i0:unit = nop
   %b13:i1:unit = nop
-  %b13:i2:i32 = add %b8:p1:i32 %b3:p1:i32
+  %b13:i2:i32 = add %b8:p1:i32 %b3:p2:i32
   %b13:i3:unit = nop
   j b14(%b13:i2:i32)
 
@@ -121,5 +123,5 @@ block b17:
   %b17:p0:i32:i
   %b17:p1:i32:t2
   %b17:i0:unit = nop
-  j b8(%b17:p0:i32, %b14:p0:i32)
+  j b8(%b17:p0:i32, %b14:p0:i32, %b17:p1:i32)
 }

@@ -426,10 +426,9 @@ impl Irgen {
     ///
     /// Returns error if the previous declearation is incompatible with `decl`.
     fn add_decl(&mut self, name: &str, decl: ir::Declaration) -> Result<(), IrgenError> {
-        let old_decl = some_or!(
-            self.decls.insert(name.to_string(), decl.clone()),
-            return Ok(())
-        );
+        let Some(old_decl) = self.decls.insert(name.to_string(), decl.clone()) else {
+            return Ok(());
+        };
 
         // Check if type is conflicting for pre-declared one
         if !old_decl.is_compatible(&decl) {
@@ -781,9 +780,7 @@ fn is_invalid_structure(dtype: &ir::Dtype, structs: &HashMap<String, Option<ir::
     if let ir::Dtype::Struct { name, fields, .. } = dtype {
         assert!(name.is_some() && fields.is_none());
         let name = name.as_ref().unwrap();
-        let struct_type = some_or!(structs.get(name), return true);
-
-        struct_type.is_none()
+        structs.get(name).is_none_or(Option::is_none)
     } else {
         false
     }

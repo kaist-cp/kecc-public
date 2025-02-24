@@ -21,7 +21,7 @@ block b1:
   %b1:p1:i32:i
   %b1:i0:unit = nop
   %b1:i1:u1 = cmp lt %b1:p1:i32 100:i32
-  br %b1:i1:u1, b2(), b3(%b1:p0:i32)
+  br %b1:i1:u1, b2(), b3(%b1:p0:i32, %b1:p1:i32)
 
 block b2:
   %b2:i0:unit = nop
@@ -31,6 +31,7 @@ block b2:
 
 block b3:
   %b3:p0:i32:sum
+  %b3:p1:i32:i
   %b3:i0:unit = nop
   ret %b3:p0:i32
 
@@ -52,7 +53,7 @@ block b5:
   %b5:i8:unit = nop
   %b5:i9:i32 = add %b0:i3:i32 2:i32
   %b5:i10:u1 = cmp eq %b5:i5:i32 %b5:i9:i32
-  br %b5:i10:u1, b3(%b5:i2:i32), b1(%b5:i2:i32, %b5:i5:i32)
+  br %b5:i10:u1, b3(%b5:i2:i32, %b5:i5:i32), b1(%b5:i2:i32, %b5:i5:i32)
 }
 
 fun i32 @main () {

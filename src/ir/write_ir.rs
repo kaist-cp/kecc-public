@@ -6,7 +6,9 @@ use crate::write_base::*;
 impl WriteLine for TranslationUnit {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
         // TODO: consider KECC IR parser in the future.
-        for (name, struct_type) in &self.structs {
+        let mut structs = self.structs.iter().collect::<Vec<_>>();
+        structs.sort_unstable_by_key(|&(name, _)| name);
+        for (name, struct_type) in structs {
             let definition = if let Some(struct_type) = struct_type {
                 let fields = struct_type
                     .get_struct_fields()

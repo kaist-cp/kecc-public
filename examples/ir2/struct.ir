@@ -1,5 +1,5 @@
-struct %t1 : { a:i8, %anon:struct %t0, c:f64 }
 struct %t0 : { b:[4 x [5 x i32]] }
+struct %t1 : { a:i8, %anon:struct %t0, c:f64 }
 
 fun unit @init (i32, i32, [5 x i32]*) {
 init:
@@ -19,10 +19,11 @@ block b0:
   %b0:i1:unit = nop
   %b0:i2:unit = nop
   %b0:i3:unit = nop
-  j b2(0:i32)
+  j b2(0:i32, undef:i32)
 
 block b2:
   %b2:p0:i32:i
+  %b2:p1:i32:j
   %b2:i0:unit = nop
   %b2:i1:unit = nop
   %b2:i2:u1 = cmp lt %b2:p0:i32 %b0:p0:i32
@@ -66,7 +67,7 @@ block b10:
   %b10:i0:unit = nop
   %b10:i1:i32 = add %b2:p0:i32 1:i32
   %b10:i2:unit = nop
-  j b2(%b10:i1:i32)
+  j b2(%b10:i1:i32, %b7:p0:i32)
 }
 
 fun i32 @main () {

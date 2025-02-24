@@ -1,15 +1,4 @@
 #[macro_export]
-/// Some or executing the given expression.
-macro_rules! some_or {
-    ($e:expr_2021, $err:expr_2021) => {{
-        match $e {
-            Some(r) => r,
-            None => $err,
-        }
-    }};
-}
-
-#[macro_export]
 /// Ok or exiting the process.
 macro_rules! ok_or_exit {
     ($e:expr_2021, $code:expr_2021) => {{
@@ -24,7 +13,7 @@ macro_rules! ok_or_exit {
 }
 
 #[macro_export]
-/// Ok or exiting the process.
+/// Some or exiting the process.
 macro_rules! some_or_exit {
     ($e:expr_2021, $code:expr_2021) => {{
         match $e {

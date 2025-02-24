@@ -45,14 +45,15 @@ block b0:
   %b0:i30:unit = nop
   %b0:i31:unit = nop
   %b0:i32:unit = nop
-  j b2(%b0:i29:i32, 0:i32)
+  j b2(%b0:i29:i32, 0:i32, undef:u1)
 
 block b2:
   %b2:p0:i32:temp
   %b2:p1:i32:i
+  %b2:p2:u1:t0
   %b2:i0:unit = nop
   %b2:i1:u1 = cmp lt %b2:p1:i32 10:i32
-  br %b2:i1:u1, b3(), b5()
+  br %b2:i1:u1, b3(), b5(%b2:p2:u1)
 
 block b3:
   %b3:i0:unit = nop
@@ -60,6 +61,7 @@ block b3:
   br %b3:i1:u1, b9(), b10()
 
 block b5:
+  %b5:p0:u1:t0
   %b5:i0:unit = nop
   switch %b2:p0:i32 default b13(%b2:p0:i32) [
     1:i32 b14()
@@ -73,7 +75,7 @@ block b7:
   %b7:i4:unit = nop
   %b7:i5:i32 = add %b2:p1:i32 1:i32
   %b7:i6:unit = nop
-  j b2(%b7:i2:i32, %b7:i5:i32)
+  j b2(%b7:i2:i32, %b7:i5:i32, %b11:p0:u1)
 
 block b9:
   %b9:i0:unit = nop
@@ -88,7 +90,7 @@ block b10:
 block b11:
   %b11:p0:u1:t0
   %b11:i0:unit = nop
-  br %b11:p0:u1, b5(), b7()
+  br %b11:p0:u1, b5(%b11:p0:u1), b7()
 
 block b13:
   %b13:p0:i32:temp

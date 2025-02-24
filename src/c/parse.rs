@@ -2,11 +2,11 @@ use core::ops::Deref;
 use std::path::Path;
 
 use lang_c::ast::*;
-use lang_c::driver::{parse, Config, Error as ParseError};
+use lang_c::driver::{Config, Error as ParseError, parse};
 use lang_c::span::Node;
 
-use crate::utils::AssertSupported;
 use crate::Translate;
+use crate::utils::AssertSupported;
 
 /// Parse Error
 #[derive(Debug)]
@@ -616,7 +616,7 @@ impl AssertSupported for AlignOf {
 }
 
 #[inline]
-pub fn is_valid_global_variable_declaration(decl: &Declaration) -> bool {
+fn is_valid_global_variable_declaration(decl: &Declaration) -> bool {
     let declarators = &decl.declarators;
 
     declarators.iter().all(|init_decl| {
@@ -629,7 +629,7 @@ pub fn is_valid_global_variable_declaration(decl: &Declaration) -> bool {
 }
 
 #[inline]
-pub fn is_valid_global_variable_initializer(initializer: &Initializer) -> bool {
+fn is_valid_global_variable_initializer(initializer: &Initializer) -> bool {
     match initializer {
         Initializer::Expression(expr) => match &expr.node {
             Expression::Constant(_) => true,

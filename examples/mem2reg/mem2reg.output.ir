@@ -85,7 +85,7 @@ block b0:
   %b0:i2:unit = nop
   switch undef:i32 default b1() [
     2:i32 b2(0:i32)
-    3:i32 b3()
+    3:i32 b3(0:i32)
   ]
 
 block b1:
@@ -99,9 +99,10 @@ block b2:
   %b2:i0:unit = nop
   %b2:i1:unit = call @sink:[ret:unit params:(i32)]*(%b2:p0:i32)
   %b2:i2:unit = nop
-  j b3()
+  j b3(200:i32)
 
 block b3:
+  %b3:p0:i32:x
   %b3:i0:unit = nop
   j b0(300:i32)
 }
@@ -139,8 +140,8 @@ block b0:
   %b0:i8:unit = nop
 
   switch undef:i32 default b1() [
-    2:i32 b2(0:i32)
-    3:i32 b3()
+    2:i32 b2(0:i32, 2:i64)
+    3:i32 b3(0:i32, 1:i16, 2:i64)
   ]
 
 block b1:
@@ -152,10 +153,11 @@ block b1:
   %b1:i4:unit = call @sink:[ret:unit params:(i32)]*(2:i64)
   %b1:i5:unit = nop
 
-  j b2(100:i32)
+  j b2(100:i32, 102:i64)
 
 block b2:
   %b2:p0:i32:x
+  %b2:p1:i64:z
 
   %b2:i0:unit = nop
   %b2:i1:unit = call @sink:[ret:unit params:(i32)]*(%b2:p0:i32)
@@ -164,9 +166,12 @@ block b2:
   %b2:i4:unit = call @sink:[ret:unit params:(i32)]*(1:i16)
   %b2:i5:unit = nop
 
-  j b3()
+  j b3(200:i32, 201:i16, %b2:p1:i64)
 
 block b3:
+  %b3:p0:i32:x
+  %b3:p1:i16:y
+  %b3:p2:i64:z
   %b3:i0:unit = nop
   %b3:i1:unit = nop
   %b3:i2:unit = nop

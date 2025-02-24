@@ -15,7 +15,7 @@ use std::hash::{Hash, Hasher};
 
 pub use dtype::{Dtype, DtypeError, HasDtype};
 use hexf_parse::{parse_hexf32, parse_hexf64};
-pub use interp::{interp, Value};
+pub use interp::{Value, interp};
 use itertools::Itertools;
 use lang_c::ast;
 use ordered_float::OrderedFloat;
@@ -192,6 +192,9 @@ pub struct Block {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
     Nop,
+    Value {
+        value: Operand,
+    },
     BinOp {
         op: ast::BinaryOperator,
         lhs: Operand,
@@ -233,6 +236,7 @@ impl HasDtype for Instruction {
     fn dtype(&self) -> Dtype {
         match self {
             Self::Nop | Self::Store { .. } => Dtype::unit(),
+            Self::Value { value } => value.dtype(),
             Self::BinOp { dtype, .. }
             | Self::UnaryOp { dtype, .. }
             | Self::Call {
@@ -316,6 +320,7 @@ impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Instruction::Nop => write!(f, "nop"),
+            Instruction::Value { value } => write!(f, "{value}"),
             Instruction::BinOp { op, lhs, rhs, .. } => {
                 write!(f, "{} {} {}", op.write_operation(), lhs, rhs)
             }
@@ -440,7 +445,7 @@ impl fmt::Display for JumpArg {
             self.bid,
             self.args
                 .iter()
-                .format_with(", ", |a, f| f(&format_args!("{}", a)))
+                .format_with(", ", |a, f| f(&format_args!("{a}")))
         )
     }
 }

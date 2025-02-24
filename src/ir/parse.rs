@@ -17,28 +17,25 @@ peg::parser! {
 
         pub rule translation_unit() -> TranslationUnit
             = _ named_structs:(named_struct() ** __) _ ds:(named_decl() ** __) _ {
-                let mut structs = HashMap::new();
-                for named_struct in &named_structs {
+                let mut structs = named_structs.iter().map(|named_struct| {
                     let name = named_struct.name.as_ref().unwrap();
                     let struct_type = &named_struct.inner;
-                    let result = structs.insert(name.clone(), struct_type.clone());
-                    assert!(result.is_none());
-                }
+                    (name.clone(), struct_type.clone())
+                }).collect::<HashMap<_,_>>();
 
                 // Resolve struct type in structs
+                // TODO: This is needed?
                 for named_struct in named_structs {
                     let name = named_struct.name.unwrap();
-                    let dtype = some_or!(structs.get(&name).unwrap(), continue);
+                    let Some(dtype) = structs.get(&name).unwrap() else {
+                        continue;
+                    };
                     if dtype.get_struct_size_align_offsets().unwrap().is_none() {
                         resolve_structs(dtype.clone(), &mut structs);
                     }
                 }
 
-                let mut decls = BTreeMap::new();
-                for decl in ds {
-                    let result = decls.insert(decl.name.unwrap(), decl.inner);
-                    assert!(result.is_none());
-                }
+                let mut decls = ds.into_iter().map(|decl| (decl.name.unwrap(), decl.inner)).collect::<BTreeMap<_,_>>();
 
                 TranslationUnit { decls, structs }
             }
@@ -211,11 +208,10 @@ peg::parser! {
 
         rule instruction() -> (BlockId, usize, Named<Instruction>)
             = "%" bid:bid() ":i" number:number() ":" dtype:dtype() name:(":" name:id() { name })? _ "=" _ instruction:instruction_inner() {
-                // TODO: The dtype of `GetElementPtr` instruction depends on the situation.
-                // Let's `ptr` has `*[5 x i32]` type, after applying `GetElementPtr` instruction,
-                // the dtype of the result can be `*i32` or `*[5 x i32]` in the current KECC.
-                // For this reason, we need to check the dtype of the result to confirm the dtype
-                // of `GetElementPtr` instruction when parsing IR.
+                // TODO: The dtype of `GetElementPtr` instruction depends on the situation. Say `ptr`
+                // has type `*[5 x i32]`, after applying `GetElementPtr`, result' dtype can currently
+                // be `*i32` or `*[5 x i32]`. Thus, we need to check the dtype of the result to confirm
+                // the dtype of `GetElementPtr` instruction when parsing IR.
                 let instruction = if let Instruction::GetElementPtr { ptr, offset, .. } = instruction {
                     Instruction::GetElementPtr { ptr, offset, dtype }
                 } else {
@@ -318,6 +314,10 @@ peg::parser! {
                     offset,
                     dtype: Dtype::unit(), // TODO
                 }
+            }
+        /
+            value:operand() {
+                Instruction::Value { value }
             }
         /
             "<instruction>" {

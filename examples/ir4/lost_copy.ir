@@ -1,0 +1,19 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  j b1(0:i32)
+
+block b1:
+  %b1:p0:i32:i
+  %b1:i0:i32 = add %b1:p0:i32 1:i32
+  %b1:i1:u1 = cmp lt %b1:i0:i32 4:i32
+  br %b1:i1:u1, b1(%b1:i0:i32), b3()
+
+block b3:
+  ret %b1:p0:i32
+}

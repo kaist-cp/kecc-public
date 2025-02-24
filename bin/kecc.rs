@@ -6,8 +6,8 @@ use std::process::{Command, Stdio};
 
 use clap::Parser;
 use kecc::{
-    ir, ok_or_exit, write, Asmgen, Deadcode, Gvn, IrParse, IrVisualizer, Irgen, Mem2reg, Optimize,
-    Parse, SimplifyCfg, Translate, O1,
+    Asmgen, Deadcode, Gvn, IrParse, IrVisualizer, Irgen, Mem2reg, O1, Optimize, Parse, SimplifyCfg,
+    Translate, ir, ok_or_exit, write,
 };
 use lang_c::ast::TranslationUnit;
 use tempfile::tempdir;

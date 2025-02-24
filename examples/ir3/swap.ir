@@ -1,0 +1,21 @@
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations: 
+
+
+block b0:
+  j b1(1:i32, 2:i32)
+
+block b1:
+  %b1:p0:i32:a
+  %b1:p1:i32:b
+  %b1:i0:u1 = cmp eq %b1:p0:i32 1:i32
+  br %b1:i0:u1, b1(%b1:p1:i32, %b1:p0:i32), b3()
+
+block b3:
+  %b3:i0:i32 = mul %b1:p1:i32 10:i32
+  %b3:i1:i32 = add %b3:i0:i32 %b1:p0:i32
+  ret %b3:i1:i32
+}

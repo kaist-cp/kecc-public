@@ -1,7 +1,8 @@
 use std::fs::{self, File};
-use std::io::{stderr, Read, Write};
+use std::io::{Read, Write, stderr};
 use std::path::Path;
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
 use lang_c::*;
 use rand::Rng;
@@ -107,7 +108,7 @@ pub fn test_irgen(path: &Path) {
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
 
-    let rand_num = rand::thread_rng().gen_range(1..100);
+    let rand_num = rand::rng().random_range(1..100);
     let new_c = modify_c(path, rand_num);
     modify_ir(&mut ir, rand_num);
 
@@ -148,17 +149,15 @@ pub fn test_irgen(path: &Path) {
         .spawn()
         .expect("failed to execute the compiled executable");
 
-    let status = some_or!(
-        child
-            .wait_timeout_ms(1000)
-            .expect("failed to obtain exit status from child process"),
-        {
-            println!("timeout occurs");
-            child.kill().unwrap();
-            let _ = child.wait().unwrap();
-            ::std::process::exit(SKIP_TEST);
-        }
-    );
+    let Some(status) = child
+        .wait_timeout(Duration::from_millis(1000))
+        .expect("failed to obtain exit status from child process")
+    else {
+        println!("timeout occurs");
+        child.kill().unwrap();
+        let _ = child.wait().unwrap();
+        ::std::process::exit(SKIP_TEST);
+    };
 
     if child
         .stderr
@@ -302,7 +301,7 @@ pub fn test_asmgen(path: &Path) {
         .translate(&ir)
         .expect("fail to create riscv assembly code");
 
-    let rand_num = rand::thread_rng().gen_range(1..100);
+    let rand_num = rand::rng().random_range(1..100);
     modify_ir(&mut ir, rand_num);
     modify_asm(&mut asm, rand_num);
 
@@ -345,17 +344,15 @@ pub fn test_asmgen(path: &Path) {
         .spawn()
         .expect("failed to execute the compiled executable");
 
-    let status = some_or!(
-        child
-            .wait_timeout_ms(1000)
-            .expect("failed to obtain exit status from child process"),
-        {
-            println!("timeout occurs");
-            child.kill().unwrap();
-            let _ = child.wait().unwrap();
-            ::std::process::exit(SKIP_TEST);
-        }
-    );
+    let Some(status) = child
+        .wait_timeout(Duration::from_millis(1000))
+        .expect("failed to obtain exit status from child process")
+    else {
+        println!("timeout occurs");
+        child.kill().unwrap();
+        let _ = child.wait().unwrap();
+        ::std::process::exit(SKIP_TEST);
+    };
 
     if child
         .stderr
@@ -425,17 +422,15 @@ pub fn test_end_to_end(path: &Path) {
         .status()
         .expect("failed to remove compiled executable");
 
-    let status = some_or!(
-        child
-            .wait_timeout_ms(1000)
-            .expect("failed to obtain exit status from child process"),
-        {
-            println!("timeout occurs");
-            child.kill().unwrap();
-            let _ = child.wait().unwrap();
-            ::std::process::exit(SKIP_TEST);
-        }
-    );
+    let Some(status) = child
+        .wait_timeout(Duration::from_millis(1000))
+        .expect("failed to obtain exit status from child process")
+    else {
+        println!("timeout occurs");
+        child.kill().unwrap();
+        let _ = child.wait().unwrap();
+        ::std::process::exit(SKIP_TEST);
+    };
 
     if child
         .stderr
@@ -508,17 +503,15 @@ pub fn test_end_to_end(path: &Path) {
         .spawn()
         .expect("failed to execute the compiled executable");
 
-    let status = some_or!(
-        child
-            .wait_timeout_ms(1000)
-            .expect("failed to obtain exit status from child process"),
-        {
-            println!("timeout occurs");
-            child.kill().unwrap();
-            let _ = child.wait().unwrap();
-            ::std::process::exit(SKIP_TEST);
-        }
-    );
+    let Some(status) = child
+        .wait_timeout(Duration::from_millis(1000))
+        .expect("failed to obtain exit status from child process")
+    else {
+        println!("timeout occurs");
+        child.kill().unwrap();
+        let _ = child.wait().unwrap();
+        ::std::process::exit(SKIP_TEST);
+    };
 
     if child
         .stderr

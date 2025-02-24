@@ -1,9 +1,10 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 use lang_c::ast;
 
 use crate::ir::HasDtype;
-use crate::{asm, ir, Translate};
+use crate::opt::opt_utils;
+use crate::{Translate, asm, ir};
 
 #[derive(Debug)]
 pub struct Asmgen {}

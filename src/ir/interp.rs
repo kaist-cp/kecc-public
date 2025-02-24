@@ -1,7 +1,6 @@
 use core::{fmt, iter, mem};
 use std::collections::HashMap;
 
-use itertools::izip;
 use ordered_float::OrderedFloat;
 use thiserror::Error;
 
@@ -184,8 +183,7 @@ impl Value {
             Dtype::Float { width, .. } => Self::float(f64::default(), *width),
             Dtype::Pointer { inner, .. } => Self::nullptr(inner.deref().clone()),
             Dtype::Array { inner, size } => {
-                let values = iter::repeat(Self::default_from_dtype(inner, structs))
-                    .take(*size)
+                let values = iter::repeat_n(Self::default_from_dtype(inner, structs), *size)
                     .collect::<Result<Vec<_>, _>>()?;
                 Self::array(inner.deref().clone(), values)
             }
@@ -605,7 +603,7 @@ mod calculator {
     }
 
     // TODO: change to template function in the future
-    pub fn calculate_binary_operator_expression(
+    pub(crate) fn calculate_binary_operator_expression(
         op: &ast::BinaryOperator,
         lhs: Value,
         rhs: Value,
@@ -675,7 +673,7 @@ mod calculator {
         }
     }
 
-    pub fn calculate_unary_operator_expression(
+    pub(crate) fn calculate_unary_operator_expression(
         op: &ast::UnaryOperator,
         operand: Value,
     ) -> Result<Value, ()> {
@@ -727,7 +725,7 @@ mod calculator {
         }
     }
 
-    pub fn calculate_typecast(value: Value, dtype: Dtype) -> Result<Value, ()> {
+    pub(crate) fn calculate_typecast(value: Value, dtype: Dtype) -> Result<Value, ()> {
         if value.dtype() == dtype {
             return Ok(value);
         }
@@ -851,7 +849,7 @@ impl Byte {
 
     fn block_from_dtype(dtype: &Dtype, structs: &HashMap<String, Option<Dtype>>) -> Vec<Self> {
         let size = dtype.size_align_of(structs).unwrap().0;
-        iter::repeat(Self::Undef).take(size).collect()
+        iter::repeat_n(Self::Undef, size).collect()
     }
 
     fn u128_to_bytes(mut value: u128, size: usize) -> Vec<u8> {
@@ -889,27 +887,25 @@ impl Byte {
                 width, is_signed, ..
             } => {
                 let size = dtype.size_align_of(structs).unwrap().0;
-                let bytes = bytes.by_ref().take(size).collect::<Vec<_>>();
-                let value = some_or!(
-                    bytes
-                        .iter()
-                        .map(|b| b.get_concrete())
-                        .collect::<Option<Vec<_>>>(),
-                    return Ok(Value::undef(dtype.clone()))
-                );
+                let Some(value) = bytes
+                    .take(size)
+                    .map(Byte::get_concrete)
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    return Ok(Value::undef(dtype.clone()));
+                };
                 let value = Self::bytes_to_u128(&value, *is_signed);
                 Ok(Value::int(value, *width, *is_signed))
             }
             Dtype::Float { width, .. } => {
                 let size = dtype.size_align_of(structs).unwrap().0;
-                let bytes = bytes.by_ref().take(size).collect::<Vec<_>>();
-                let value = some_or!(
-                    bytes
-                        .iter()
-                        .map(|b| b.get_concrete())
-                        .collect::<Option<Vec<_>>>(),
-                    return Ok(Value::undef(dtype.clone()))
-                );
+                let Some(value) = bytes
+                    .take(size)
+                    .map(Byte::get_concrete)
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    return Ok(Value::undef(dtype.clone()));
+                };
                 let value = Self::bytes_to_u128(&value, false);
                 let value = if size == Dtype::SIZE_OF_FLOAT {
                     f32::from_bits(value as u32) as f64
@@ -920,17 +916,13 @@ impl Byte {
                 Ok(Value::float(value, *width))
             }
             Dtype::Pointer { inner, .. } => {
-                let bytes = bytes
-                    .by_ref()
+                let Some(value) = bytes
                     .take(Dtype::SIZE_OF_POINTER)
-                    .collect::<Vec<_>>();
-                let value = some_or!(
-                    bytes
-                        .iter()
-                        .map(|b| b.get_pointer())
-                        .collect::<Option<Vec<_>>>(),
-                    return Ok(Value::undef(dtype.clone()))
-                );
+                    .map(Byte::get_pointer)
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    return Ok(Value::undef(dtype.clone()));
+                };
 
                 let (bid, offset, _) = value.first().expect("not empty");
 
@@ -983,13 +975,15 @@ impl Byte {
                 let bytes = bytes.by_ref().take(*size).cloned().collect::<Vec<_>>();
 
                 assert_eq!(fields.len(), offsets.len());
-                let fields = izip!(fields, offsets)
+                let fields = fields
+                    .iter()
+                    .zip(offsets)
                     .map(|(f, o)| {
                         let mut sub_bytes = bytes[*o..].iter();
                         let value = Self::bytes_to_value(&mut sub_bytes, f.deref(), structs)?;
                         Ok(Named::new(f.name().cloned(), value))
                     })
-                    .collect::<Result<Vec<_>, InterpreterError>>()?;
+                    .collect::<Result<Vec<_>, _>>()?;
 
                 Ok(Value::Struct {
                     name: name.clone(),
@@ -1010,9 +1004,9 @@ impl Byte {
             } => {
                 let size = value.dtype().size_align_of(structs).unwrap().0;
                 Self::u128_to_bytes(*int_value, size)
-                    .iter()
-                    .map(|b| Self::concrete(*b))
-                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .map(Self::concrete)
+                    .collect()
             }
             Value::Float {
                 value: float_value, ..
@@ -1025,9 +1019,9 @@ impl Byte {
                 };
 
                 Self::u128_to_bytes(value_bits, size)
-                    .iter()
-                    .map(|b| Self::concrete(*b))
-                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .map(Self::concrete)
+                    .collect()
             }
             Value::Pointer { bid, offset, .. } => (0..Dtype::SIZE_OF_POINTER)
                 .map(|i| Self::pointer(*bid, *offset, i))
@@ -1042,7 +1036,7 @@ impl Byte {
                     .iter()
                     .flat_map(|v| {
                         let mut result = Self::value_to_bytes(v, structs);
-                        result.extend(iter::repeat(Byte::Undef).take(padding));
+                        result.extend(iter::repeat_n(Byte::Undef, padding));
                         result
                     })
                     .collect()
@@ -1058,10 +1052,10 @@ impl Byte {
                     .expect("`struct_type` must be struct type")
                     .as_ref()
                     .expect("`offsets` must be `Some`");
-                let mut values = iter::repeat(Byte::Undef).take(*size_of).collect::<Vec<_>>();
+                let mut values = iter::repeat_n(Byte::Undef, *size_of).collect::<Vec<_>>();
 
                 assert_eq!(fields.len(), offsets.len());
-                izip!(fields, offsets).for_each(|(f, o)| {
+                fields.iter().zip(offsets).for_each(|(f, o)| {
                     let result = Self::value_to_bytes(f.deref(), structs);
                     let size_of_data = f.deref().dtype().size_align_of(structs).unwrap().0;
                     let _unused = values.splice(*o..(*o + size_of_data), result);
@@ -1270,7 +1264,9 @@ impl<'i> State<'i> {
         }
 
         // Execute a block exit.
-        let return_value = some_or!(self.interp_block_exit(&block.exit)?, return Ok(None));
+        let Some(return_value) = self.interp_block_exit(&block.exit)? else {
+            return Ok(None);
+        };
 
         // If it's returning from a function, pop the stack frame.
 
@@ -1288,7 +1284,9 @@ impl<'i> State<'i> {
         }
 
         // restore previous state
-        let prev_stack_frame = some_or!(self.stack.pop(), return Ok(Some(return_value)));
+        let Some(prev_stack_frame) = self.stack.pop() else {
+            return Ok(Some(return_value));
+        };
         self.stack_frame = prev_stack_frame;
 
         // create temporary register to write return value
@@ -1313,7 +1311,9 @@ impl<'i> State<'i> {
     ) -> Result<Vec<Value>, InterpreterError> {
         // Check that the dtype of each args matches the expected
         if !(args.len() == signature.params.len()
-            && izip!(args, &signature.params)
+            && args
+                .iter()
+                .zip(&signature.params)
                 .all(|(a, d)| a.dtype().set_const(false) == d.clone().set_const(false)))
         {
             panic!("dtype of args and params must be compatible")
@@ -1333,7 +1333,7 @@ impl<'i> State<'i> {
             .expect("block matched with `arg.bid` must be exist");
 
         assert_eq!(arg.args.len(), block.phinodes.len());
-        for (a, d) in izip!(&arg.args, &block.phinodes) {
+        for (a, d) in arg.args.iter().zip(&block.phinodes) {
             assert!(a.dtype().set_const(false) == d.deref().clone().set_const(false));
         }
 
@@ -1394,6 +1394,7 @@ impl<'i> State<'i> {
     fn interp_instruction(&mut self, instruction: &Instruction) -> Result<(), InterpreterError> {
         let result = match instruction {
             Instruction::Nop => Value::unit(),
+            Instruction::Value { value, .. } => self.interp_operand(value)?,
             Instruction::BinOp { op, lhs, rhs, .. } => {
                 let lhs = self.interp_operand(lhs)?;
                 let rhs = self.interp_operand(rhs)?;
@@ -1469,7 +1470,7 @@ impl<'i> State<'i> {
                     .expect("init block must exists");
 
                 if !(args.len() == block_init.phinodes.len()
-                    && izip!(args, &block_init.phinodes).all(|(a, d)| {
+                    && args.iter().zip(&block_init.phinodes).all(|(a, d)| {
                         a.dtype().set_const(false) == d.deref().clone().set_const(false)
                     }))
                 {

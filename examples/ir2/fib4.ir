@@ -26,12 +26,13 @@ block b1:
 
 block b2:
   %b2:i0:unit = nop
-  j b5(1:i32, 0:i32, 1:i32)
+  j b5(1:i32, 0:i32, 1:i32, 0:i32)
 
 block b5:
   %b5:p0:i32:i
   %b5:p1:i32:t1
   %b5:p2:i32:t2
+  %b5:p3:i32:next_term
   %b5:i0:unit = nop
   %b5:i1:unit = nop
   %b5:i2:u1 = cmp lt %b5:p0:i32 %b0:p0:i32
@@ -49,7 +50,7 @@ block b6:
   %b6:i8:unit = nop
   %b6:i9:i32 = add %b5:p0:i32 1:i32
   %b6:i10:unit = nop
-  j b5(%b6:i9:i32, %b5:p2:i32, %b6:i2:i32)
+  j b5(%b6:i9:i32, %b5:p2:i32, %b6:i2:i32, %b6:i2:i32)
 
 block b7:
   %b7:i0:unit = nop

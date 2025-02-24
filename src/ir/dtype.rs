@@ -1,16 +1,13 @@
 use core::convert::TryFrom;
 use core::fmt;
-use core::ops::Deref;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
-use itertools::izip;
 use lang_c::ast;
 use lang_c::span::Node;
 use thiserror::Error;
 
 use crate::ir::*;
-use crate::some_or;
 
 /// TODO(document)
 #[derive(Debug, PartialEq, Eq, Error)]
@@ -227,13 +224,13 @@ impl BaseDtype {
             tq => {
                 return Err(DtypeError::Misc {
                     message: format!("unsupported typq qualifier: {tq:#?}"),
-                })
+                });
             }
         }
         Ok(())
     }
 
-    pub fn apply_specifier_qualifier(
+    pub(crate) fn apply_specifier_qualifier(
         &mut self,
         typename_specifier: &ast::SpecifierQualifier,
     ) -> Result<(), DtypeError> {
@@ -247,14 +244,14 @@ impl BaseDtype {
             sq => {
                 return Err(DtypeError::Misc {
                     message: format!("unsupported specifier qualifier: {sq:#?}"),
-                })
+                });
             }
         }
 
         Ok(())
     }
 
-    pub fn apply_declaration_specifier(
+    pub(crate) fn apply_declaration_specifier(
         &mut self,
         declaration_specifier: &ast::DeclarationSpecifier,
     ) -> Result<(), DtypeError> {
@@ -271,7 +268,7 @@ impl BaseDtype {
             ds => {
                 return Err(DtypeError::Misc {
                     message: format!("unsupported declaration qualifier: {ds:#?}"),
-                })
+                });
             }
         }
 
@@ -289,7 +286,7 @@ impl BaseDtype {
     ///
     /// * `self` - Part that has been converted to 'BaseDtype' on the pointer declarator.
     /// * `pointer_qualifier` - Pointer qualifiers required to apply to 'BaseDtype' immediately.
-    pub fn apply_pointer_qualifier(
+    pub(crate) fn apply_pointer_qualifier(
         &mut self,
         pointer_qualifier: &ast::PointerQualifier,
     ) -> Result<(), DtypeError> {
@@ -300,14 +297,14 @@ impl BaseDtype {
             pq => {
                 return Err(DtypeError::Misc {
                     message: format!("unsupported pointer qualifier: {pq:#?}"),
-                })
+                });
             }
         }
 
         Ok(())
     }
 
-    pub fn apply_specifier_qualifiers(
+    pub(crate) fn apply_specifier_qualifiers(
         &mut self,
         typename_specifiers: &[Node<ast::SpecifierQualifier>],
     ) -> Result<(), DtypeError> {
@@ -318,7 +315,7 @@ impl BaseDtype {
         Ok(())
     }
 
-    pub fn apply_declaration_specifiers(
+    pub(crate) fn apply_declaration_specifiers(
         &mut self,
         declaration_specifiers: &[Node<ast::DeclarationSpecifier>],
     ) -> Result<(), DtypeError> {
@@ -445,7 +442,7 @@ impl TryFrom<BaseDtype> for Dtype {
             _ => {
                 return Err(DtypeError::Misc {
                     message: "two or more size modifiers in declaration specifiers".to_string(),
-                })
+                });
             }
         };
 
@@ -985,17 +982,18 @@ impl Dtype {
                 .expect("`offsets` must be `Some`");
 
             assert_eq!(fields.len(), offsets.len());
-            for (field, &offset) in izip!(fields, offsets) {
+            for (field, &offset) in fields.iter().zip(offsets) {
                 if let Some(name) = field.name() {
                     if name == field_name {
                         return Some((offset, field.deref().clone()));
                     }
                 } else {
                     let field_dtype = field.deref();
-                    let (offset_inner, dtype) = some_or!(
-                        field_dtype.get_offset_struct_field(field_name, structs),
-                        continue
-                    );
+                    let Some((offset_inner, dtype)) =
+                        field_dtype.get_offset_struct_field(field_name, structs)
+                    else {
+                        continue;
+                    };
                     return Some((offset + offset_inner, dtype));
                 }
             }

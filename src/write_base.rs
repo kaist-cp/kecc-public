@@ -1,12 +1,12 @@
 use std::io::{Result, Write};
 
 /// Write `indent` number of double spaces to `write`.
-pub fn write_indent(indent: usize, write: &mut dyn Write) -> Result<()> {
+pub(crate) fn write_indent(indent: usize, write: &mut dyn Write) -> Result<()> {
     write!(write, "{}", "  ".repeat(indent))
 }
 
 /// A trait for writing a type to a `Write` stream with a new line.
-pub trait WriteLine {
+pub(crate) trait WriteLine {
     /// Write `self` to `write`, starting at `indent` number of double spaces, with a newline at the
     /// end.
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()>;
@@ -15,7 +15,7 @@ pub trait WriteLine {
 /// Essentially the same as [`ToString`].
 ///
 /// Exists to make some foreign types into a string.
-pub trait WriteString {
+pub(crate) trait WriteString {
     /// See [`ToString::to_string`].
     fn write_string(&self) -> String;
 }
@@ -44,6 +44,6 @@ impl<T: WriteString> WriteString for Option<T> {
 }
 
 /// Write `t` to `write`.
-pub fn write<T: WriteLine>(t: &T, write: &mut dyn Write) -> Result<()> {
+pub(crate) fn write<T: WriteLine>(t: &T, write: &mut dyn Write) -> Result<()> {
     t.write_line(0, write)
 }
