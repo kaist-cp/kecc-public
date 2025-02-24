@@ -1,4 +1,4 @@
-int nonce = 1; // For random input
+int nonce = 1;  // For random input
 
 int main() {
     int i;
@@ -8,8 +8,11 @@ int main() {
     int loop_num = nonce % 100;
 
     for (i = 0; i < loop_num; ((i % 2) ? (i += 2) : ++i)) {
-        if (i % 2) { p += q; }
-        else { p += r; } 
+        if (i % 2) {
+            p += q;
+        } else {
+            p += r;
+        }
     }
 
     return p;

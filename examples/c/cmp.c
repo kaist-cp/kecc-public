@@ -1,11 +1,15 @@
 int int_greater_than(int i, unsigned int j) {
-    if (i > j) return 1;
-    else return 0;
+    if (i > j)
+        return 1;
+    else
+        return 0;
 }
 
 int char_greater_than(char i, unsigned char j) {
-    if (i > j) return 1;
-    else return 0;
+    if (i > j)
+        return 1;
+    else
+        return 0;
 }
 
 int main() {

@@ -71,12 +71,11 @@ fn modify_asm(unit: &mut asm::Asm, rand_num: i32) {
 }
 
 // Rust sets an exit code of 101 when the process panicked.
-// So, we decide KECC sets an exit code of 102 after 101 when the test skipped.
+// Set exit code of 102 after 101 to denote that the test skipped.
 const SKIP_TEST: i32 = 102;
 
 /// Tests write_c.
 pub fn test_write_c(path: &Path) {
-    // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
     let unit = Parse
         .translate(&path)
@@ -91,9 +90,17 @@ pub fn test_write_c(path: &Path) {
     let new_unit = Parse
         .translate(&temp_file_path.as_path())
         .expect("parse failed while parsing the output from implemented printer");
-    drop(temp_file);
-    c::assert_ast_equiv(&unit, &new_unit);
-    temp_dir.close().expect("temp dir deletion failed");
+
+    if !unit.is_equiv(&new_unit) {
+        let mut buf = String::new();
+        // FIXME: For some reason we cannot reuse `temp_file`.
+        let _ = File::open(&temp_file_path)
+            .unwrap()
+            .read_to_string(&mut buf)
+            .unwrap();
+
+        panic!("[write-c] Failed to correctly write {path:?}.\n\n[incorrect result]\n\n{buf}");
+    }
 }
 
 /// Tests irgen.
@@ -171,12 +178,10 @@ pub fn test_irgen(path: &Path) {
     }
 
     let status = some_or_exit!(status.code(), SKIP_TEST);
-    drop(temp_file);
-    temp_dir.close().expect("temp dir deletion failed");
 
     // Interpret resolved ir
     let args = Vec::new();
-    let result = ir::interp(&ir, args).unwrap_or_else(|interp_error| panic!("{}", interp_error));
+    let result = ir::interp(&ir, args).unwrap_or_else(|interp_error| panic!("{interp_error}"));
     // We only allow a main function whose return type is `int`
     let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
     assert_eq!(width, 32);
@@ -187,7 +192,12 @@ pub fn test_irgen(path: &Path) {
     // typecasted to `unsigned char`. However, during `creduce` to reduce the code, typecasting may
     // be nullified. So, we truncate the result value to byte size one more time here.
     println!("clang (expected): {}, kecc: {}", status as u8, value as u8);
-    assert_eq!(status as u8, value as u8);
+    if status as u8 != value as u8 {
+        stderr().lock().write_fmt(format_args!(
+            "[irgen] Failed to correctly generate {path:?}.\n\n [incorrect ir]"
+        ));
+        write(&ir, &mut stderr()).unwrap();
+    }
 }
 
 /// Tests irparse.

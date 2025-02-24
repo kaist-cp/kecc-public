@@ -67,4 +67,4 @@ pub use opt::{
 };
 pub use tests::*;
 pub use utils::*;
-pub(crate) use write_base::write;
+pub use write_base::write;

@@ -1,9 +1,9 @@
 typedef struct {
-  char a;
-  struct {
-    int b[4][5];
-  };
-  double c;
+    char a;
+    struct {
+        int b[4][5];
+    };
+    double c;
 } Temp;
 
 void init(int row, int col, int arr[4][5]) {
@@ -21,6 +21,6 @@ int main() {
 
     Temp temp2;
     temp2 = temp;
-    
+
     return temp2.b[2][3] == 6;
 }

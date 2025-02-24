@@ -1,6 +1,9 @@
-int foo(int x, int y, int z){
-    if (x == y) { return y; }
-    else { return z; }
+int foo(int x, int y, int z) {
+    if (x == y) {
+        return y;
+    } else {
+        return z;
+    }
 }
 
 int main() {

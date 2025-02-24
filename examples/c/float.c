@@ -14,22 +14,22 @@ double average(int len, int a[10]) {
     int sum = 0;
     int i;
 
-    for(i = 0; i < len; i++) {
+    for (i = 0; i < len; i++) {
         sum += a[i];
     }
 
-    return (double) sum / len;
+    return (double)sum / len;
 }
 
 int main() {
     int a[10];
     int len = 10;
-    
+
     for (int i = 0; i < len; i++) {
         a[i] = i;
     }
 
     float avg = average(len, a);
-    
+
     return is_close(avg, 4.5, 1e-09, 0.1);
 }

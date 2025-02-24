@@ -1,4 +1,4 @@
-int nonce = 1; // For random input
+int nonce = 1;  // For random input
 
 int fibonacci(int n) {
     if (n < 2) {

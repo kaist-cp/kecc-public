@@ -1,11 +1,11 @@
-int nonce = 1; // For random input
+int nonce = 1;  // For random input
 int g = 10;
 
 int foo(int, int k);
 
 int main() {
     int i = g;
-    
+
     return foo(i, i);
 }
 

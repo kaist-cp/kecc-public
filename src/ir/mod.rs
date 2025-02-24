@@ -192,6 +192,7 @@ pub struct Block {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
     Nop,
+    // TODO: Explain what this is, why this is needed.
     Value {
         value: Operand,
     },

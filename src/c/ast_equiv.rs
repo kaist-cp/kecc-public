@@ -522,13 +522,3 @@ impl IsEquiv for AlignOf {
         self.0.is_equiv(&other.0)
     }
 }
-
-pub(crate) fn assert_ast_equiv(lhs: &TranslationUnit, rhs: &TranslationUnit) {
-    if !lhs.is_equiv(rhs) {
-        panic!(
-            r#"assertion failed: `(left.is_equiv(right))`
-             left: `{lhs:?}`,
-            right: `{rhs:?}`"#
-        )
-    }
-}

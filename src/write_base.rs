@@ -6,7 +6,7 @@ pub(crate) fn write_indent(indent: usize, write: &mut dyn Write) -> Result<()> {
 }
 
 /// A trait for writing a type to a `Write` stream with a new line.
-pub(crate) trait WriteLine {
+pub trait WriteLine {
     /// Write `self` to `write`, starting at `indent` number of double spaces, with a newline at the
     /// end.
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()>;
@@ -44,6 +44,6 @@ impl<T: WriteString> WriteString for Option<T> {
 }
 
 /// Write `t` to `write`.
-pub(crate) fn write<T: WriteLine>(t: &T, write: &mut dyn Write) -> Result<()> {
+pub fn write<T: WriteLine>(t: &T, write: &mut dyn Write) -> Result<()> {
     t.write_line(0, write)
 }

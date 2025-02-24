@@ -18,6 +18,7 @@ impl<T: WriteString> WriteString for Node<T> {
 }
 
 impl WriteLine for TranslationUnit {
+    /// VERY BIG HINT: You should start by understanding the [`writeln!`](https://doc.rust-lang.org/std/macro.writeln.html) macro.
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
         todo!()
     }

@@ -1,4 +1,4 @@
-int (fibonacci)(int n) {
+int fibonacci(int n) {
     if (n < 2) {
         n += 2;
     }
