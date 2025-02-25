@@ -90,7 +90,7 @@ fn test_examples_write_c() {
     test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {
         if !path.to_str().unwrap().contains(HELLO_MAIN) {
             println!("[testing write_c for {path:?}]");
-            test_write_c(path)
+            test_write_c(path);
         }
     });
 }
@@ -103,7 +103,7 @@ fn test_examples_irgen_small() {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
         if !IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) && !path_str.contains(HELLO_MAIN) {
             println!("[testing irgen for {path:?}]");
-            test_irgen(path)
+            test_irgen(path);
         }
     });
 }
@@ -114,7 +114,7 @@ fn test_examples_irgen_large() {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
         if IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) && !path_str.contains(HELLO_MAIN) {
             println!("[testing irgen for {path:?}]");
-            test_irgen(path)
+            test_irgen(path);
         }
     });
 }
@@ -217,7 +217,7 @@ fn test_examples_asmgen_small() {
         test_dir(Path::new(dir), OsStr::new("ir"), |path| {
             if path.to_str().unwrap().contains(HELLO_MAIN) {
                 println!("[testing asmgen for {path:?}]");
-                test_asmgen(path)
+                test_asmgen(path);
             }
         });
     }
@@ -231,7 +231,7 @@ fn test_examples_asmgen_small() {
             if !ASMGEN_SMALL_TEST_IGNORE_LIST.contains(file_name) && !file_name.contains(HELLO_MAIN)
             {
                 println!("[testing asmgen for {path:?}]");
-                test_asmgen(path)
+                test_asmgen(path);
             }
         });
     }
@@ -249,7 +249,7 @@ fn test_examples_asmgen_large() {
             if ASMGEN_SMALL_TEST_IGNORE_LIST.contains(file_name) && !file_name.contains(HELLO_MAIN)
             {
                 println!("[testing asmgen for {path:?}]");
-                test_asmgen(path)
+                test_asmgen(path);
             }
         });
     }
@@ -257,5 +257,8 @@ fn test_examples_asmgen_large() {
 
 #[test]
 fn test_examples_end_to_end() {
-    test_dir(Path::new("examples/c"), OsStr::new("c"), test_end_to_end);
+    test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {
+        println!("[testing end-to-end for {path:?}]");
+        test_end_to_end(path);
+    });
 }

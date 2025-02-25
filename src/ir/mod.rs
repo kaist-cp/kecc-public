@@ -192,7 +192,11 @@ pub struct Block {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
     Nop,
-    // TODO: Explain what this is, why this is needed.
+    /// A value, used for "simple copy".
+    ///
+    /// This is only used during phi elimination for Asmgen. You can ignore this before that. In
+    /// particular, you will need this instruction to properly generate assembly for `lost_copy.c`
+    /// and `swap.c`.
     Value {
         value: Operand,
     },

@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::io::{Read, Write, stderr};
+use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Duration;
@@ -193,10 +193,13 @@ pub fn test_irgen(path: &Path) {
     // be nullified. So, we truncate the result value to byte size one more time here.
     println!("clang (expected): {}, kecc: {}", status as u8, value as u8);
     if status as u8 != value as u8 {
-        stderr().lock().write_fmt(format_args!(
+        let mut stderr = io::stderr().lock();
+        stderr.write_fmt(format_args!(
             "[irgen] Failed to correctly generate {path:?}.\n\n [incorrect ir]"
         ));
-        write(&ir, &mut stderr()).unwrap();
+        write(&ir, &mut stderr).unwrap();
+        drop(stderr);
+        panic!("[irgen]");
     }
 }
 
@@ -277,23 +280,20 @@ pub fn test_opt<P1: AsRef<Path>, P2: AsRef<Path>, O: Optimize<ir::TranslationUni
     let _ = opt.optimize(&mut ir);
 
     if !ir.is_equiv(&to) {
-        stderr()
-            .lock()
+        let mut stderr = io::stderr().lock();
+        stderr
             .write_fmt(format_args!(
                 "[test_opt] actual outcome mismatches with the expected outcome.\n\n[before opt]"
             ))
             .unwrap();
-        write(&from, &mut stderr()).unwrap();
-        stderr()
-            .lock()
-            .write_fmt(format_args!("\n[after opt]"))
-            .unwrap();
-        write(&ir, &mut stderr()).unwrap();
-        stderr()
-            .lock()
+        write(&from, &mut stderr).unwrap();
+        stderr.write_fmt(format_args!("\n[after opt]")).unwrap();
+        write(&ir, &mut stderr).unwrap();
+        stderr
             .write_fmt(format_args!("\n[after opt (expected)]"))
             .unwrap();
-        write(&to, &mut stderr()).unwrap();
+        write(&to, &mut stderr).unwrap();
+        drop(stderr);
         panic!("[test_opt]");
     }
 }
