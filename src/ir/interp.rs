@@ -5,7 +5,6 @@ use ordered_float::OrderedFloat;
 use thiserror::Error;
 
 use crate::ir::*;
-use crate::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {

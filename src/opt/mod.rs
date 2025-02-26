@@ -1,5 +1,3 @@
-use crate::*;
-
 mod deadcode;
 mod gvn;
 mod mem2reg;

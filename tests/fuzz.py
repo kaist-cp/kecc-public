@@ -51,28 +51,6 @@ CSMITH_DIR = "csmith-2.3.0"
 SKIP_TEST = 102
 
 
-class ProgressBar:
-    def __init__(self):
-        self.stage = 0
-        self.stage_indicators = [
-            "-",
-            "\\",
-            "|",
-            "/",
-        ]
-        self.pbar = tqdm.tqdm(
-            total=1, bar_format="{l_bar}{bar}| [Elapsed:{elapsed}, <ETA:{remaining}]"
-        )
-        self.last_progress = 0
-
-    def print_progressbar(self, progress):
-        indicator = self.stage_indicators[self.stage % len(self.stage_indicators)]
-        self.stage += 1
-        self.pbar.set_description(indicator)
-        self.pbar.update(progress - self.last_progress)
-        self.last_progress = progress
-
-
 def execute_command(command, cwd=None):
     try:
         process = subprocess.Popen(
@@ -300,17 +278,6 @@ def creduce(tests_dir, fuzz_arg, analyze):
         proc = subprocess.Popen(
             args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir
         )
-        pbar = ProgressBar()
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
-            line = line.decode()
-            if "%" in line:
-                try:
-                    pbar.print_progressbar(abs(float(line[1 : line.index("%")])) / 100)
-                except:
-                    pass  # This is for potential error
         (out, err) = proc.communicate()
         if proc.returncode != 0:
             print(out.decode())
@@ -456,8 +423,6 @@ if __name__ == "__main__":
         )
 
     if args.reduce:
-        import tqdm
-
         creduce(tests_dir, fuzz_arg, args.clang_analyze)
     else:
         fuzz(tests_dir, fuzz_arg, args.num, args.easy)

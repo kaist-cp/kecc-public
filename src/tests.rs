@@ -194,9 +194,11 @@ pub fn test_irgen(path: &Path) {
     println!("clang (expected): {}, kecc: {}", status as u8, value as u8);
     if status as u8 != value as u8 {
         let mut stderr = io::stderr().lock();
-        stderr.write_fmt(format_args!(
-            "[irgen] Failed to correctly generate {path:?}.\n\n [incorrect ir]"
-        ));
+        stderr
+            .write_fmt(format_args!(
+                "[irgen] Failed to correctly generate {path:?}.\n\n [incorrect ir]"
+            ))
+            .unwrap();
         write(&ir, &mut stderr).unwrap();
         drop(stderr);
         panic!("[irgen]");

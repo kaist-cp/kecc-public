@@ -3,9 +3,9 @@ use std::path::Path;
 
 use lang_c::*;
 
+use crate::Translate;
 use crate::ir::*;
 use crate::utils::AssertSupported;
-use crate::{Translate, *};
 
 peg::parser! {
     grammar ir_parse() for str {
