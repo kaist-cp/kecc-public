@@ -1,0 +1,255 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`rust-peg` is a simple yet flexible parser generator that makes it easy to write robust parsers. Based on the Parsing Expression Grammar formalism, it provides a Rust macro that builds a recursive descent parser from a concise definition of the grammar."><title>peg - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="peg" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../peg/index.html">peg</a><span class="version">0.8.4</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#features" title="Features">Features</a></li><li><a href="#overview" title="Overview">Overview</a></li><li><a href="#example" title="Example">Example</a></li><li><a href="#expression-reference" title="Expression Reference">Expression Reference</a><ul><li><a href="#atoms" title="Atoms">Atoms</a></li><li><a href="#combining" title="Combining">Combining</a></li><li><a href="#repetition" title="Repetition">Repetition</a></li><li><a href="#special" title="Special">Special</a></li></ul></li><li><a href="#expression-details" title="Expression details">Expression details</a><ul><li><a href="#pattern-expressions" title="Pattern expressions">Pattern expressions</a></li><li><a href="#repeat-ranges" title="Repeat ranges">Repeat ranges</a></li><li><a href="#precedence-climbing" title="Precedence climbing">Precedence climbing</a></li></ul></li><li><a href="#input-types" title="Input types">Input types</a></li><li><a href="#end-of-file-handling" title="End-of-file handling">End-of-file handling</a></li><li><a href="#rule-parameters" title="Rule parameters">Rule parameters</a></li><li><a href="#failure-reporting" title="Failure reporting">Failure reporting</a></li><li><a href="#imports" title="Imports">Imports</a></li><li><a href="#rustdoc-comments" title="Rustdoc comments">Rustdoc comments</a></li><li><a href="#caching-and-left-recursion" title="Caching and left recursion">Caching and left recursion</a></li><li><a href="#tracing" title="Tracing">Tracing</a></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#macros" title="Macros">Macros</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>peg</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/peg/lib.rs.html#1-350">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>rust-peg</code> is a simple yet flexible parser generator that makes it easy to
+write robust parsers. Based on the <a href="https://en.wikipedia.org/wiki/Parsing_expression_grammar">Parsing Expression
+Grammar</a> formalism, it provides a Rust macro that builds a
+recursive descent parser from a concise definition of the grammar.</p>
+<h3 id="features"><a class="doc-anchor" href="#features">§</a>Features</h3>
+<ul>
+<li>Parse input from <code>&amp;str</code>, <code>&amp;[u8]</code>, <code>&amp;[T]</code> or custom types implementing
+traits</li>
+<li>Customizable reporting of parse errors</li>
+<li>Rules can accept arguments to create reusable rule templates</li>
+<li>Precedence climbing for prefix/postfix/infix expressions</li>
+<li>Helpful <code>rustc</code> error messages for errors in the grammar definition or the
+Rust code embedded within it</li>
+<li>Rule-level tracing to debug grammars</li>
+</ul>
+<h3 id="overview"><a class="doc-anchor" href="#overview">§</a>Overview</h3>
+<p>The <code>peg::parser!{}</code> macro encloses a <code>grammar NAME() for INPUT_TYPE { ... }</code> definition containing a set of rules which match components of your
+language.</p>
+<p>Rules are defined with <code>rule NAME(PARAMETERS) -&gt; RETURN_TYPE = PEG_EXPR</code>.
+The body of the rule, following the <code>=</code>, is a PEG expression, definining how
+the input is matched to produce a value.</p>
+<p>PEG expressions are evaluated at a particular position of the input. When an
+expression matches, it advances the position and optionally returns a value.
+The expression syntax and behavior is <a href="#expression-reference">documented
+below</a>.</p>
+<p>The macro expands to a Rust <code>mod</code> containing a function for each rule marked
+<code>pub</code> in the grammar. To parse an input sequence, call one of these
+functions. The call returns a <code>Result&lt;T, ParseError&gt;</code> carrying either the
+successfully parsed value returned by the rule, or a <code>ParseError</code> containing
+the failure position and the set of tokens expected there.</p>
+<h3 id="example"><a class="doc-anchor" href="#example">§</a>Example</h3>
+<p>Parse a comma-separated list of numbers surrounded by brackets into a <code>Vec&lt;u32&gt;</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">peg::parser!</span>{
+  grammar list_parser() <span class="kw">for </span>str {
+    rule number() -&gt; u32
+      = n:$([<span class="string">'0'</span>..=<span class="string">'9'</span>]+) {<span class="question-mark">? </span>n.parse().or(<span class="prelude-val">Err</span>(<span class="string">"u32"</span>)) }
+
+    <span class="kw">pub </span>rule list() -&gt; Vec&lt;u32&gt;
+      = <span class="string">"[" </span>l:(number() <span class="kw-2">*</span>* <span class="string">","</span>) <span class="string">"]" </span>{ l }
+  }
+}
+
+<span class="kw">pub fn </span>main() {
+    <span class="macro">assert_eq!</span>(list_parser::list(<span class="string">"[1,1,2,3,5,8]"</span>), <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">8</span>]));
+}</code></pre></div>
+<h3 id="expression-reference"><a class="doc-anchor" href="#expression-reference">§</a>Expression Reference</h3><h4 id="atoms"><a class="doc-anchor" href="#atoms">§</a>Atoms</h4>
+<ul>
+<li><code>"keyword"</code> - <em>Literal:</em> match a literal string.</li>
+<li><code>['0'..='9']</code>  - <em>Pattern:</em> match a single element that matches a Rust <code>match</code>-style
+pattern. <a href="#pattern-expressions">(details)</a></li>
+<li><code>[^ '0'..='9']</code>  - <em>Inverted pattern:</em> match a single element that does not match a Rust <code>match</code>-style
+pattern. <a href="#pattern-expressions">(details)</a></li>
+<li><code>some_rule()</code> - <em>Rule:</em> match a rule defined elsewhere in the grammar and return its
+result. Arguments in the parentheses are Rust expressions.</li>
+<li><code>_</code> or <code>__</code> or <code>___</code> - <em>Rule (underscore):</em> As a special case, rule names
+consisting of underscores can be defined and invoked without parentheses. These are
+conventionally used to match whitespace between tokens.</li>
+<li><code>(e)</code> - <em>Parentheses:</em> wrap an expression into a group to override
+normal precedence. Returns the same value as the inner expression. (Use
+an <em>Action</em> block to set the return value for a sequence).</li>
+</ul>
+<h4 id="combining"><a class="doc-anchor" href="#combining">§</a>Combining</h4>
+<ul>
+<li><code>e1 e2 e3</code> - <em>Sequence:</em> match expressions in sequence (<code>e1</code> followed by <code>e2</code> followed by
+<code>e3</code>), ignoring the return values.</li>
+<li><code>a:e1 e2 b:e3 c:e4 { rust }</code> - <em>Action:</em> match <code>e1</code>, <code>e2</code>, <code>e3</code>, <code>e4</code> in
+sequence, like above. If they match successfully, run the Rust code in
+the block and return its return value. The variable names before the
+colons in the sequence are bound to the results of the
+corresponding expressions. It is important that the Rust code embedded
+in the grammar is deterministic and free of side effects, as it may be
+called multiple times.</li>
+<li><code>a:e1 b:e2 c:e3 {? rust }</code> - <em>Conditional action:</em> Like above, but the
+Rust block returns a <code>Result&lt;T, &amp;str&gt;</code> instead of a value directly. On
+<code>Ok(v)</code>, it matches successfully and returns <code>v</code>. On <code>Err(e)</code>, the match
+of the entire expression fails and it tries alternatives or reports a
+parse failure with the <code>&amp;str</code> <code>e</code>.</li>
+<li><code>e1 / e2 / e3</code> - <em>Ordered choice:</em> try to match <code>e1</code>. If the match succeeds, return its
+result, otherwise try <code>e2</code>, and so on.</li>
+</ul>
+<h4 id="repetition"><a class="doc-anchor" href="#repetition">§</a>Repetition</h4>
+<ul>
+<li><code>expression?</code> - <em>Optional:</em> match zero or one repetitions of <code>expression</code>. Returns an
+<code>Option</code>.</li>
+<li><code>expression*</code> - <em>Repeat:</em> match zero or more repetitions of <code>expression</code> and return the
+results as a <code>Vec</code>.</li>
+<li><code>expression+</code> - <em>One-or-more:</em> match one or more repetitions of <code>expression</code> and return the
+results as a <code>Vec</code>.</li>
+<li><code>expression*&lt;n,m&gt;</code> - <em>Range repeat:</em> match between <code>n</code> and <code>m</code> repetitions of <code>expression</code>
+return the results as a <code>Vec</code>. <a href="#repeat-ranges">(details)</a></li>
+<li><code>expression ** delim</code> - <em>Delimited repeat:</em> match zero or more repetitions of <code>expression</code>
+delimited with <code>delim</code> and return the results as a <code>Vec</code>.</li>
+<li><code>expression **&lt;n,m&gt; delim</code> - <em>Delimited repeat (range):</em> match between <code>n</code> and <code>m</code> repetitions of <code>expression</code>
+delimited with <code>delim</code> and return the results as a <code>Vec</code>. <a href="#repeat-ranges">(details)</a></li>
+<li><code>expression ++ delim</code> - <em>Delimited repeat (one or more):</em> match one or more repetitions of <code>expression</code>
+delimited with <code>delim</code> and return the results as a <code>Vec</code>.</li>
+</ul>
+<h4 id="special"><a class="doc-anchor" href="#special">§</a>Special</h4>
+<ul>
+<li><code>$(e)</code> - <em>Slice:</em> match the expression <code>e</code>, and return the slice of the input
+corresponding to the match.</li>
+<li><code>&amp;e</code> - <em>Positive lookahead:</em> Match only if <code>e</code> matches at this position,
+without consuming any characters.</li>
+<li><code>!e</code> - <em>Negative lookahead:</em> Match only if <code>e</code> does not match at this
+position, without consuming any characters.</li>
+<li><code>position!()</code> - return a <code>usize</code> representing the current offset into
+the input without consuming anything.</li>
+<li><code>quiet!{ e }</code> - match the expression <code>e</code>, but don’t report literals within it as “expected” in
+error messages.</li>
+<li><code>expected!("something")</code> - fail to match, and report the specified string as expected
+at the current location.</li>
+<li><code>precedence!{ ... }</code> - Parse infix, prefix, or postfix expressions by precedence climbing.
+<a href="#precedence-climbing">(details)</a></li>
+</ul>
+<h3 id="expression-details"><a class="doc-anchor" href="#expression-details">§</a>Expression details</h3><h4 id="pattern-expressions"><a class="doc-anchor" href="#pattern-expressions">§</a>Pattern expressions</h4>
+<p>The <code>[pat]</code> syntax expands into a <a href="https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html">Rust <code>match</code>
+pattern</a> against the next character
+(or element) of the input.</p>
+<p>When the pattern begins with <code>^</code>, the matching behavior is inverted:
+the expression succeeds only if the pattern does <em>not</em> match.
+<code>[^' ']</code> matches any character other than a space.</p>
+<p>To match sets of characters, use Rust’s <code>..=</code> inclusive range pattern
+syntax and <code>|</code> to match multiple patterns. For example <code>['a'..='z' | 'A'..='Z']</code> matches an
+upper or lower case ASCII alphabet character.</p>
+<p>If your input type is a slice of an enum type, a pattern could match an enum variant like
+<code>[Token::Operator('+')]</code>.</p>
+<p>Variables captured by the pattern are accessible in a subsequent action
+block: <code>[Token::Integer(i)] { i }</code>.</p>
+<p>The pattern expression also evaluates to the matched element, which can be
+captured into a variable or used as the return value of a rule: <code>c:['+'|'-']</code>.</p>
+<p>Like Rust <code>match</code>, pattern expressions support guard expressions:
+<code>[c if c.is_ascii_digit()]</code>.</p>
+<p><code>[_]</code> matches any single element. As this always matches except at end-of-file, combining it
+with negative lookahead as <code>![_]</code> is the idiom for matching EOF in PEG.</p>
+<h4 id="repeat-ranges"><a class="doc-anchor" href="#repeat-ranges">§</a>Repeat ranges</h4>
+<p>The repeat operators <code>*</code> and <code>**</code> can be followed by an optional range specification of the
+form <code>&lt;n&gt;</code> (exact), <code>&lt;n,&gt;</code> (min-inclusive), <code>&lt;,m&gt;</code> (max-inclusive) or <code>&lt;n,m&gt;</code> (range-inclusive), where <code>n</code> and <code>m</code> are either
+integers, or a Rust <code>usize</code> expression enclosed in <code>{}</code>.</p>
+<h4 id="precedence-climbing"><a class="doc-anchor" href="#precedence-climbing">§</a>Precedence climbing</h4>
+<p><code>precedence!{ rules... }</code> provides a convenient way to parse infix, prefix, and postfix
+operators using the <a href="http://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing">precedence
+climbing</a>
+algorithm.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">pub </span>rule arithmetic() -&gt; i64 = <span class="macro">precedence!</span>{
+  x:(@) <span class="string">"+" </span>y:@ { x + y }
+  x:(@) <span class="string">"-" </span>y:@ { x - y }
+  --
+  x:(@) <span class="string">"*" </span>y:@ { x * y }
+  x:(@) <span class="string">"/" </span>y:@ { x / y }
+  --
+  x:@ <span class="string">"^" </span>y:(@) { x.pow(y <span class="kw">as </span>u32) }
+  --
+  n:number() { n }
+  <span class="string">"(" </span>e:arithmetic() <span class="string">")" </span>{ e }
+}</code></pre></div>
+<p>Each <code>--</code> introduces a new precedence level that binds more tightly than previous precedence
+levels. The levels consist of one or more operator rules each followed by a Rust action
+expression.</p>
+<p>The <code>(@)</code> and <code>@</code> are the operands, and the parentheses indicate associativity. An operator
+rule beginning and ending with <code>@</code> is an infix expression. Prefix and postfix rules have one
+<code>@</code> at the beginning or end, and atoms do not include <code>@</code>.</p>
+<h3 id="input-types"><a class="doc-anchor" href="#input-types">§</a>Input types</h3>
+<p>The first line of the grammar declares an input type. This is normally
+<code>str</code>, but  <code>rust-peg</code> handles input types through a series of traits. The
+library comes with implementations for <code>str</code>, <code>[u8]</code>, and <code>[T]</code>. Define the
+traits below to use your own types as input to <code>peg</code> grammars:</p>
+<ul>
+<li><a href="trait.Parse.html" title="trait peg::Parse"><code>Parse</code></a> is the base trait required for all inputs. The others are only required to use the
+corresponding expressions.</li>
+<li><a href="trait.ParseElem.html" title="trait peg::ParseElem"><code>ParseElem</code></a> implements the <code>[_]</code> pattern operator, with a method returning the next item of
+the input to match.</li>
+<li><a href="trait.ParseLiteral.html" title="trait peg::ParseLiteral"><code>ParseLiteral</code></a> implements matching against a <code>"string"</code> literal.</li>
+<li><a href="trait.ParseSlice.html" title="trait peg::ParseSlice"><code>ParseSlice</code></a> implements the <code>$()</code> operator, returning a slice from a span of indexes.</li>
+</ul>
+<p>As a more complex example, the body of the <code>peg::parser!{}</code> macro itself is
+parsed with <code>peg</code>, using a <a href="https://github.com/kevinmehall/rust-peg/blob/master/peg-macros/tokens.rs">definition of these traits</a>
+for a type that wraps Rust’s <code>TokenTree</code>.</p>
+<h3 id="end-of-file-handling"><a class="doc-anchor" href="#end-of-file-handling">§</a>End-of-file handling</h3>
+<p>Normally, parsers report an error if the top-level rule matches without consuming all the input.
+To allow matching a prefix of the input, add the <code>#[no_eof]</code> attribute before <code>pub rule</code>.
+Take care to not miss a malformed <code>x</code> at the last position if the rule ends with a <code>x()*</code>
+repeat expression.</p>
+<h3 id="rule-parameters"><a class="doc-anchor" href="#rule-parameters">§</a>Rule parameters</h3>
+<p>Rules can be parameterized with types, lifetimes, and values, just like Rust functions.</p>
+<p>In addition to Rust values, rules can also accept PEG expression fragments as arguments by using
+<code>rule&lt;R&gt;</code> as a parameter type. When calling such a rule, use <code>&lt;&gt;</code> around a PEG expression in the
+argument list to capture the expression and pass it to the rule.</p>
+<p>For example:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>rule num_radix(radix: u32) -&gt; u32
+  = n:$([<span class="string">'0'</span>..=<span class="string">'9'</span>]+) {<span class="question-mark">? </span>u32::from_str_radix(n, radix).or(<span class="prelude-val">Err</span>(<span class="string">"number"</span>)) }
+
+rule list&lt;T&gt;(x: rule&lt;T&gt;) -&gt; Vec&lt;T&gt; = <span class="string">"[" </span>v:(x() <span class="kw-2">*</span>* <span class="string">","</span>) <span class="string">","</span><span class="question-mark">? </span><span class="string">"]" </span>{v}
+
+<span class="kw">pub </span>rule octal_list() -&gt; Vec&lt;u32&gt; = list(&lt;num_radix(<span class="number">8</span>)&gt;)</code></pre></div>
+<h3 id="failure-reporting"><a class="doc-anchor" href="#failure-reporting">§</a>Failure reporting</h3>
+<p>When a match fails, position information is automatically recorded to report a set of
+“expected” tokens that would have allowed the parser to advance further.</p>
+<p>Some rules should never appear in error messages, and can be suppressed with <code>quiet!{e}</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>rule whitespace() = <span class="macro">quiet!</span>{[<span class="string">' ' </span>| <span class="string">'\n' </span>| <span class="string">'\t'</span>]+}</code></pre></div>
+<p>If you want the “expected” set to contain a more helpful string instead of character sets, you
+can use <code>quiet!{}</code> and <code>expected!()</code> together:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>rule identifier()
+  = <span class="macro">quiet!</span>{[ <span class="string">'a'</span>..=<span class="string">'z' </span>| <span class="string">'A'</span>..=<span class="string">'Z'</span>][<span class="string">'a'</span>..=<span class="string">'z' </span>| <span class="string">'A'</span>..=<span class="string">'Z' </span>| <span class="string">'0'</span>..=<span class="string">'9' </span>]<span class="kw-2">*</span>}
+  / <span class="macro">expected!</span>(<span class="string">"identifier"</span>)</code></pre></div>
+<h3 id="imports"><a class="doc-anchor" href="#imports">§</a>Imports</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">mod </span>ast {
+   <span class="kw">pub struct </span>Expr;
+}
+
+<span class="macro">peg::parser!</span>{grammar doc() <span class="kw">for </span>str {
+    <span class="kw">use </span><span class="self">self</span>::ast::Expr;
+}}</code></pre></div>
+<p>The grammar may begin with a series of <code>use</code> declarations, just like in Rust, which are
+included in the generated module. Unlike normal <code>mod {}</code> blocks, <code>use super::*</code> is inserted by
+default, so you don’t have to deal with this most of the time.</p>
+<h3 id="rustdoc-comments"><a class="doc-anchor" href="#rustdoc-comments">§</a>Rustdoc comments</h3>
+<p><code>rustdoc</code> comments with <code>///</code> before a <code>grammar</code> or <code>pub rule</code> are propagated to the resulting
+module or function:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="doccomment">/// Parse an array expression.
+</span><span class="kw">pub </span>rule array() -&gt; Vec&lt;i32&gt; = <span class="string">"[...]" </span>{ <span class="macro">vec!</span>[] }</code></pre></div>
+<p>As with all procedural macros, non-doc comments are ignored by the lexer and can be used like
+in any other Rust code.</p>
+<h3 id="caching-and-left-recursion"><a class="doc-anchor" href="#caching-and-left-recursion">§</a>Caching and left recursion</h3>
+<p>A <code>rule</code> without parameters can be prefixed with <code>#[cache]</code> if it is likely
+to be checked repeatedly in the same position. This memoizes the rule result
+as a function of input position, in the style of a <a href="https://en.wikipedia.org/wiki/Parsing_expression_grammar#Implementing_parsers_from_parsing_expression_grammars">packrat
+parser</a>.</p>
+<p>However, idiomatic code avoids structures that parse the same input
+repeatedly, so the use of <code>#[cache]</code> is often not a performance win. Simple
+rules may also be faster to re-match than the additional cost of the hash
+table lookup and insert.</p>
+<p>For example, a complex rule called <code>expr</code> might benefit from caching if used
+like <code>expr() "x" / expr() "y" / expr() "z"</code>, but this could be rewritten to
+<code>expr() ("x" / "y" / "z")</code> which would be even faster.</p>
+<p><code>#[cache_left_rec]</code> extends the <code>#[cache]</code> mechanism with the ability to resolve
+left-recursive rules, which are otherwise an error.</p>
+<p>The <code>precedence!{}</code> syntax is another way to handle nested operators and avoid
+repeatedly matching an expression rule.</p>
+<h3 id="tracing"><a class="doc-anchor" href="#tracing">§</a>Tracing</h3>
+<p>If you pass the <code>peg/trace</code> feature to Cargo when building your project, a
+trace of the rules attempted and matched will be printed to stdout when
+parsing. For example,</p>
+<div class="example-wrap"><pre class="language-sh"><code>$ cargo run --features peg/trace
+...
+[PEG_TRACE] Matched rule type at 8:5
+[PEG_TRACE] Attempting to match rule ident at 8:12
+[PEG_TRACE] Attempting to match rule letter at 8:12
+[PEG_TRACE] Failed to match rule letter at 8:12
+...</code></pre></div></div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="error/index.html" title="mod peg::error">error</a></div><div class="desc docblock-short">Parse error reporting</div></li><li><div class="item-name"><a class="mod" href="str/index.html" title="mod peg::str">str</a></div><div class="desc docblock-short">Utilities for <code>str</code> input</div></li></ul><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.parser.html" title="macro peg::parser">parser</a></div><div class="desc docblock-short">The main macro for creating a PEG parser.</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.RuleResult.html" title="enum peg::RuleResult">Rule<wbr>Result</a></div><div class="desc docblock-short">The result type used internally in the parser.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Parse.html" title="trait peg::Parse">Parse</a></div><div class="desc docblock-short">A type that can be used as input to a parser.</div></li><li><div class="item-name"><a class="trait" href="trait.ParseElem.html" title="trait peg::ParseElem">Parse<wbr>Elem</a></div><div class="desc docblock-short">A parser input type supporting the <code>[...]</code> syntax.</div></li><li><div class="item-name"><a class="trait" href="trait.ParseLiteral.html" title="trait peg::ParseLiteral">Parse<wbr>Literal</a></div><div class="desc docblock-short">A parser input type supporting the <code>"literal"</code> syntax.</div></li><li><div class="item-name"><a class="trait" href="trait.ParseSlice.html" title="trait peg::ParseSlice">Parse<wbr>Slice</a></div><div class="desc docblock-short">A parser input type supporting the <code>$()</code> syntax.</div></li></ul></section></div></main></body></html>
