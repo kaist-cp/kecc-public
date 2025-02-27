@@ -23,18 +23,13 @@ impl Translate<TranslationUnit> for Visualizer {
 
         // TODO: Add variables and structs information
         for (name, decl) in &source.decls {
-            match decl {
-                Declaration::Variable { .. } => {}
-                Declaration::Function {
-                    signature,
-                    definition,
-                } => {
-                    let Some(definition) = definition else {
-                        continue;
-                    };
-                    let subgraph = self.translate_function(name, signature, definition)?;
-                    subgraphs.push(subgraph);
-                }
+            if let Declaration::Function {
+                signature,
+                definition: Some(definition),
+            } = decl
+            {
+                let subgraph = self.translate_function(name, signature, definition)?;
+                subgraphs.push(subgraph);
             }
         }
 
@@ -42,11 +37,11 @@ impl Translate<TranslationUnit> for Visualizer {
 
         // Add edges between subgraphs
         for (name, decl) in &source.decls {
-            if let Declaration::Function { definition, .. } = decl {
-                let Some(definition) = definition else {
-                    continue;
-                };
-
+            if let Declaration::Function {
+                definition: Some(definition),
+                ..
+            } = decl
+            {
                 for (bid, block) in &definition.blocks {
                     for (iid, instruction) in block.instructions.iter().enumerate() {
                         if let Instruction::Call { callee, .. } = &instruction.inner {

@@ -239,3 +239,8 @@ make run
 - Submit the corresponding files to [gg.kaist.ac.kr](https://gg.kaist.ac.kr).
 - Run `./scripts/make-submissions.sh` to generate `irgen.zip` to `final.zip`,
   which you should submit for homework 2 to the final project.
+
+## Running on a local machine
+
+- https://github.com/kaist-cp/cs420/issues/314
+- https://github.com/kaist-cp/cs420/issues/460

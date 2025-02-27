@@ -223,22 +223,9 @@ impl fmt::Display for Instruction {
                     ",rtz"
                 } else {
                     ""
-                }
-                .to_string();
-
-                write!(
-                    f,
-                    "{}\t{},{}{}{}",
-                    instr,
-                    rd,
-                    rs1,
-                    if let Some(rs2) = rs2 {
-                        format!(",{rs2}")
-                    } else {
-                        "".to_string()
-                    },
-                    rounding_mode
-                )
+                };
+                let rs2 = rs2.map(|rs2| format!(",{rs2}")).unwrap_or_default();
+                write!(f, "{instr}\t{rd},{rs1}{rs2}{rounding_mode}")
             }
             Self::IType {
                 instr,
@@ -263,7 +250,7 @@ impl fmt::Display for Instruction {
                 rs1,
                 rs2,
                 imm,
-            } => write!(f, "{}\t{},{}, {}", instr, rs1, rs2, imm.0,),
+            } => write!(f, "{instr}\t{rs1},{rs2}, {imm}"),
             Self::UType { instr, rd, imm } => write!(f, "{instr}\t{rd}, {imm}",),
             Self::Pseudo(pseudo) => write!(f, "{pseudo}"),
         }

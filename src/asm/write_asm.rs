@@ -62,7 +62,7 @@ impl WriteLine for Variable {
 impl WriteLine for Block {
     fn write_line(&self, indent: usize, write: &mut dyn Write) -> Result<()> {
         if let Some(label) = &self.label {
-            writeln!(write, "{}:", label.0)?;
+            writeln!(write, "{label}:")?;
         }
 
         for instruction in &self.instructions {
