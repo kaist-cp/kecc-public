@@ -14,7 +14,7 @@ import re
 import random
 from pathlib import Path
 
-from install_smith import install_csmith
+from install_csmith import install_csmith
 
 REPLACE_DICT = {
     "volatile ": "",
