@@ -149,9 +149,23 @@ impl IsEquiv for ParameterDeclaration {
     }
 }
 
+fn unwrap_single_element_compound_stmt(stmt: &Statement) -> &Statement {
+    if let Statement::Compound(items) = stmt {
+        if items.len() == 1 {
+            if let BlockItem::Statement(inner_stmt) = &items[0].node {
+                return &inner_stmt.node;
+            }
+        }
+    }
+    stmt
+}
+
 impl IsEquiv for Statement {
     fn is_equiv(&self, other: &Self) -> bool {
-        match (self, other) {
+        match (
+            unwrap_single_element_compound_stmt(self),
+            unwrap_single_element_compound_stmt(other),
+        ) {
             (Self::Labeled(stmt), Self::Labeled(other_stmt)) => {
                 stmt.node.label.is_equiv(&other_stmt.node.label)
                     && stmt.node.statement.is_equiv(&other_stmt.node.statement)
