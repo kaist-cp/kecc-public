@@ -18,6 +18,9 @@ pub trait Optimize<T> {
 }
 
 pub type O0 = Null;
+pub(crate) type Ocfg = Repeat<SimplifyCfg>;
+//pub(crate) type Ocfg = Repeat<SimplifyCfgConstProp>;
+//pub(crate) type Ocfg = Repeat<FunctionPass<Repeat<(SimplifyCfgConstProp, (SimplifyCfgReach, (SimplifyCfgMerge, SimplifyCfgEmpty)))>>>;
 pub type O1 = Repeat<(SimplifyCfg, (Mem2reg, (Gvn, Deadcode)))>;
 
 #[derive(Default, Clone, Copy, Debug)]

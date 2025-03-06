@@ -164,6 +164,8 @@ pub fn test_irgen(path: &Path) {
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
 
+    let _ = opt::Ocfg::default().optimize(&mut ir);
+
     //println!("IR: {ir:#?}");
     println!("IR:");
     ir.write_line(0, &mut io::stdout()).unwrap();
