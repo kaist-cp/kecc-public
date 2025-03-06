@@ -87,6 +87,17 @@ pub fn test_write_c(path: &Path) {
 
     write(&unit, &mut temp_file).unwrap();
 
+    {
+        let mut buf = String::new();
+        // FIXME: For some reason we cannot reuse `temp_file`.
+        let _ = File::open(&temp_file_path)
+            .unwrap()
+            .read_to_string(&mut buf)
+            .unwrap();
+
+        println!("{}", buf);
+    }
+
     let new_unit = Parse
         .translate(&temp_file_path.as_path())
         .expect("parse failed while parsing the output from implemented printer");
@@ -98,6 +109,8 @@ pub fn test_write_c(path: &Path) {
             .unwrap()
             .read_to_string(&mut buf)
             .unwrap();
+
+        println!("{}", buf);
 
         panic!("[write-c] Failed to correctly write {path:?}.\n\n[incorrect result]\n\n{buf}");
     }
