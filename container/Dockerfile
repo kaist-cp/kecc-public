@@ -9,4 +9,5 @@ RUN apt-get update \
         m4 \
         csmith \
         libcsmith-dev \
+        creduce \
     && rm -rf /var/lib/apt/lists/*
