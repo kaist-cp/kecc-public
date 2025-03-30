@@ -9,6 +9,7 @@ use rand::Rng;
 use tempfile::tempdir;
 use wait_timeout::ChildExt;
 
+use crate::write_base::WriteLine;
 use crate::*;
 
 const NONCE_NAME: &str = "nonce";
@@ -127,6 +128,10 @@ pub fn test_irgen(path: &Path) {
     let mut ir = Irgen::default()
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
+
+    println!("IR: {ir:#?}");
+    println!();
+    ir.write_line(0, &mut io::stdout()).unwrap();
 
     let rand_num = rand::rng().random_range(1..100);
     let new_c = modify_c(path, rand_num);
