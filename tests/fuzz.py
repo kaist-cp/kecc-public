@@ -221,13 +221,17 @@ def creduce(tests_dir, fuzz_arg, analyze):
             "creduce",
             "--tidy",
             "--timing",
+            #"--n", "2",
             "--timeout",
             "20",
             "./reduce-criteria.sh",
             "test_reduced.c",
         ]
         proc = subprocess.Popen(
-            args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir
+            args,
+            #stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=tests_dir
         )
         (out, err) = proc.communicate()
         if proc.returncode != 0:
