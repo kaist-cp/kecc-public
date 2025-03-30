@@ -313,6 +313,9 @@ if __name__ == "__main__":
         "-r", "--reduce", action="store_true", help="Reducing input file"
     )
     parser.add_argument(
+        "--fuzz-and-reduce", action="store_true", help="Fuzz until crash found, then reduce automatically"
+    )
+    parser.add_argument(
         "--skip-build", action="store_true", help="Skipping cargo build"
     )
     parser.add_argument(
@@ -373,7 +376,15 @@ if __name__ == "__main__":
             "Skip building. Please run `cargo build --features=build-bin --release --bin fuzz --bin kecc` to manually build."
         )
 
-    if args.reduce:
+    if args.fuzz_and_reduce:
+        print("Fuzzing:")
+        try:
+            fuzz(tests_dir, fuzz_arg, args.num, args.easy)
+        except Exception as e:
+            print(e)
+            print("Reducing:")
+            creduce(tests_dir, fuzz_arg, args.clang_analyze)
+    elif args.reduce:
         creduce(tests_dir, fuzz_arg, args.clang_analyze)
     else:
         fuzz(tests_dir, fuzz_arg, args.num, args.easy)
