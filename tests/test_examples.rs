@@ -3,6 +3,8 @@ use std::path::Path;
 
 use kecc::*;
 
+use dir_test::{dir_test, Fixture};
+
 fn test_dir<F>(path: &Path, ext: &OsStr, f: F)
 where
     F: Fn(&Path),
@@ -96,6 +98,16 @@ fn test_examples_write_c() {
             test_write_c(path);
         }
     });
+}
+
+#[dir_test(
+    dir: "$CARGO_MANIFEST_DIR/regression_tests/c",
+    glob: "*.c",
+)]
+fn test_regression_irgen(fixture: Fixture<&str>) {
+    let path_str = fixture.path();
+    println!("[testing irgen for '{path_str:?}']"); // TODO: Colors
+    test_irgen(Path::new(path_str));
 }
 
 #[test]
