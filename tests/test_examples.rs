@@ -130,16 +130,10 @@ fn test_examples_irgen_small() {
     dir: "$CARGO_MANIFEST_DIR/examples/c",
     glob: "*.c",
 )]
-fn test_examples_irgen(fixture: Fixture<&str>) {
+fn test_examples_irgen_all(fixture: Fixture<&str>) {
     let path_str = fixture.path();
     println!("[testing irgen for '{path_str:?}']"); // TODO: Colors
     test_irgen(Path::new(path_str));
-}
-#[test]
-fn test_examples_irgen_large() {
-    test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {
-        let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-    });
 }
 
 #[test]
