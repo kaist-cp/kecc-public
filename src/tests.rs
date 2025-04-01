@@ -134,6 +134,7 @@ pub fn test_irgen(path: &Path) {
         // Compile c file: If fails, test is vacuously success
         if !Command::new("clang")
             .args([
+                "-Werror=excess-initializers",
                 "-fsanitize=float-divide-by-zero",
                 "-fsanitize=undefined",
                 "-fno-sanitize-recover=all",
