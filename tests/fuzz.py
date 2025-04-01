@@ -177,7 +177,6 @@ def make_fuzz_errmsg(tests_dir, fuzz_arg):
             args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir
         )
         (out, err) = proc.communicate(timeout=5)
-        print("{out=}, {err=}")
         if proc.returncode != 0:
             if "assertion failed" in out.decode():
                 fuzz_errmsg = "assertion failed"

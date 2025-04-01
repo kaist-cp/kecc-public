@@ -36,15 +36,14 @@ pub trait Translate<S> {
     fn translate(&mut self, source: &S) -> Result<Self::Target, Self::Error>;
 }
 
+#[derive(Default, Clone, Debug)]
+pub struct NotSupportedErr(pub String);
+
 /// Trait to check if a type can be translated.
 pub trait AssertSupported {
     /// Assert that the type can be translated.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the type can't be translated.
-    // TODO: should return a boolean.
-    fn assert_supported(&self);
+    #[must_use = "must check result of assert_supported"]
+    fn assert_supported(&self) -> Result<(), NotSupportedErr>;
 }
 
 /// Essentially the same as [`PartialEq`].

@@ -2,8 +2,8 @@
 
 rm -f out*.txt
 
-#ulimit -t 3000                                                                                                                                                                                             
-#ulimit -v 2000000                                                                                                                                                                                          
+#ulimit -t 3000
+#ulimit -v 2000000
 
 if
   (! gcc -Wall -Wextra test_reduced.c > out_gcc.txt 2>&1 ||\
@@ -14,7 +14,7 @@ fi
 
 if
   [ $FUZZ_ARG = '-i' ] &&\
-  (! clang -pedantic -Wall -Werror=strict-prototypes -c test_reduced.c > out_clang.txt 2>&1 ||\
+  (! clang -pedantic -Wall -Wno-Werror=strict-prototypes -Wno-tautological-pointer-compare -c test_reduced.c > out_clang.txt 2>&1 ||\
   grep 'main-return-type' out_clang.txt ||\
   grep 'conversions than data arguments' out_clang.txt ||\
   grep 'int-conversion' out_clang.txt ||\

@@ -11,6 +11,7 @@ use wait_timeout::ChildExt;
 
 use crate::write_base::WriteLine;
 use crate::*;
+use crate::c::Error as ParseError;
 
 const NONCE_NAME: &str = "nonce";
 
@@ -121,9 +122,42 @@ pub fn test_write_c(path: &Path) {
 pub fn test_irgen(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
-    let unit = Parse
-        .translate(&path)
-        .unwrap_or_else(|e| panic!("parse failed {} {e:?}", path.display()));
+    let temp_dir = tempdir().expect("temp dir creation failed");
+    let temp_file_path = temp_dir.path().join("temp.c");
+    {
+        let bin_path = temp_file_path
+            .with_extension("irgen")
+            .as_path()
+            .display()
+            .to_string();
+
+        // Compile c file: If fails, test is vacuously success
+        if !Command::new("clang")
+            .args([
+                "-fsanitize=float-divide-by-zero",
+                "-fsanitize=undefined",
+                "-fno-sanitize-recover=all",
+                path.to_str().expect(""),
+                //&path.into_os_string().into_string(),
+                "-o",
+                &bin_path,
+            ])
+            // .stderr(Stdio::null())
+            .status()
+            .unwrap()
+            .success()
+        {
+            println!("SKIP_TEST: clang failed to compile:");
+            ::std::process::exit(SKIP_TEST);
+        }
+    }
+    let unit = Parse.translate(&path).unwrap_or_else(|err| match err {
+        ParseError::ParseError(e) => panic!("parse failed {} {e:?}", path.display()),
+        ParseError::Unsupported(e) => {
+            println!("SKIP_TEST: unsupported {e:?}");
+            ::std::process::exit(SKIP_TEST);
+        }
+    });
 
     let mut ir = Irgen::default()
         .translate(&unit)
@@ -139,8 +173,6 @@ pub fn test_irgen(path: &Path) {
     modify_ir(&mut ir, rand_num);
 
     // compile recolved c example
-    let temp_dir = tempdir().expect("temp dir creation failed");
-    let temp_file_path = temp_dir.path().join("temp.c");
     let mut temp_file = File::create(&temp_file_path).unwrap();
     temp_file.write_all(new_c.as_bytes()).unwrap();
 
