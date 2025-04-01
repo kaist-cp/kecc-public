@@ -165,6 +165,7 @@ pub fn test_irgen(path: &Path) {
         .unwrap()
         .success()
     {
+        println!("SKIP_TEST: clang failed to compile:");
         ::std::process::exit(SKIP_TEST);
     }
 
@@ -181,6 +182,7 @@ pub fn test_irgen(path: &Path) {
         println!("timeout occurs");
         child.kill().unwrap();
         let _ = child.wait().unwrap();
+        println!("SKIP_TEST: failed to execute compiled executable");
         ::std::process::exit(SKIP_TEST);
     };
 
