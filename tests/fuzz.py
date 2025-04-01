@@ -176,7 +176,8 @@ def make_fuzz_errmsg(tests_dir, fuzz_arg):
         proc = subprocess.Popen(
             args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir
         )
-        (out, err) = proc.communicate()
+        (out, err) = proc.communicate(timeout=5)
+        print("{out=}, {err=}")
         if proc.returncode != 0:
             if "assertion failed" in out.decode():
                 fuzz_errmsg = "assertion failed"
@@ -217,19 +218,21 @@ def creduce(tests_dir, fuzz_arg, analyze):
 
     try:
         # --tidy: Do not make a backup copy of each file to reduce as file.orig
+        print("Trying to reduce:")
         args = [
             "creduce",
             "--tidy",
             "--timing",
             #"--n", "2",
             "--timeout",
-            "20",
+            #"20",
+            "5",
             "./reduce-criteria.sh",
             "test_reduced.c",
         ]
         proc = subprocess.Popen(
             args,
-            #stdout=subprocess.PIPE,
+            stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             cwd=tests_dir
         )
@@ -281,7 +284,7 @@ def fuzz(tests_dir, fuzz_arg, num_iter, easy):
                     stderr=subprocess.STDOUT,
                     cwd=tests_dir,
                 )
-                proc.communicate(timeout=60)
+                proc.communicate(timeout=5)
 
                 # KECC sets an exit code of 102 when the test skipped.
                 if proc.returncode == SKIP_TEST:

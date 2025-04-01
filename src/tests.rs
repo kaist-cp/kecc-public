@@ -123,7 +123,7 @@ pub fn test_irgen(path: &Path) {
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
     let unit = Parse
         .translate(&path)
-        .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
+        .unwrap_or_else(|e| panic!("parse failed {} {e:?}", path.display()));
 
     let mut ir = Irgen::default()
         .translate(&unit)
