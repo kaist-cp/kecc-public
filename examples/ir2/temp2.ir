@@ -34,18 +34,17 @@ block b0:
   %b0:i19:i32 = typecast %b0:i18:i8 to i32
   %b0:i20:i32 = add %b0:i9:i32 %b0:i19:i32
   %b0:i21:unit = nop
-  %b0:i22:struct color = load %l1:struct color*
+  %b0:i22:unit = nop
   %b0:i23:unit = nop
   %b0:i24:unit = nop
-  %b0:i25:unit = nop
-  %b0:i26:i8* = getelementptr %l1:struct color* offset 4:i64
-  %b0:i27:i8 = load %b0:i26:i8*
-  %b0:i28:i32 = typecast %b0:i27:i8 to i32
-  %b0:i29:i32 = add %b0:i20:i32 %b0:i28:i32
+  %b0:i25:i8* = getelementptr %l1:struct color* offset 4:i64
+  %b0:i26:i8 = load %b0:i25:i8*
+  %b0:i27:i32 = typecast %b0:i26:i8 to i32
+  %b0:i28:i32 = add %b0:i20:i32 %b0:i27:i32
+  %b0:i29:unit = nop
   %b0:i30:unit = nop
   %b0:i31:unit = nop
-  %b0:i32:unit = nop
-  j b2(%b0:i29:i32, 0:i32, undef:u1)
+  j b2(%b0:i28:i32, 0:i32, undef:u1)
 
 block b2:
   %b2:p0:i32:temp

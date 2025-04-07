@@ -19,19 +19,15 @@ init:
 block b0:
   %b0:i0:unit = store 1:i32 %l0:i32*
   %b0:i1:i32* = call @foo:[ret:i32* params:(i32*)]*(%l0:i32*)
-  %b0:i2:i32* = call @foo:[ret:i32* params:(i32*)]*(%l0:i32*)
-  %b0:i3:i32* = call @foo:[ret:i32* params:(i32*)]*(%l0:i32*)
-  %b0:i4:i32* = call @foo:[ret:i32* params:(i32*)]*(%l0:i32*)
-  %b0:i5:i32 = load %b0:i4:i32*
-  %b0:i6:i32 = add %b0:i5:i32 1:i32
-  %b0:i7:unit = store %b0:i6:i32 %b0:i2:i32*
-  %b0:i8:i32* = call @foo:[ret:i32* params:(i32*)]*(%l0:i32*)
-  %b0:i9:i32* = call @foo:[ret:i32* params:(i32*)]*(%l0:i32*)
-  %b0:i10:i32 = load %b0:i9:i32*
-  %b0:i11:i32 = add %b0:i10:i32 1:i32
-  %b0:i12:unit = store %b0:i11:i32 %b0:i8:i32*
-  %b0:i13:i32 = load %l0:i32*
-  %b0:i14:u1 = cmp eq %b0:i13:i32 3:i32
-  %b0:i15:i32 = typecast %b0:i14:u1 to i32
-  ret %b0:i15:i32
+  %b0:i2:i32 = load %b0:i1:i32*
+  %b0:i3:i32 = add %b0:i2:i32 1:i32
+  %b0:i4:unit = store %b0:i3:i32 %b0:i1:i32*
+  %b0:i5:i32* = call @foo:[ret:i32* params:(i32*)]*(%l0:i32*)
+  %b0:i6:i32 = load %b0:i5:i32*
+  %b0:i7:i32 = add %b0:i6:i32 1:i32
+  %b0:i8:unit = store %b0:i7:i32 %b0:i5:i32*
+  %b0:i9:i32 = load %l0:i32*
+  %b0:i10:u1 = cmp eq %b0:i9:i32 3:i32
+  %b0:i11:i32 = typecast %b0:i10:u1 to i32
+  ret %b0:i11:i32
 }

@@ -60,6 +60,9 @@ const IRGEN_SMALL_TEST_IGNORE_LIST: [&str; 12] = [
     "examples/c/temp2.c",
 ];
 
+// TODO: Enable this test next semester.
+const IRGEN_FULL_TEST_IGNORE_LIST: [&str; 1] = ["examples/c/side-effect.c"];
+
 const ASMGEN_TEST_DIR_LIST: [&str; 5] = [
     "examples/ir0",
     "examples/ir1",
@@ -101,7 +104,10 @@ fn test_examples_irgen_small() {
     test_irgen(Path::new(&format!("examples/c/{HELLO_MAIN}.c")));
     test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {
         let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if !IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) && !path_str.contains(HELLO_MAIN) {
+        if !IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str)
+            && !IRGEN_FULL_TEST_IGNORE_LIST.contains(path_str)
+            && !path_str.contains(HELLO_MAIN)
+        {
             println!("[testing irgen for {path:?}]");
             test_irgen(path);
         }

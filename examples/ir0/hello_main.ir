@@ -2,12 +2,12 @@
 fun i32 @main () {
 init:
   bid: b0
-  allocations:
+  allocations: 
 
 
 block b0:
   ret 1:i32
 
 block b1:
-  ret 1:i32
+  ret 0:i32
 }
