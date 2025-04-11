@@ -726,10 +726,52 @@ impl TryFrom<&ast::Constant> for Constant {
                 Ok(Self::float(value, dtype))
             }
             ast::Constant::Character(character) => {
-                let dtype = Dtype::CHAR;
-                let value = character.parse::<char>().unwrap() as u128;
+                // XXX: character above is not just the character, but also includes any prefix and
+                // quotation characters from the source code.
+                //
+                // Handle the mess that is a char literal in C
+                // See https://en.cppreference.com/w/c/language/character_constant for reference
+                // We are targetting C11, but we only handle "c-char" cases and none of the
+                // multibyte or UTF-8 options
+                if &character[0..0] == "\'" {
+                    // While it might be expected that the constant shall have the type 'char' this
+                    // is actually not true:
+                    //
+                    // "Such constant has type int and a value equal to the representation of
+                    // c-char in the execution character set as a value of type char mapped to int"
+                    //
+                    let dtype = Dtype::INT;
 
-                Ok(Self::int(value, dtype))
+                    // Parse and convert the c-char:
+                    let value = match &character[1..1] {
+                        "\\" => {
+                            // TODO: Implement all of https://en.cppreference.com/w/c/language/escape,
+                            panic!("C character literal escape sequences is_unsupported")
+                        }
+                        "'" | "\n" => panic!("Invalid C character literal"),
+                        char => {
+                            // Verify that we only have one character and that we end with a proper
+                            // quote again:
+                            if &character[2..] != "'" {
+                                panic!("C character literal has unexpected characters");
+                            }
+
+                            char.parse::<char>().unwrap() as u128
+                        }
+                    };
+
+                    Ok(Self::int(value, dtype))
+                } else if &character[0..1] == "u8" {
+                    panic!("UTF-8 character literal is_unsupported");
+                } else if &character[0..1] == "u\'" {
+                    panic!("u character literal prefix is_unsupported");
+                } else if &character[0..1] == "U\'" {
+                    panic!("U character literal prefix is_unsupported");
+                } else if &character[0..1] == "L\'" {
+                    panic!("L character literal prefix is_unsupported");
+                } else {
+                    panic!("unexpected character literal format");
+                }
             }
         }
     }
