@@ -285,6 +285,24 @@ impl Value {
 
                     Ok(Self::structure(name.clone(), fields))
                 }
+                Dtype::Int { .. } | Dtype::Float { .. } | Dtype::Pointer { .. } => {
+                    // Handle the initialization of scalar types with the
+                    // `type name = { expr };` syntax
+                    // Reference: https://en.cppreference.com/w/c/language/scalar_initialization
+                    // There should only be one item in the list:
+                    if items.len() != 1 {
+                        return Err(());
+                    }
+                    let only_item = &items.first().unwrap().node;
+
+                    // With no designators
+                    if !only_item.designation.is_empty() {
+                        return Err(());
+                    }
+
+                    // Simply handle it as if it was `type name = expr;`
+                    Self::try_from_initializer(&only_item.initializer.node, dtype, structs)
+                }
                 _ => Err(()),
             },
         }
