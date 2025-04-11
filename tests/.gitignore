@@ -3,3 +3,4 @@
 /test*.c
 /reduce-criteria.sh
 /creduce_bug_*
+__pycache__
