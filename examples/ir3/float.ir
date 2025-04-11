@@ -2,7 +2,7 @@
 fun f64 @average (i32, i32*) {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -35,7 +35,7 @@ block b5:
 fun f64 @custom_abs (f64) {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -59,7 +59,7 @@ block b3:
 fun f64 @custom_max (f64, f64) {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -82,7 +82,7 @@ block b3:
 fun i32 @is_close (f64, f64, f64, f64) {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -105,7 +105,7 @@ block b0:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:[10 x i32]:a
 
 block b0:

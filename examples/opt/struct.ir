@@ -4,7 +4,7 @@ struct %t1 : { a:i8, %anon:struct %t0, c:f64 }
 fun unit @init (i32, i32, [5 x i32]*) {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -47,7 +47,7 @@ block b10:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:struct %t1:temp
     %l1:struct %t1:temp2
 

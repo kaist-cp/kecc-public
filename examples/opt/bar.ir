@@ -2,7 +2,7 @@
 fun i32 @bar (i32, i32, i32) {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -22,7 +22,7 @@ block b2:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:

@@ -3,7 +3,7 @@ var i32 @g = 0
 fun i32* @foo () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -19,7 +19,7 @@ block b1:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:

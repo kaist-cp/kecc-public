@@ -2,7 +2,7 @@
 fun i32 @char_greater_than (i8, u8) {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i8:i
     %l1:u8:j
 
@@ -28,7 +28,7 @@ block b2:
 fun i32 @int_greater_than (i32, u32) {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32:i
     %l1:u32:j
 
@@ -53,7 +53,7 @@ block b2:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32:r1
     %l1:i32:r2
     %l2:u1:t0

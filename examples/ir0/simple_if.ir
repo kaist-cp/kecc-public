@@ -2,7 +2,7 @@
 fun i32 @fibonacci (i32) {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32:n
 
 block b0:
@@ -38,7 +38,7 @@ block b4:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:

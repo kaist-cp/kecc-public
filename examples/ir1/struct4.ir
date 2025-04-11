@@ -4,7 +4,7 @@ var i32 @nonce = 1
 fun struct Foo @f () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:struct Foo:x
 
 block b0:
@@ -18,7 +18,7 @@ block b0:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32:x
     %l1:struct Foo:t0
 

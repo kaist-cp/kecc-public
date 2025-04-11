@@ -2,7 +2,7 @@
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i8:a
     %l1:i8:b
     %l2:u8:c

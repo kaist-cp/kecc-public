@@ -4,7 +4,7 @@ struct %t1 : { a:i8, %anon:struct %t0, c:i64 }
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:const struct %t1:temp
     %l1:struct %t1:temp2
     %l2:i32:sum

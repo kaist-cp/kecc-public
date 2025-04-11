@@ -2,7 +2,7 @@
 fun unit @init (i32, i32, [5 x i32]*) {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32:row
     %l1:i32:col
     %l2:[5 x i32]*:a
@@ -80,7 +80,7 @@ block b10:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:[4 x [5 x i32]]:a
     %l1:i32:row
     %l2:i32:col

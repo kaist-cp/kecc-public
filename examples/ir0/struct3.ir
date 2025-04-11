@@ -4,7 +4,7 @@ struct Sub : { m1:i64, m2:i64, m3:i64, m4:i64 }
 fun struct Big @foo (struct Big) {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:struct Big:p1
     %l1:struct Big:r
 
@@ -27,7 +27,7 @@ block b1:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:struct Big:a
     %l1:struct Big:r
 

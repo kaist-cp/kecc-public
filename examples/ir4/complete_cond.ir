@@ -2,7 +2,7 @@
 fun i32 @func_0 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -157,7 +157,7 @@ block b39:
 fun i32 @func_1 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -312,7 +312,7 @@ block b39:
 fun i32 @func_10 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -467,7 +467,7 @@ block b39:
 fun i32 @func_11 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -622,7 +622,7 @@ block b39:
 fun i32 @func_12 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -777,7 +777,7 @@ block b39:
 fun i32 @func_13 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -932,7 +932,7 @@ block b39:
 fun i32 @func_14 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -1087,7 +1087,7 @@ block b39:
 fun i32 @func_15 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -1242,7 +1242,7 @@ block b39:
 fun i32 @func_16 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -1397,7 +1397,7 @@ block b39:
 fun i32 @func_17 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -1552,7 +1552,7 @@ block b39:
 fun i32 @func_18 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -1707,7 +1707,7 @@ block b39:
 fun i32 @func_19 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -1862,7 +1862,7 @@ block b39:
 fun i32 @func_2 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -2017,7 +2017,7 @@ block b39:
 fun i32 @func_20 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -2172,7 +2172,7 @@ block b39:
 fun i32 @func_21 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -2328,7 +2328,7 @@ block b39:
 fun i32 @func_22 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -2483,7 +2483,7 @@ block b39:
 fun i32 @func_23 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -2638,7 +2638,7 @@ block b39:
 fun i32 @func_24 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -2793,7 +2793,7 @@ block b39:
 fun i32 @func_25 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -2948,7 +2948,7 @@ block b39:
 fun i32 @func_26 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -3103,7 +3103,7 @@ block b39:
 fun i32 @func_27 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -3258,7 +3258,7 @@ block b39:
 fun i32 @func_28 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -3413,7 +3413,7 @@ block b39:
 fun i32 @func_29 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -3568,7 +3568,7 @@ block b39:
 fun i32 @func_3 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -3723,7 +3723,7 @@ block b39:
 fun i32 @func_30 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -3878,7 +3878,7 @@ block b39:
 fun i32 @func_31 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -4033,7 +4033,7 @@ block b39:
 fun i32 @func_32 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -4188,7 +4188,7 @@ block b39:
 fun i32 @func_33 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -4343,7 +4343,7 @@ block b39:
 fun i32 @func_34 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -4498,7 +4498,7 @@ block b39:
 fun i32 @func_35 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -4653,7 +4653,7 @@ block b39:
 fun i32 @func_36 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -4808,7 +4808,7 @@ block b39:
 fun i32 @func_37 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -4963,7 +4963,7 @@ block b39:
 fun i32 @func_38 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -5118,7 +5118,7 @@ block b39:
 fun i32 @func_39 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -5273,7 +5273,7 @@ block b39:
 fun i32 @func_4 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -5428,7 +5428,7 @@ block b39:
 fun i32 @func_40 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -5583,7 +5583,7 @@ block b39:
 fun i32 @func_41 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -5738,7 +5738,7 @@ block b39:
 fun i32 @func_42 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -5893,7 +5893,7 @@ block b39:
 fun i32 @func_43 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -6048,7 +6048,7 @@ block b39:
 fun i32 @func_44 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -6203,7 +6203,7 @@ block b39:
 fun i32 @func_45 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -6358,7 +6358,7 @@ block b39:
 fun i32 @func_46 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -6513,7 +6513,7 @@ block b39:
 fun i32 @func_47 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -6668,7 +6668,7 @@ block b39:
 fun i32 @func_48 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -6823,7 +6823,7 @@ block b39:
 fun i32 @func_49 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -6978,7 +6978,7 @@ block b39:
 fun i32 @func_5 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -7133,7 +7133,7 @@ block b39:
 fun i32 @func_50 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -7288,7 +7288,7 @@ block b39:
 fun i32 @func_51 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -7443,7 +7443,7 @@ block b39:
 fun i32 @func_52 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -7598,7 +7598,7 @@ block b39:
 fun i32 @func_53 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -7753,7 +7753,7 @@ block b39:
 fun i32 @func_54 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -7908,7 +7908,7 @@ block b39:
 fun i32 @func_55 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -8063,7 +8063,7 @@ block b39:
 fun i32 @func_56 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -8218,7 +8218,7 @@ block b39:
 fun i32 @func_57 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -8373,7 +8373,7 @@ block b39:
 fun i32 @func_58 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -8528,7 +8528,7 @@ block b39:
 fun i32 @func_59 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -8683,7 +8683,7 @@ block b39:
 fun i32 @func_6 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -8838,7 +8838,7 @@ block b39:
 fun i32 @func_60 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -8993,7 +8993,7 @@ block b39:
 fun i32 @func_61 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -9148,7 +9148,7 @@ block b39:
 fun i32 @func_62 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -9303,7 +9303,7 @@ block b39:
 fun i32 @func_63 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -9458,7 +9458,7 @@ block b39:
 fun i32 @func_64 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -9613,7 +9613,7 @@ block b39:
 fun i32 @func_65 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -9768,7 +9768,7 @@ block b39:
 fun i32 @func_66 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -9923,7 +9923,7 @@ block b39:
 fun i32 @func_67 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -10078,7 +10078,7 @@ block b39:
 fun i32 @func_68 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -10233,7 +10233,7 @@ block b39:
 fun i32 @func_69 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -10388,7 +10388,7 @@ block b39:
 fun i32 @func_7 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -10543,7 +10543,7 @@ block b39:
 fun i32 @func_70 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -10698,7 +10698,7 @@ block b39:
 fun i32 @func_71 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -10853,7 +10853,7 @@ block b39:
 fun i32 @func_72 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -11008,7 +11008,7 @@ block b39:
 fun i32 @func_73 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -11163,7 +11163,7 @@ block b39:
 fun i32 @func_74 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -11318,7 +11318,7 @@ block b39:
 fun i32 @func_75 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -11473,7 +11473,7 @@ block b39:
 fun i32 @func_76 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -11628,7 +11628,7 @@ block b39:
 fun i32 @func_77 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -11783,7 +11783,7 @@ block b39:
 fun i32 @func_78 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -11938,7 +11938,7 @@ block b39:
 fun i32 @func_79 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -12093,7 +12093,7 @@ block b39:
 fun i32 @func_8 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -12248,7 +12248,7 @@ block b39:
 fun i32 @func_80 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -12403,7 +12403,7 @@ block b39:
 fun i32 @func_81 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -12558,7 +12558,7 @@ block b39:
 fun i32 @func_82 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -12713,7 +12713,7 @@ block b39:
 fun i32 @func_83 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -12868,7 +12868,7 @@ block b39:
 fun i32 @func_84 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -13023,7 +13023,7 @@ block b39:
 fun i32 @func_85 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -13178,7 +13178,7 @@ block b39:
 fun i32 @func_86 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -13333,7 +13333,7 @@ block b39:
 fun i32 @func_87 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -13488,7 +13488,7 @@ block b39:
 fun i32 @func_88 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -13643,7 +13643,7 @@ block b39:
 fun i32 @func_89 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -13798,7 +13798,7 @@ block b39:
 fun i32 @func_9 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -13953,7 +13953,7 @@ block b39:
 fun i32 @func_90 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -14108,7 +14108,7 @@ block b39:
 fun i32 @func_91 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -14263,7 +14263,7 @@ block b39:
 fun i32 @func_92 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -14418,7 +14418,7 @@ block b39:
 fun i32 @func_93 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -14573,7 +14573,7 @@ block b39:
 fun i32 @func_94 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -14728,7 +14728,7 @@ block b39:
 fun i32 @func_95 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -14883,7 +14883,7 @@ block b39:
 fun i32 @func_96 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -15038,7 +15038,7 @@ block b39:
 fun i32 @func_97 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -15194,7 +15194,7 @@ block b39:
 fun i32 @func_98 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -15349,7 +15349,7 @@ block b39:
 fun i32 @func_99 () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -15504,7 +15504,7 @@ block b39:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:

@@ -3,7 +3,7 @@ struct color : { number:i32, name:i8 }
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32:temp
     %l1:struct color:c
     %l2:struct color*:cp

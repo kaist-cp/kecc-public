@@ -2,7 +2,7 @@
 fun i32* @foo (i32*) {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32*:a
 
 block b0:
@@ -15,7 +15,7 @@ block b0:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32:a
     %l1:i32*:p
     %l2:i32**:p2

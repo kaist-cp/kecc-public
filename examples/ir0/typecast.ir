@@ -3,7 +3,7 @@ var i8 @temp = 0x00l
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:

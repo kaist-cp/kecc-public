@@ -84,7 +84,7 @@ impl WriteLine for (&String, &Declaration) {
                     // print meta data for function
                     writeln!(
                         write,
-                        "init:\n  bid: {}\n  allocations: \n{}",
+                        "init:\n  bid: {}\n  allocations:\n{}",
                         definition.bid_init,
                         definition
                             .allocations

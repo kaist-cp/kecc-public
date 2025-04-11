@@ -3,7 +3,7 @@ var [5 x i32] @g_a = {1, 2, 3}
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
     %l0:i32:init
     %l1:[5 x i32]:a
     %l2:i32:sum

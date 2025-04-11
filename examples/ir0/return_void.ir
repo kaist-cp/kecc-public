@@ -2,7 +2,7 @@
 fun unit @foo () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
@@ -12,7 +12,7 @@ block b0:
 fun i32 @main () {
 init:
   bid: b0
-  allocations: 
+  allocations:
 
 
 block b0:
