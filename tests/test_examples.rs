@@ -61,7 +61,7 @@ const IRGEN_SMALL_TEST_IGNORE_LIST: [&str; 12] = [
 ];
 
 // TODO: Enable this test next semester.
-const IRGEN_FULL_TEST_IGNORE_LIST: [&str; 1] = ["examples/c/side-effect.c"];
+const IRGEN_FULL_TEST_IGNORE_LIST: [&str; 1] = ["examples/c/side_effect.c"];
 
 const ASMGEN_TEST_DIR_LIST: [&str; 5] = [
     "examples/ir0",
