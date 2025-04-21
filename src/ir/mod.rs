@@ -640,7 +640,7 @@ pub enum Constant {
 }
 
 impl TryFrom<&ast::Constant> for Constant {
-    type Error = ();
+    type Error = (); // TODO: Add an error type
 
     fn try_from(constant: &ast::Constant) -> Result<Self, Self::Error> {
         match constant {
@@ -725,15 +725,15 @@ impl TryFrom<&ast::Constant> for Constant {
 
                 Ok(Self::float(value, dtype))
             }
-            ast::Constant::Character(character) => {
-                // XXX: character above is not just the character, but also includes any prefix and
+            ast::Constant::Character(literal) => {
+                // XXX: 'literal' above is not just the character, but also includes any prefix and
                 // quotation characters from the source code.
                 //
-                // Handle the mess that is a char literal in C
+                // This code, tries to handle the mess that is a char literal in C
                 // See https://en.cppreference.com/w/c/language/character_constant for reference
                 // We are targetting C11, but we only handle "c-char" cases and none of the
                 // multibyte or UTF-8 options
-                if &character[0..0] == "\'" {
+                if &literal[0..0] == "\'" {
                     // While it might be expected that the constant shall have the type 'char' this
                     // is actually not true:
                     //
@@ -742,32 +742,72 @@ impl TryFrom<&ast::Constant> for Constant {
                     //
                     let dtype = Dtype::INT;
 
-                    // Parse and convert the c-char:
-                    let value = match &character[1..1] {
-                        "\\" => {
-                            // TODO: Implement all of https://en.cppreference.com/w/c/language/escape,
-                            panic!("C character literal escape sequences is_unsupported")
-                        }
-                        "'" | "\n" => panic!("Invalid C character literal"),
-                        char => {
-                            // Verify that we only have one character and that we end with a proper
-                            // quote again:
-                            if &character[2..] != "'" {
-                                panic!("C character literal has unexpected characters");
+                    if literal == "\'\'" {
+                        panic!("Invalid literal \"{literal:?}\"");
+                    }
+
+                    // We first take care of the most likely case 'c', where c is a simple
+                    // character, that is "anything but ', \, \n "
+                    if literal.len() == 3 && literal[2..2] == *"\'" {
+                        match &literal[1..1] {
+                            "'" => panic!("Invalid literal \"{literal:?}\""),
+                            "\\" => panic!(
+                                "Invalid literal \"{literal:?}\" escape sequence without closing quotation mark"
+                            ),
+                            "\n" => panic!("Unescaped newline in literal \"{literal:?}\""),
+                            char => {
+                                let rawchar = char.parse::<char>().unwrap() as u8;
+
+                                if rawchar == 0 {
+                                    panic!(
+                                        "NULL-byte in character literal, refusing to continue as it might cause problems later"
+                                    );
+                                }
+
+                                Ok(Self::int(rawchar.into(), dtype))
                             }
-
-                            char.parse::<char>().unwrap() as u128
                         }
-                    };
+                    } else if literal[1..1] == *"\'" && literal[3..3] == *"\'" {
+                        // Handle a large part of https://en.cppreference.com/w/c/language/escape
+                        let value: u128 = match &literal[2..2] {
+                            "'" => 0x27,
+                            "\"" => 0x22,
+                            "?" => 0x3f,
+                            "\\" => 0x5c,
+                            "a" => 0x07,
+                            "b" => 0x08,
+                            "f" => 0x0c,
+                            "n" => 0x0a,
+                            "r" => 0x0d,
+                            "t" => 0x09,
+                            "v" => 0x0b,
+                            // Handle octal escapes for "\N" where N -> digit here to simplify
+                            // the code a bit
+                            "0" => 0x00,
+                            "1" => 0x01,
+                            "2" => 0x02,
+                            "3" => 0x03,
+                            "4" => 0x04,
+                            "5" => 0x05,
+                            "6" => 0x06,
+                            "7" => 0x07,
+                            _ => panic!("Unsupported character literal escape \"{literal:?}\""),
+                        };
 
-                    Ok(Self::int(value, dtype))
-                } else if &character[0..1] == "u8" {
+                        Ok(Self::int(value, dtype))
+                    } else {
+                        // TODO: Handle \nnn octal and \Xnnn escapes
+                        panic!(
+                            "Multibyte character literal or unsupported escape sequence encountred: \"{literal:?}\""
+                        );
+                    }
+                } else if &literal[0..1] == "u8" {
                     panic!("UTF-8 character literal is_unsupported");
-                } else if &character[0..1] == "u\'" {
+                } else if &literal[0..1] == "u\'" {
                     panic!("u character literal prefix is_unsupported");
-                } else if &character[0..1] == "U\'" {
+                } else if &literal[0..1] == "U\'" {
                     panic!("U character literal prefix is_unsupported");
-                } else if &character[0..1] == "L\'" {
+                } else if &literal[0..1] == "L\'" {
                     panic!("L character literal prefix is_unsupported");
                 } else {
                     panic!("unexpected character literal format");
