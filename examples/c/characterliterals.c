@@ -2,7 +2,6 @@
 int nonce = 1; // For random input
 
 char literals[23] = {
-    '\0',
     'a',
     '#',
     '\'',
