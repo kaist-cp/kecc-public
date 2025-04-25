@@ -9,9 +9,9 @@ use rand::Rng;
 use tempfile::tempdir;
 use wait_timeout::ChildExt;
 
+use crate::c::Error as ParseError;
 use crate::write_base::WriteLine;
 use crate::*;
-use crate::c::Error as ParseError;
 
 const NONCE_NAME: &str = "nonce";
 
