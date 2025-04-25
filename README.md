@@ -4,11 +4,12 @@
 
 Install [rustup](https://rustup.rs/).
 
+### Alternative approach using podman and container
+
 ```sh
 buildah build --layers=true --tag localhost/uni/cs-40200:latest ./container
-podman run --rm -it --init --init-path=/usr/bin/tini --userns=keep-id --workdir="$PWD" --volumn="$PWD:$PWD:rw" localhost/uni/cs-40200:latest
+podman run --rm -it --init --userns=keep-id --workdir="$PWD" --volumn="$PWD:$PWD:rw" localhost/uni/cs-40200:latest
 ```
-
 
 ## Build
 
