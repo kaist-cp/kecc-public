@@ -3,7 +3,7 @@ use std::path::Path;
 
 use kecc::*;
 
-use dir_test::{dir_test, Fixture};
+use dir_test::{Fixture, dir_test};
 
 fn test_dir<F>(path: &Path, ext: &OsStr, f: F)
 where
@@ -90,6 +90,8 @@ const ASMGEN_SMALL_TEST_IGNORE_LIST: [&str; 12] = [
 
 #[test]
 fn test_examples_write_c() {
+    println!("[testing write_c for \"examples/c/test_write_c1.c\"]");
+    test_write_c(Path::new("examples/c/test_write_c1.c"));
     println!("[testing write_c for \"examples/c/{HELLO_MAIN}.c\"]");
     test_write_c(Path::new(&format!("examples/c/{HELLO_MAIN}.c")));
     test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {

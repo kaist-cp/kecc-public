@@ -12,3 +12,9 @@ RUN apt-get update \
         creduce \
         zip \
     && rm -rf /var/lib/apt/lists/*
+
+# For irgen
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+        clang \
+    && rm -rf /var/lib/apt/lists/*

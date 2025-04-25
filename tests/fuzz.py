@@ -232,7 +232,7 @@ def creduce(tests_dir, fuzz_arg, analyze):
         ]
         proc = subprocess.Popen(
             args,
-            stdout=subprocess.PIPE,
+            # stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             cwd=tests_dir
         )

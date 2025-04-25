@@ -5,5 +5,5 @@ int main() {
         a[i] = i;
     }
 
-    return a[1] + a[2];
+    return a[1];
 }

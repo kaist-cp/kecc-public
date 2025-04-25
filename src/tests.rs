@@ -129,9 +129,10 @@ pub fn test_irgen(path: &Path) {
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
 
-    println!("IR: {ir:#?}");
-    println!();
+    //println!("IR: {ir:#?}");
+    println!("IR:");
     ir.write_line(0, &mut io::stdout()).unwrap();
+    println!();
 
     let rand_num = rand::rng().random_range(1..100);
     let new_c = modify_c(path, rand_num);
@@ -160,7 +161,7 @@ pub fn test_irgen(path: &Path) {
             "-o",
             &bin_path,
         ])
-        .stderr(Stdio::null())
+        .stderr(Stdio::piped())
         .status()
         .unwrap()
         .success()
@@ -203,6 +204,7 @@ pub fn test_irgen(path: &Path) {
     let args = Vec::new();
     let result = ir::interp(&ir, args).unwrap_or_else(|interp_error| panic!("{interp_error}"));
     // We only allow a main function whose return type is `int`
+    println!("{result:#?}");
     let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
     assert_eq!(width, 32);
     assert!(is_signed);
@@ -216,7 +218,7 @@ pub fn test_irgen(path: &Path) {
         let mut stderr = io::stderr().lock();
         stderr
             .write_fmt(format_args!(
-                "[irgen] Failed to correctly generate {path:?}.\n\n [incorrect ir]"
+                "[irgen] Failed to correctly generate {path:?}.\n\n [incorrect ir]\n"
             ))
             .unwrap();
         write(&ir, &mut stderr).unwrap();
@@ -435,7 +437,7 @@ pub fn test_end_to_end(path: &Path) {
             "-o",
             &bin_path,
         ])
-        .stderr(Stdio::null())
+        // .stderr(Stdio::null())
         .status()
         .unwrap()
         .success()
