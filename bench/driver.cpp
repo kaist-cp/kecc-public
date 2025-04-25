@@ -12,6 +12,13 @@ namespace model {
   #include <two_dimension_array.c>
   #include <matrix.c>
   #include <graph.c>
+  #include <median.c>
+  #include <multiply.c>
+  #include <qsort.c>
+  #include <rsort.c>
+  #include <spmv.c>
+  #include <towers.c>
+  #include <vvadd.c>
 }
 
 extern "C" {
@@ -28,6 +35,14 @@ extern "C" {
   int matrix_add(int, int);
   int graph_dijkstra(int, int);
   int graph_floyd_warshall(int, int);
+  // From riscv-tests
+  int run_median(int, int);
+  int run_multiply(int, int);
+  int run_qsort(int, int);
+  int run_rsort(int, int);
+  int run_spmv(int, int);
+  int run_towers(int, int);
+  int run_vvadd(int, int);
 }
 
 namespace {
@@ -80,6 +95,13 @@ int main() {
     cycles.push_back(evaluate("matrix_add", 30, matrix_add, model::matrix_add));
     cycles.push_back(evaluate("graph_dijkstra", 1000, graph_dijkstra, model::graph_dijkstra));
     cycles.push_back(evaluate("graph_floyd_warshall", 200, graph_floyd_warshall, model::graph_floyd_warshall));
+    cycles.push_back(evaluate("median", -1, run_median, model::run_median));
+    cycles.push_back(evaluate("mutiply", -1, run_multiply, model::run_multiply));
+    cycles.push_back(evaluate("qsort", -1, run_qsort, model::run_qsort));
+    cycles.push_back(evaluate("rsort", -1, run_rsort, model::run_rsort));
+    cycles.push_back(evaluate("spmv", -1, run_spmv, model::run_spmv));
+    cycles.push_back(evaluate("towers", -1, run_towers, model::run_towers));
+    cycles.push_back(evaluate("vvadd", -1, run_vvadd, model::run_vvadd));
   }
 
   // Calculates the geometric mean.
