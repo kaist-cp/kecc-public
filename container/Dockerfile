@@ -10,4 +10,5 @@ RUN apt-get update \
         csmith \
         libcsmith-dev \
         creduce \
+        zip \
     && rm -rf /var/lib/apt/lists/*
