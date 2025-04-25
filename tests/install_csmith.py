@@ -28,8 +28,10 @@ def install_csmith():
     Installation based on the provided in the github repos
     of the package. Make sure to have sudo privileges.
     """
-    usr_bin_path = "/usr/local/bin/csmith"
-    usr_inc_path = "/usr/local/include/"  # cmake dumps the include files here.
+    # Paths used by debian:
+    usr_bin_path = "/usr/bin/csmith"
+    usr_inc_path = "/usr/include/csmith"
+
     if os.path.exists(usr_bin_path):
         return usr_bin_path, usr_inc_path
 

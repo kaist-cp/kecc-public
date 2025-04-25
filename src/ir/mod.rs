@@ -640,7 +640,7 @@ pub enum Constant {
 }
 
 impl TryFrom<&ast::Constant> for Constant {
-    type Error = ();
+    type Error = (); // TODO: Add an error type
 
     fn try_from(constant: &ast::Constant) -> Result<Self, Self::Error> {
         match constant {
@@ -725,11 +725,94 @@ impl TryFrom<&ast::Constant> for Constant {
 
                 Ok(Self::float(value, dtype))
             }
-            ast::Constant::Character(character) => {
-                let dtype = Dtype::CHAR;
-                let value = character.parse::<char>().unwrap() as u128;
+            ast::Constant::Character(literal) => {
+                // XXX: 'literal' above is not just the character, but also includes any prefix and
+                // quotation characters from the source code.
+                //
+                // This code, tries to handle the mess that is a char literal in C
+                // See https://en.cppreference.com/w/c/language/character_constant for reference
+                // We are targetting C11, but we only handle "c-char" cases and none of the
+                // multibyte or UTF-8 options
+                if &literal[0..1] == "\'" {
+                    // While it might be expected that the constant shall have the type 'char' this
+                    // is actually not true:
+                    //
+                    // "Such constant has type int and a value equal to the representation of
+                    // c-char in the execution character set as a value of type char mapped to int"
+                    //
+                    let dtype = Dtype::INT;
 
-                Ok(Self::int(value, dtype))
+                    if literal == "''" {
+                        panic!("Invalid empty literal {literal:?}");
+                    }
+
+                    // We first take care of the most likely case 'c', where c is a simple
+                    // character, that is "anything but ', \, \n "
+                    if literal.len() == 3 && &literal[2..3] == "\'" {
+                        match &literal[1..2] {
+                            "'" => panic!("Invalid literal {literal:?}"),
+                            "\\" => panic!(
+                                "Invalid literal {literal:?} escape sequence without closing quotation mark"
+                            ),
+                            "\n" => panic!("Unescaped newline in literal {literal:?}"),
+                            char => {
+                                let rawchar = char.parse::<char>().unwrap() as u8;
+
+                                if rawchar == 0 {
+                                    panic!(
+                                        "NULL-byte in character literal, refusing to continue as it might cause problems later"
+                                    );
+                                }
+
+                                Ok(Self::int(rawchar.into(), dtype))
+                            }
+                        }
+                    } else if literal.len() == 4 && &literal[1..2] == "\\" && &literal[3..4] == "\'"
+                    {
+                        // Handle a large part of https://en.cppreference.com/w/c/language/escape
+                        let value: u128 = match &literal[2..3] {
+                            "'" => 0x27,
+                            "\"" => 0x22,
+                            "?" => 0x3f,
+                            "\\" => 0x5c,
+                            "a" => 0x07,
+                            "b" => 0x08,
+                            "f" => 0x0c,
+                            "n" => 0x0a,
+                            "r" => 0x0d,
+                            "t" => 0x09,
+                            "v" => 0x0b,
+                            // Handle octal escapes for "\N" where N -> digit here to simplify
+                            // the code a bit
+                            "0" => 0x00,
+                            "1" => 0x01,
+                            "2" => 0x02,
+                            "3" => 0x03,
+                            "4" => 0x04,
+                            "5" => 0x05,
+                            "6" => 0x06,
+                            "7" => 0x07,
+                            _ => panic!("Unsupported character literal escape {literal:?}"),
+                        };
+
+                        Ok(Self::int(value, dtype))
+                    } else {
+                        // TODO: Handle \nnn octal and \Xnnn escapes
+                        panic!(
+                            "Multibyte character literal or unsupported escape sequence encountred: {literal:?}"
+                        );
+                    }
+                } else if &literal[0..2] == "u8" {
+                    panic!("UTF-8 character literal is_unsupported {literal:?}");
+                } else if &literal[0..2] == "u\'" {
+                    panic!("u character literal prefix is_unsupported {literal:?}");
+                } else if &literal[0..2] == "U\'" {
+                    panic!("U character literal prefix is_unsupported {literal:?}");
+                } else if &literal[0..2] == "L\'" {
+                    panic!("L character literal prefix is_unsupported {literal:?}");
+                } else {
+                    panic!("unexpected character literal format {literal:?}");
+                }
             }
         }
     }

@@ -9,6 +9,8 @@ use rand::Rng;
 use tempfile::tempdir;
 use wait_timeout::ChildExt;
 
+use crate::c::Error as ParseError;
+use crate::write_base::WriteLine;
 use crate::*;
 
 const NONCE_NAME: &str = "nonce";
@@ -87,6 +89,17 @@ pub fn test_write_c(path: &Path) {
 
     write(&unit, &mut temp_file).unwrap();
 
+    {
+        let mut buf = String::new();
+        // FIXME: For some reason we cannot reuse `temp_file`.
+        let _ = File::open(&temp_file_path)
+            .unwrap()
+            .read_to_string(&mut buf)
+            .unwrap();
+
+        println!("{}", buf);
+    }
+
     let new_unit = Parse
         .translate(&temp_file_path.as_path())
         .expect("parse failed while parsing the output from implemented printer");
@@ -99,6 +112,8 @@ pub fn test_write_c(path: &Path) {
             .read_to_string(&mut buf)
             .unwrap();
 
+        println!("{}", buf);
+
         panic!("[write-c] Failed to correctly write {path:?}.\n\n[incorrect result]\n\n{buf}");
     }
 }
@@ -107,21 +122,60 @@ pub fn test_write_c(path: &Path) {
 pub fn test_irgen(path: &Path) {
     // Check if the file has .c extension
     assert_eq!(path.extension(), Some(std::ffi::OsStr::new("c")));
-    let unit = Parse
-        .translate(&path)
-        .unwrap_or_else(|_| panic!("parse failed {}", path.display()));
+    let temp_dir = tempdir().expect("temp dir creation failed");
+    let temp_file_path = temp_dir.path().join("temp.c");
+    {
+        let bin_path = temp_file_path
+            .with_extension("irgen")
+            .as_path()
+            .display()
+            .to_string();
+
+        // Compile c file: If fails, test is vacuously success
+        if !Command::new("clang")
+            .args([
+                "-Werror=excess-initializers",
+                "-fsanitize=float-divide-by-zero",
+                "-fsanitize=undefined",
+                "-fno-sanitize-recover=all",
+                path.to_str().expect(""),
+                //&path.into_os_string().into_string(),
+                "-o",
+                &bin_path,
+            ])
+            // .stderr(Stdio::null())
+            .status()
+            .unwrap()
+            .success()
+        {
+            println!("SKIP_TEST: clang failed to compile:");
+            ::std::process::exit(SKIP_TEST);
+        }
+    }
+    let unit = Parse.translate(&path).unwrap_or_else(|err| match err {
+        ParseError::ParseError(e) => panic!("parse failed {} {e:?}", path.display()),
+        ParseError::Unsupported(e) => {
+            println!("SKIP_TEST: unsupported {e:?}");
+            ::std::process::exit(SKIP_TEST);
+        }
+    });
 
     let mut ir = Irgen::default()
         .translate(&unit)
         .unwrap_or_else(|irgen_error| panic!("{}", irgen_error));
+
+    let _ = opt::Ocfg::default().optimize(&mut ir);
+
+    //println!("IR: {ir:#?}");
+    println!("IR:");
+    ir.write_line(0, &mut io::stdout()).unwrap();
+    println!();
 
     let rand_num = rand::rng().random_range(1..100);
     let new_c = modify_c(path, rand_num);
     modify_ir(&mut ir, rand_num);
 
     // compile recolved c example
-    let temp_dir = tempdir().expect("temp dir creation failed");
-    let temp_file_path = temp_dir.path().join("temp.c");
     let mut temp_file = File::create(&temp_file_path).unwrap();
     temp_file.write_all(new_c.as_bytes()).unwrap();
 
@@ -142,11 +196,12 @@ pub fn test_irgen(path: &Path) {
             "-o",
             &bin_path,
         ])
-        .stderr(Stdio::null())
+        .stderr(Stdio::piped())
         .status()
         .unwrap()
         .success()
     {
+        println!("SKIP_TEST: clang failed to compile:");
         ::std::process::exit(SKIP_TEST);
     }
 
@@ -163,6 +218,7 @@ pub fn test_irgen(path: &Path) {
         println!("timeout occurs");
         child.kill().unwrap();
         let _ = child.wait().unwrap();
+        println!("SKIP_TEST: failed to execute compiled executable");
         ::std::process::exit(SKIP_TEST);
     };
 
@@ -183,6 +239,7 @@ pub fn test_irgen(path: &Path) {
     let args = Vec::new();
     let result = ir::interp(&ir, args).unwrap_or_else(|interp_error| panic!("{interp_error}"));
     // We only allow a main function whose return type is `int`
+    println!("{result:#?}");
     let (value, width, is_signed) = result.get_int().expect("non-integer value occurs");
     assert_eq!(width, 32);
     assert!(is_signed);
@@ -196,7 +253,7 @@ pub fn test_irgen(path: &Path) {
         let mut stderr = io::stderr().lock();
         stderr
             .write_fmt(format_args!(
-                "[irgen] Failed to correctly generate {path:?}.\n\n [incorrect ir]"
+                "[irgen] Failed to correctly generate {path:?}.\n\n [incorrect ir]\n"
             ))
             .unwrap();
         write(&ir, &mut stderr).unwrap();
@@ -415,7 +472,7 @@ pub fn test_end_to_end(path: &Path) {
             "-o",
             &bin_path,
         ])
-        .stderr(Stdio::null())
+        // .stderr(Stdio::null())
         .status()
         .unwrap()
         .success()

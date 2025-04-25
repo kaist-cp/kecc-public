@@ -3,6 +3,8 @@ use std::path::Path;
 
 use kecc::*;
 
+use dir_test::{Fixture, dir_test};
+
 fn test_dir<F>(path: &Path, ext: &OsStr, f: F)
 where
     F: Fn(&Path),
@@ -88,6 +90,8 @@ const ASMGEN_SMALL_TEST_IGNORE_LIST: [&str; 12] = [
 
 #[test]
 fn test_examples_write_c() {
+    println!("[testing write_c for \"examples/c/test_write_c1.c\"]");
+    test_write_c(Path::new("examples/c/test_write_c1.c"));
     println!("[testing write_c for \"examples/c/{HELLO_MAIN}.c\"]");
     test_write_c(Path::new(&format!("examples/c/{HELLO_MAIN}.c")));
     test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {
@@ -96,6 +100,16 @@ fn test_examples_write_c() {
             test_write_c(path);
         }
     });
+}
+
+#[dir_test(
+    dir: "$CARGO_MANIFEST_DIR/regression_tests/c",
+    glob: "*.c",
+)]
+fn test_regression_irgen(fixture: Fixture<&str>) {
+    let path_str = fixture.path();
+    println!("[testing irgen for '{path_str:?}']"); // TODO: Colors
+    test_irgen(Path::new(path_str));
 }
 
 #[test]
@@ -114,15 +128,14 @@ fn test_examples_irgen_small() {
     });
 }
 
-#[test]
-fn test_examples_irgen_large() {
-    test_dir(Path::new("examples/c"), OsStr::new("c"), |path| {
-        let path_str = &path.to_str().expect("`path` must be transformed to `&str`");
-        if IRGEN_SMALL_TEST_IGNORE_LIST.contains(path_str) && !path_str.contains(HELLO_MAIN) {
-            println!("[testing irgen for {path:?}]");
-            test_irgen(path);
-        }
-    });
+#[dir_test(
+    dir: "$CARGO_MANIFEST_DIR/examples/c",
+    glob: "*.c",
+)]
+fn test_examples_irgen_all(fixture: Fixture<&str>) {
+    let path_str = fixture.path();
+    println!("[testing irgen for '{path_str:?}']"); // TODO: Colors
+    test_irgen(Path::new(path_str));
 }
 
 #[test]

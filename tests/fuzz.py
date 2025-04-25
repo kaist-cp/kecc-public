@@ -176,7 +176,7 @@ def make_fuzz_errmsg(tests_dir, fuzz_arg):
         proc = subprocess.Popen(
             args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir
         )
-        (out, err) = proc.communicate()
+        (out, err) = proc.communicate(timeout=5)
         if proc.returncode != 0:
             if "assertion failed" in out.decode():
                 fuzz_errmsg = "assertion failed"
@@ -217,17 +217,23 @@ def creduce(tests_dir, fuzz_arg, analyze):
 
     try:
         # --tidy: Do not make a backup copy of each file to reduce as file.orig
+        print("Trying to reduce:")
         args = [
             "creduce",
             "--tidy",
             "--timing",
+            #"--n", "2",
             "--timeout",
-            "20",
+            #"20",
+            "5",
             "./reduce-criteria.sh",
             "test_reduced.c",
         ]
         proc = subprocess.Popen(
-            args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=tests_dir
+            args,
+            # stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=tests_dir
         )
         (out, err) = proc.communicate()
         if proc.returncode != 0:
@@ -277,7 +283,7 @@ def fuzz(tests_dir, fuzz_arg, num_iter, easy):
                     stderr=subprocess.STDOUT,
                     cwd=tests_dir,
                 )
-                proc.communicate(timeout=60)
+                proc.communicate(timeout=5)
 
                 # KECC sets an exit code of 102 when the test skipped.
                 if proc.returncode == SKIP_TEST:
@@ -311,6 +317,9 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--irgen", action="store_true", help="Fuzzing irgen")
     parser.add_argument(
         "-r", "--reduce", action="store_true", help="Reducing input file"
+    )
+    parser.add_argument(
+        "--fuzz-and-reduce", action="store_true", help="Fuzz until crash found, then reduce automatically"
     )
     parser.add_argument(
         "--skip-build", action="store_true", help="Skipping cargo build"
@@ -373,7 +382,15 @@ if __name__ == "__main__":
             "Skip building. Please run `cargo build --features=build-bin --release --bin fuzz --bin kecc` to manually build."
         )
 
-    if args.reduce:
+    if args.fuzz_and_reduce:
+        print("Fuzzing:")
+        try:
+            fuzz(tests_dir, fuzz_arg, args.num, args.easy)
+        except Exception as e:
+            print(e)
+            print("Reducing:")
+            creduce(tests_dir, fuzz_arg, args.clang_analyze)
+    elif args.reduce:
         creduce(tests_dir, fuzz_arg, args.clang_analyze)
     else:
         fuzz(tests_dir, fuzz_arg, args.num, args.easy)

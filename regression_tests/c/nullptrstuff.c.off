@@ -1,0 +1,5 @@
+int main() {
+    int *a = (void*)0;
+    long *b = (void*)0;
+    return (long*)a == b; // Should be 1, as both are valid NULL pointers.
+}
