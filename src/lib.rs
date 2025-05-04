@@ -1,6 +1,9 @@
 //! KECC: KAIST Educational C Compiler.
 
 #![deny(clippy::all)]
+// See https://github.com/rust-lang/rust-clippy/issues/3351 - clippy will recommend using any over
+// fold in some cases where this will actually change the meaning of the operation.
+#![allow(clippy::unnecessary_fold)]
 // #![deny(rustdoc::all)]
 #![deny(warnings)]
 // Tries to deny all rustc allow lints.
