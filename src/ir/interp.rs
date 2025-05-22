@@ -598,6 +598,17 @@ mod calculator {
             ),
         };
 
+        // The calculation above was done with f64, even if the type we are working with is
+        // supposed to be f32.
+        // We now need to coerce the type back, to ensure any kind of precision loss is applied as
+        // if we calculated with f32:
+
+        let result = if width == Dtype::SIZE_OF_FLOAT * Dtype::BITS_OF_BYTE {
+            result as f32 as f64
+        } else {
+            result
+        };
+
         Ok(Value::float(result, width))
     }
 
