@@ -14,8 +14,8 @@ void multiply_data_init(int nonce) {
     int y = nonce;
 
     for (i = 0; i < 100; i++) {
-        x = (x * 97 + 17) % 10009;
-        y = (y * 17 + 23) % 10007;
+        x = (x * 97 + 17) % 1009;
+        y = (y * 17 + 23) % 1007;
         input1_multiply[i] = x;
         input2_multiply[i] = y;
     }

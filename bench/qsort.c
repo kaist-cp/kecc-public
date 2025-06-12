@@ -12,7 +12,7 @@ void qsort_data_init(int nonce) {
     int x = nonce;
 
     for (i = 0; i < 16384; i++) {
-        x = (x * 97 + 17) % 100000009;
+        x = (x * 97 + 17) % 100009;
         input_qsort_data[i] = x;
     }
 }

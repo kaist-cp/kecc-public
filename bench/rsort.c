@@ -12,7 +12,7 @@ void rsort_data_init(int nonce) {
     int x = nonce;
 
     for (i = 0; i < 2048; i++) {
-        x = (x * 97 + 17) % 10000007;
+        x = (x * 97 + 17) % 100007;
         input_rsort_data[i] = x;
     }
 }
