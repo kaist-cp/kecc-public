@@ -74,7 +74,7 @@ int verifyDouble(int n, double* test) {
     int result = 0;
 
     for (i = 0; i < n; i++) {
-        result += (int) (test[i]);
+        result ^= (int) (test[i]);
     }
 
     return result;

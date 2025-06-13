@@ -101,7 +101,7 @@ int verify_rsort(int n, int* test) {
         if (t0 > t1)
             return 1;
 
-        result += t0;
+        result ^= t0;
     }
 
     return result;

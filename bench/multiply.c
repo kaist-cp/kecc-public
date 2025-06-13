@@ -26,6 +26,9 @@ int multiply(int x, int y) {
     int result = 0;
 
     for (i = 0; i < 32; i++) {
+        if (x == 0)
+            break;
+
         if ((x & 0x1) == 1)
             result = result + y;
 
@@ -47,7 +50,7 @@ int verify_multiply(int n, int* test) {
         if (t0 * t1 != v)
             return 1;
 
-        result += v;
+        result ^= v;
     }
 
     return result;

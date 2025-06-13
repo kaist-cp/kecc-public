@@ -35,7 +35,7 @@ int verify_vvadd(int n, int* test) {
 
     for (i = 0; i < n; i++) {
         int v = test[i];
-        result += v;
+        result ^= v;
     }
 
     return result;
