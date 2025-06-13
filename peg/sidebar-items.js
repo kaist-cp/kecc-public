@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RuleResult"],"macro":["parser"],"mod":["error","str"],"trait":["Parse","ParseElem","ParseLiteral","ParseSlice"]};

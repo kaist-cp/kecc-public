@@ -1,0 +1,621 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `Visit` trait in crate `lang_c`."><title>Visit in lang_c::visit - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="lang_c" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../lang_c/index.html">lang_c</a><span class="version">0.15.1</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Visit</a></h2><h3><a href="#provided-methods">Provided Methods</a></h3><ul class="block"><li><a href="#method.visit_alignment_specifier" title="visit_alignment_specifier">visit_alignment_specifier</a></li><li><a href="#method.visit_alignof" title="visit_alignof">visit_alignof</a></li><li><a href="#method.visit_array_declarator" title="visit_array_declarator">visit_array_declarator</a></li><li><a href="#method.visit_array_size" title="visit_array_size">visit_array_size</a></li><li><a href="#method.visit_asm_statement" title="visit_asm_statement">visit_asm_statement</a></li><li><a href="#method.visit_attribute" title="visit_attribute">visit_attribute</a></li><li><a href="#method.visit_availability_attribute" title="visit_availability_attribute">visit_availability_attribute</a></li><li><a href="#method.visit_availability_clause" title="visit_availability_clause">visit_availability_clause</a></li><li><a href="#method.visit_binary_operator" title="visit_binary_operator">visit_binary_operator</a></li><li><a href="#method.visit_binary_operator_expression" title="visit_binary_operator_expression">visit_binary_operator_expression</a></li><li><a href="#method.visit_block_item" title="visit_block_item">visit_block_item</a></li><li><a href="#method.visit_call_expression" title="visit_call_expression">visit_call_expression</a></li><li><a href="#method.visit_case_range" title="visit_case_range">visit_case_range</a></li><li><a href="#method.visit_cast_expression" title="visit_cast_expression">visit_cast_expression</a></li><li><a href="#method.visit_compound_literal" title="visit_compound_literal">visit_compound_literal</a></li><li><a href="#method.visit_conditional_expression" title="visit_conditional_expression">visit_conditional_expression</a></li><li><a href="#method.visit_constant" title="visit_constant">visit_constant</a></li><li><a href="#method.visit_declaration" title="visit_declaration">visit_declaration</a></li><li><a href="#method.visit_declaration_specifier" title="visit_declaration_specifier">visit_declaration_specifier</a></li><li><a href="#method.visit_declarator" title="visit_declarator">visit_declarator</a></li><li><a href="#method.visit_declarator_kind" title="visit_declarator_kind">visit_declarator_kind</a></li><li><a href="#method.visit_derived_declarator" title="visit_derived_declarator">visit_derived_declarator</a></li><li><a href="#method.visit_designator" title="visit_designator">visit_designator</a></li><li><a href="#method.visit_do_while_statement" title="visit_do_while_statement">visit_do_while_statement</a></li><li><a href="#method.visit_ellipsis" title="visit_ellipsis">visit_ellipsis</a></li><li><a href="#method.visit_enum_type" title="visit_enum_type">visit_enum_type</a></li><li><a href="#method.visit_enumerator" title="visit_enumerator">visit_enumerator</a></li><li><a href="#method.visit_expression" title="visit_expression">visit_expression</a></li><li><a href="#method.visit_extension" title="visit_extension">visit_extension</a></li><li><a href="#method.visit_external_declaration" title="visit_external_declaration">visit_external_declaration</a></li><li><a href="#method.visit_float" title="visit_float">visit_float</a></li><li><a href="#method.visit_float_base" title="visit_float_base">visit_float_base</a></li><li><a href="#method.visit_float_format" title="visit_float_format">visit_float_format</a></li><li><a href="#method.visit_float_suffix" title="visit_float_suffix">visit_float_suffix</a></li><li><a href="#method.visit_for_initializer" title="visit_for_initializer">visit_for_initializer</a></li><li><a href="#method.visit_for_statement" title="visit_for_statement">visit_for_statement</a></li><li><a href="#method.visit_function_declarator" title="visit_function_declarator">visit_function_declarator</a></li><li><a href="#method.visit_function_definition" title="visit_function_definition">visit_function_definition</a></li><li><a href="#method.visit_function_specifier" title="visit_function_specifier">visit_function_specifier</a></li><li><a href="#method.visit_generic_association" title="visit_generic_association">visit_generic_association</a></li><li><a href="#method.visit_generic_association_type" title="visit_generic_association_type">visit_generic_association_type</a></li><li><a href="#method.visit_generic_selection" title="visit_generic_selection">visit_generic_selection</a></li><li><a href="#method.visit_gnu_asm_operand" title="visit_gnu_asm_operand">visit_gnu_asm_operand</a></li><li><a href="#method.visit_gnu_extended_asm_statement" title="visit_gnu_extended_asm_statement">visit_gnu_extended_asm_statement</a></li><li><a href="#method.visit_identifier" title="visit_identifier">visit_identifier</a></li><li><a href="#method.visit_if_statement" title="visit_if_statement">visit_if_statement</a></li><li><a href="#method.visit_init_declarator" title="visit_init_declarator">visit_init_declarator</a></li><li><a href="#method.visit_initializer" title="visit_initializer">visit_initializer</a></li><li><a href="#method.visit_initializer_list_item" title="visit_initializer_list_item">visit_initializer_list_item</a></li><li><a href="#method.visit_integer" title="visit_integer">visit_integer</a></li><li><a href="#method.visit_integer_base" title="visit_integer_base">visit_integer_base</a></li><li><a href="#method.visit_integer_size" title="visit_integer_size">visit_integer_size</a></li><li><a href="#method.visit_integer_suffix" title="visit_integer_suffix">visit_integer_suffix</a></li><li><a href="#method.visit_label" title="visit_label">visit_label</a></li><li><a href="#method.visit_labeled_statement" title="visit_labeled_statement">visit_labeled_statement</a></li><li><a href="#method.visit_member_expression" title="visit_member_expression">visit_member_expression</a></li><li><a href="#method.visit_member_operator" title="visit_member_operator">visit_member_operator</a></li><li><a href="#method.visit_offset_designator" title="visit_offset_designator">visit_offset_designator</a></li><li><a href="#method.visit_offset_member" title="visit_offset_member">visit_offset_member</a></li><li><a href="#method.visit_offset_of_expression" title="visit_offset_of_expression">visit_offset_of_expression</a></li><li><a href="#method.visit_parameter_declaration" title="visit_parameter_declaration">visit_parameter_declaration</a></li><li><a href="#method.visit_pointer_qualifier" title="visit_pointer_qualifier">visit_pointer_qualifier</a></li><li><a href="#method.visit_range_designator" title="visit_range_designator">visit_range_designator</a></li><li><a href="#method.visit_sizeofty" title="visit_sizeofty">visit_sizeofty</a></li><li><a href="#method.visit_sizeofval" title="visit_sizeofval">visit_sizeofval</a></li><li><a href="#method.visit_specifier_qualifier" title="visit_specifier_qualifier">visit_specifier_qualifier</a></li><li><a href="#method.visit_statement" title="visit_statement">visit_statement</a></li><li><a href="#method.visit_static_assert" title="visit_static_assert">visit_static_assert</a></li><li><a href="#method.visit_storage_class_specifier" title="visit_storage_class_specifier">visit_storage_class_specifier</a></li><li><a href="#method.visit_string_literal" title="visit_string_literal">visit_string_literal</a></li><li><a href="#method.visit_struct_declaration" title="visit_struct_declaration">visit_struct_declaration</a></li><li><a href="#method.visit_struct_declarator" title="visit_struct_declarator">visit_struct_declarator</a></li><li><a href="#method.visit_struct_field" title="visit_struct_field">visit_struct_field</a></li><li><a href="#method.visit_struct_kind" title="visit_struct_kind">visit_struct_kind</a></li><li><a href="#method.visit_struct_type" title="visit_struct_type">visit_struct_type</a></li><li><a href="#method.visit_switch_statement" title="visit_switch_statement">visit_switch_statement</a></li><li><a href="#method.visit_translation_unit" title="visit_translation_unit">visit_translation_unit</a></li><li><a href="#method.visit_ts18661_float_format" title="visit_ts18661_float_format">visit_ts18661_float_format</a></li><li><a href="#method.visit_ts18661_float_type" title="visit_ts18661_float_type">visit_ts18661_float_type</a></li><li><a href="#method.visit_type_name" title="visit_type_name">visit_type_name</a></li><li><a href="#method.visit_type_of" title="visit_type_of">visit_type_of</a></li><li><a href="#method.visit_type_qualifier" title="visit_type_qualifier">visit_type_qualifier</a></li><li><a href="#method.visit_type_specifier" title="visit_type_specifier">visit_type_specifier</a></li><li><a href="#method.visit_unary_operator" title="visit_unary_operator">visit_unary_operator</a></li><li><a href="#method.visit_unary_operator_expression" title="visit_unary_operator_expression">visit_unary_operator_expression</a></li><li><a href="#method.visit_va_arg_expression" title="visit_va_arg_expression">visit_va_arg_expression</a></li><li><a href="#method.visit_while_statement" title="visit_while_statement">visit_while_statement</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In lang_<wbr>c::<wbr>visit</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="../index.html">lang_c</a>::<wbr><a href="index.html">visit</a></span><h1>Trait <span class="trait">Visit</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/lang_c/visit.rs.html#24-505">Source</a> </span></div><pre class="rust item-decl"><code>pub trait Visit&lt;'ast&gt; {
+<details class="toggle type-contents-toggle"><summary class="hideme"><span>Show 87 methods</span></summary>    // Provided methods
+    fn <a href="#method.visit_identifier" class="fn">visit_identifier</a>(
+        &amp;mut self,
+        identifier: &amp;'ast <a class="struct" href="../ast/struct.Identifier.html" title="struct lang_c::ast::Identifier">Identifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_constant" class="fn">visit_constant</a>(&amp;mut self, constant: &amp;'ast <a class="enum" href="../ast/enum.Constant.html" title="enum lang_c::ast::Constant">Constant</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_integer" class="fn">visit_integer</a>(&amp;mut self, integer: &amp;'ast <a class="struct" href="../ast/struct.Integer.html" title="struct lang_c::ast::Integer">Integer</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_integer_base" class="fn">visit_integer_base</a>(
+        &amp;mut self,
+        integer_base: &amp;'ast <a class="enum" href="../ast/enum.IntegerBase.html" title="enum lang_c::ast::IntegerBase">IntegerBase</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_integer_suffix" class="fn">visit_integer_suffix</a>(
+        &amp;mut self,
+        integer_suffix: &amp;'ast <a class="struct" href="../ast/struct.IntegerSuffix.html" title="struct lang_c::ast::IntegerSuffix">IntegerSuffix</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_integer_size" class="fn">visit_integer_size</a>(
+        &amp;mut self,
+        integer_size: &amp;'ast <a class="enum" href="../ast/enum.IntegerSize.html" title="enum lang_c::ast::IntegerSize">IntegerSize</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_float" class="fn">visit_float</a>(&amp;mut self, float: &amp;'ast <a class="struct" href="../ast/struct.Float.html" title="struct lang_c::ast::Float">Float</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_float_base" class="fn">visit_float_base</a>(
+        &amp;mut self,
+        float_base: &amp;'ast <a class="enum" href="../ast/enum.FloatBase.html" title="enum lang_c::ast::FloatBase">FloatBase</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_float_suffix" class="fn">visit_float_suffix</a>(
+        &amp;mut self,
+        float_suffix: &amp;'ast <a class="struct" href="../ast/struct.FloatSuffix.html" title="struct lang_c::ast::FloatSuffix">FloatSuffix</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_float_format" class="fn">visit_float_format</a>(
+        &amp;mut self,
+        float_format: &amp;'ast <a class="enum" href="../ast/enum.FloatFormat.html" title="enum lang_c::ast::FloatFormat">FloatFormat</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_string_literal" class="fn">visit_string_literal</a>(
+        &amp;mut self,
+        string_literal: &amp;'ast <a class="type" href="../ast/type.StringLiteral.html" title="type lang_c::ast::StringLiteral">StringLiteral</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_expression" class="fn">visit_expression</a>(
+        &amp;mut self,
+        expression: &amp;'ast <a class="enum" href="../ast/enum.Expression.html" title="enum lang_c::ast::Expression">Expression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_member_operator" class="fn">visit_member_operator</a>(
+        &amp;mut self,
+        member_operator: &amp;'ast <a class="enum" href="../ast/enum.MemberOperator.html" title="enum lang_c::ast::MemberOperator">MemberOperator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_generic_selection" class="fn">visit_generic_selection</a>(
+        &amp;mut self,
+        generic_selection: &amp;'ast <a class="struct" href="../ast/struct.GenericSelection.html" title="struct lang_c::ast::GenericSelection">GenericSelection</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_generic_association" class="fn">visit_generic_association</a>(
+        &amp;mut self,
+        generic_association: &amp;'ast <a class="enum" href="../ast/enum.GenericAssociation.html" title="enum lang_c::ast::GenericAssociation">GenericAssociation</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_generic_association_type" class="fn">visit_generic_association_type</a>(
+        &amp;mut self,
+        generic_association_type: &amp;'ast <a class="struct" href="../ast/struct.GenericAssociationType.html" title="struct lang_c::ast::GenericAssociationType">GenericAssociationType</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_member_expression" class="fn">visit_member_expression</a>(
+        &amp;mut self,
+        member_expression: &amp;'ast <a class="struct" href="../ast/struct.MemberExpression.html" title="struct lang_c::ast::MemberExpression">MemberExpression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_call_expression" class="fn">visit_call_expression</a>(
+        &amp;mut self,
+        call_expression: &amp;'ast <a class="struct" href="../ast/struct.CallExpression.html" title="struct lang_c::ast::CallExpression">CallExpression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_compound_literal" class="fn">visit_compound_literal</a>(
+        &amp;mut self,
+        compound_literal: &amp;'ast <a class="struct" href="../ast/struct.CompoundLiteral.html" title="struct lang_c::ast::CompoundLiteral">CompoundLiteral</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_sizeofty" class="fn">visit_sizeofty</a>(&amp;mut self, sizeofty: &amp;'ast <a class="struct" href="../ast/struct.SizeOfTy.html" title="struct lang_c::ast::SizeOfTy">SizeOfTy</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_sizeofval" class="fn">visit_sizeofval</a>(&amp;mut self, sizeofval: &amp;'ast <a class="struct" href="../ast/struct.SizeOfVal.html" title="struct lang_c::ast::SizeOfVal">SizeOfVal</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_alignof" class="fn">visit_alignof</a>(&amp;mut self, alignofty: &amp;'ast <a class="struct" href="../ast/struct.AlignOf.html" title="struct lang_c::ast::AlignOf">AlignOf</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_unary_operator" class="fn">visit_unary_operator</a>(
+        &amp;mut self,
+        unary_operator: &amp;'ast <a class="enum" href="../ast/enum.UnaryOperator.html" title="enum lang_c::ast::UnaryOperator">UnaryOperator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_unary_operator_expression" class="fn">visit_unary_operator_expression</a>(
+        &amp;mut self,
+        unary_operator_expression: &amp;'ast <a class="struct" href="../ast/struct.UnaryOperatorExpression.html" title="struct lang_c::ast::UnaryOperatorExpression">UnaryOperatorExpression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_cast_expression" class="fn">visit_cast_expression</a>(
+        &amp;mut self,
+        cast_expression: &amp;'ast <a class="struct" href="../ast/struct.CastExpression.html" title="struct lang_c::ast::CastExpression">CastExpression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_binary_operator" class="fn">visit_binary_operator</a>(
+        &amp;mut self,
+        binary_operator: &amp;'ast <a class="enum" href="../ast/enum.BinaryOperator.html" title="enum lang_c::ast::BinaryOperator">BinaryOperator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_binary_operator_expression" class="fn">visit_binary_operator_expression</a>(
+        &amp;mut self,
+        binary_operator_expression: &amp;'ast <a class="struct" href="../ast/struct.BinaryOperatorExpression.html" title="struct lang_c::ast::BinaryOperatorExpression">BinaryOperatorExpression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_conditional_expression" class="fn">visit_conditional_expression</a>(
+        &amp;mut self,
+        conditional_expression: &amp;'ast <a class="struct" href="../ast/struct.ConditionalExpression.html" title="struct lang_c::ast::ConditionalExpression">ConditionalExpression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_va_arg_expression" class="fn">visit_va_arg_expression</a>(
+        &amp;mut self,
+        va_arg_expression: &amp;'ast <a class="struct" href="../ast/struct.VaArgExpression.html" title="struct lang_c::ast::VaArgExpression">VaArgExpression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_offset_of_expression" class="fn">visit_offset_of_expression</a>(
+        &amp;mut self,
+        offset_of_expression: &amp;'ast <a class="struct" href="../ast/struct.OffsetOfExpression.html" title="struct lang_c::ast::OffsetOfExpression">OffsetOfExpression</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_offset_designator" class="fn">visit_offset_designator</a>(
+        &amp;mut self,
+        offset_designator: &amp;'ast <a class="struct" href="../ast/struct.OffsetDesignator.html" title="struct lang_c::ast::OffsetDesignator">OffsetDesignator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_offset_member" class="fn">visit_offset_member</a>(
+        &amp;mut self,
+        offset_member: &amp;'ast <a class="enum" href="../ast/enum.OffsetMember.html" title="enum lang_c::ast::OffsetMember">OffsetMember</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_declaration" class="fn">visit_declaration</a>(
+        &amp;mut self,
+        declaration: &amp;'ast <a class="struct" href="../ast/struct.Declaration.html" title="struct lang_c::ast::Declaration">Declaration</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_declaration_specifier" class="fn">visit_declaration_specifier</a>(
+        &amp;mut self,
+        declaration_specifier: &amp;'ast <a class="enum" href="../ast/enum.DeclarationSpecifier.html" title="enum lang_c::ast::DeclarationSpecifier">DeclarationSpecifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_init_declarator" class="fn">visit_init_declarator</a>(
+        &amp;mut self,
+        init_declarator: &amp;'ast <a class="struct" href="../ast/struct.InitDeclarator.html" title="struct lang_c::ast::InitDeclarator">InitDeclarator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_storage_class_specifier" class="fn">visit_storage_class_specifier</a>(
+        &amp;mut self,
+        storage_class_specifier: &amp;'ast <a class="enum" href="../ast/enum.StorageClassSpecifier.html" title="enum lang_c::ast::StorageClassSpecifier">StorageClassSpecifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_type_specifier" class="fn">visit_type_specifier</a>(
+        &amp;mut self,
+        type_specifier: &amp;'ast <a class="enum" href="../ast/enum.TypeSpecifier.html" title="enum lang_c::ast::TypeSpecifier">TypeSpecifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_ts18661_float_type" class="fn">visit_ts18661_float_type</a>(
+        &amp;mut self,
+        ts18661_float_type: &amp;'ast <a class="struct" href="../ast/struct.TS18661FloatType.html" title="struct lang_c::ast::TS18661FloatType">TS18661FloatType</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_ts18661_float_format" class="fn">visit_ts18661_float_format</a>(
+        &amp;mut self,
+        ts18661_float_format: &amp;'ast <a class="enum" href="../ast/enum.TS18661FloatFormat.html" title="enum lang_c::ast::TS18661FloatFormat">TS18661FloatFormat</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_struct_type" class="fn">visit_struct_type</a>(
+        &amp;mut self,
+        struct_type: &amp;'ast <a class="struct" href="../ast/struct.StructType.html" title="struct lang_c::ast::StructType">StructType</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_struct_kind" class="fn">visit_struct_kind</a>(
+        &amp;mut self,
+        struct_kind: &amp;'ast <a class="enum" href="../ast/enum.StructKind.html" title="enum lang_c::ast::StructKind">StructKind</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_struct_declaration" class="fn">visit_struct_declaration</a>(
+        &amp;mut self,
+        struct_declaration: &amp;'ast <a class="enum" href="../ast/enum.StructDeclaration.html" title="enum lang_c::ast::StructDeclaration">StructDeclaration</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_struct_field" class="fn">visit_struct_field</a>(
+        &amp;mut self,
+        struct_field: &amp;'ast <a class="struct" href="../ast/struct.StructField.html" title="struct lang_c::ast::StructField">StructField</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_specifier_qualifier" class="fn">visit_specifier_qualifier</a>(
+        &amp;mut self,
+        specifier_qualifier: &amp;'ast <a class="enum" href="../ast/enum.SpecifierQualifier.html" title="enum lang_c::ast::SpecifierQualifier">SpecifierQualifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_struct_declarator" class="fn">visit_struct_declarator</a>(
+        &amp;mut self,
+        struct_declarator: &amp;'ast <a class="struct" href="../ast/struct.StructDeclarator.html" title="struct lang_c::ast::StructDeclarator">StructDeclarator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_enum_type" class="fn">visit_enum_type</a>(&amp;mut self, enum_type: &amp;'ast <a class="struct" href="../ast/struct.EnumType.html" title="struct lang_c::ast::EnumType">EnumType</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_enumerator" class="fn">visit_enumerator</a>(
+        &amp;mut self,
+        enumerator: &amp;'ast <a class="struct" href="../ast/struct.Enumerator.html" title="struct lang_c::ast::Enumerator">Enumerator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_type_qualifier" class="fn">visit_type_qualifier</a>(
+        &amp;mut self,
+        type_qualifier: &amp;'ast <a class="enum" href="../ast/enum.TypeQualifier.html" title="enum lang_c::ast::TypeQualifier">TypeQualifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_function_specifier" class="fn">visit_function_specifier</a>(
+        &amp;mut self,
+        function_specifier: &amp;'ast <a class="enum" href="../ast/enum.FunctionSpecifier.html" title="enum lang_c::ast::FunctionSpecifier">FunctionSpecifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_alignment_specifier" class="fn">visit_alignment_specifier</a>(
+        &amp;mut self,
+        alignment_specifier: &amp;'ast <a class="enum" href="../ast/enum.AlignmentSpecifier.html" title="enum lang_c::ast::AlignmentSpecifier">AlignmentSpecifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_declarator" class="fn">visit_declarator</a>(
+        &amp;mut self,
+        declarator: &amp;'ast <a class="struct" href="../ast/struct.Declarator.html" title="struct lang_c::ast::Declarator">Declarator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_declarator_kind" class="fn">visit_declarator_kind</a>(
+        &amp;mut self,
+        declarator_kind: &amp;'ast <a class="enum" href="../ast/enum.DeclaratorKind.html" title="enum lang_c::ast::DeclaratorKind">DeclaratorKind</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_derived_declarator" class="fn">visit_derived_declarator</a>(
+        &amp;mut self,
+        derived_declarator: &amp;'ast <a class="enum" href="../ast/enum.DerivedDeclarator.html" title="enum lang_c::ast::DerivedDeclarator">DerivedDeclarator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_array_declarator" class="fn">visit_array_declarator</a>(
+        &amp;mut self,
+        array_declarator: &amp;'ast <a class="struct" href="../ast/struct.ArrayDeclarator.html" title="struct lang_c::ast::ArrayDeclarator">ArrayDeclarator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_function_declarator" class="fn">visit_function_declarator</a>(
+        &amp;mut self,
+        function_declarator: &amp;'ast <a class="struct" href="../ast/struct.FunctionDeclarator.html" title="struct lang_c::ast::FunctionDeclarator">FunctionDeclarator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_pointer_qualifier" class="fn">visit_pointer_qualifier</a>(
+        &amp;mut self,
+        pointer_qualifier: &amp;'ast <a class="enum" href="../ast/enum.PointerQualifier.html" title="enum lang_c::ast::PointerQualifier">PointerQualifier</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_array_size" class="fn">visit_array_size</a>(
+        &amp;mut self,
+        array_size: &amp;'ast <a class="enum" href="../ast/enum.ArraySize.html" title="enum lang_c::ast::ArraySize">ArraySize</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_parameter_declaration" class="fn">visit_parameter_declaration</a>(
+        &amp;mut self,
+        parameter_declaration: &amp;'ast <a class="struct" href="../ast/struct.ParameterDeclaration.html" title="struct lang_c::ast::ParameterDeclaration">ParameterDeclaration</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_ellipsis" class="fn">visit_ellipsis</a>(&amp;mut self, ellipsis: &amp;'ast <a class="enum" href="../ast/enum.Ellipsis.html" title="enum lang_c::ast::Ellipsis">Ellipsis</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_type_name" class="fn">visit_type_name</a>(&amp;mut self, type_name: &amp;'ast <a class="struct" href="../ast/struct.TypeName.html" title="struct lang_c::ast::TypeName">TypeName</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_initializer" class="fn">visit_initializer</a>(
+        &amp;mut self,
+        initializer: &amp;'ast <a class="enum" href="../ast/enum.Initializer.html" title="enum lang_c::ast::Initializer">Initializer</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_initializer_list_item" class="fn">visit_initializer_list_item</a>(
+        &amp;mut self,
+        initializer_list_item: &amp;'ast <a class="struct" href="../ast/struct.InitializerListItem.html" title="struct lang_c::ast::InitializerListItem">InitializerListItem</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_designator" class="fn">visit_designator</a>(
+        &amp;mut self,
+        designator: &amp;'ast <a class="enum" href="../ast/enum.Designator.html" title="enum lang_c::ast::Designator">Designator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_range_designator" class="fn">visit_range_designator</a>(
+        &amp;mut self,
+        range_designator: &amp;'ast <a class="struct" href="../ast/struct.RangeDesignator.html" title="struct lang_c::ast::RangeDesignator">RangeDesignator</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_static_assert" class="fn">visit_static_assert</a>(
+        &amp;mut self,
+        static_assert: &amp;'ast <a class="struct" href="../ast/struct.StaticAssert.html" title="struct lang_c::ast::StaticAssert">StaticAssert</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_statement" class="fn">visit_statement</a>(&amp;mut self, statement: &amp;'ast <a class="enum" href="../ast/enum.Statement.html" title="enum lang_c::ast::Statement">Statement</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_labeled_statement" class="fn">visit_labeled_statement</a>(
+        &amp;mut self,
+        labeled_statement: &amp;'ast <a class="struct" href="../ast/struct.LabeledStatement.html" title="struct lang_c::ast::LabeledStatement">LabeledStatement</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_if_statement" class="fn">visit_if_statement</a>(
+        &amp;mut self,
+        if_statement: &amp;'ast <a class="struct" href="../ast/struct.IfStatement.html" title="struct lang_c::ast::IfStatement">IfStatement</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_switch_statement" class="fn">visit_switch_statement</a>(
+        &amp;mut self,
+        switch_statement: &amp;'ast <a class="struct" href="../ast/struct.SwitchStatement.html" title="struct lang_c::ast::SwitchStatement">SwitchStatement</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_while_statement" class="fn">visit_while_statement</a>(
+        &amp;mut self,
+        while_statement: &amp;'ast <a class="struct" href="../ast/struct.WhileStatement.html" title="struct lang_c::ast::WhileStatement">WhileStatement</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_do_while_statement" class="fn">visit_do_while_statement</a>(
+        &amp;mut self,
+        do_while_statement: &amp;'ast <a class="struct" href="../ast/struct.DoWhileStatement.html" title="struct lang_c::ast::DoWhileStatement">DoWhileStatement</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_for_statement" class="fn">visit_for_statement</a>(
+        &amp;mut self,
+        for_statement: &amp;'ast <a class="struct" href="../ast/struct.ForStatement.html" title="struct lang_c::ast::ForStatement">ForStatement</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_label" class="fn">visit_label</a>(&amp;mut self, label: &amp;'ast <a class="enum" href="../ast/enum.Label.html" title="enum lang_c::ast::Label">Label</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_case_range" class="fn">visit_case_range</a>(&amp;mut self, range: &amp;'ast <a class="struct" href="../ast/struct.CaseRange.html" title="struct lang_c::ast::CaseRange">CaseRange</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_for_initializer" class="fn">visit_for_initializer</a>(
+        &amp;mut self,
+        for_initializer: &amp;'ast <a class="enum" href="../ast/enum.ForInitializer.html" title="enum lang_c::ast::ForInitializer">ForInitializer</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_block_item" class="fn">visit_block_item</a>(
+        &amp;mut self,
+        block_item: &amp;'ast <a class="enum" href="../ast/enum.BlockItem.html" title="enum lang_c::ast::BlockItem">BlockItem</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_translation_unit" class="fn">visit_translation_unit</a>(
+        &amp;mut self,
+        translation_unit: &amp;'ast <a class="struct" href="../ast/struct.TranslationUnit.html" title="struct lang_c::ast::TranslationUnit">TranslationUnit</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_external_declaration" class="fn">visit_external_declaration</a>(
+        &amp;mut self,
+        external_declaration: &amp;'ast <a class="enum" href="../ast/enum.ExternalDeclaration.html" title="enum lang_c::ast::ExternalDeclaration">ExternalDeclaration</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_function_definition" class="fn">visit_function_definition</a>(
+        &amp;mut self,
+        function_definition: &amp;'ast <a class="struct" href="../ast/struct.FunctionDefinition.html" title="struct lang_c::ast::FunctionDefinition">FunctionDefinition</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_extension" class="fn">visit_extension</a>(&amp;mut self, extension: &amp;'ast <a class="enum" href="../ast/enum.Extension.html" title="enum lang_c::ast::Extension">Extension</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_attribute" class="fn">visit_attribute</a>(&amp;mut self, attribute: &amp;'ast <a class="struct" href="../ast/struct.Attribute.html" title="struct lang_c::ast::Attribute">Attribute</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_asm_statement" class="fn">visit_asm_statement</a>(
+        &amp;mut self,
+        asm_statement: &amp;'ast <a class="enum" href="../ast/enum.AsmStatement.html" title="enum lang_c::ast::AsmStatement">AsmStatement</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_availability_attribute" class="fn">visit_availability_attribute</a>(
+        &amp;mut self,
+        availability: &amp;'ast <a class="struct" href="../ast/struct.AvailabilityAttribute.html" title="struct lang_c::ast::AvailabilityAttribute">AvailabilityAttribute</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_availability_clause" class="fn">visit_availability_clause</a>(
+        &amp;mut self,
+        _clause: &amp;'ast <a class="enum" href="../ast/enum.AvailabilityClause.html" title="enum lang_c::ast::AvailabilityClause">AvailabilityClause</a>,
+        _span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_gnu_extended_asm_statement" class="fn">visit_gnu_extended_asm_statement</a>(
+        &amp;mut self,
+        gnu_extended_asm_statement: &amp;'ast <a class="struct" href="../ast/struct.GnuExtendedAsmStatement.html" title="struct lang_c::ast::GnuExtendedAsmStatement">GnuExtendedAsmStatement</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_gnu_asm_operand" class="fn">visit_gnu_asm_operand</a>(
+        &amp;mut self,
+        gnu_asm_operand: &amp;'ast <a class="struct" href="../ast/struct.GnuAsmOperand.html" title="struct lang_c::ast::GnuAsmOperand">GnuAsmOperand</a>,
+        span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+    ) { ... }
+<span class="item-spacer"></span>    fn <a href="#method.visit_type_of" class="fn">visit_type_of</a>(&amp;mut self, type_of: &amp;'ast <a class="enum" href="../ast/enum.TypeOf.html" title="enum lang_c::ast::TypeOf">TypeOf</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>) { ... }
+</details>}</code></pre><h2 id="provided-methods" class="section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><section id="method.visit_identifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#25-27">Source</a><h4 class="code-header">fn <a href="#method.visit_identifier" class="fn">visit_identifier</a>(&amp;mut self, identifier: &amp;'ast <a class="struct" href="../ast/struct.Identifier.html" title="struct lang_c::ast::Identifier">Identifier</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_constant" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#29-31">Source</a><h4 class="code-header">fn <a href="#method.visit_constant" class="fn">visit_constant</a>(&amp;mut self, constant: &amp;'ast <a class="enum" href="../ast/enum.Constant.html" title="enum lang_c::ast::Constant">Constant</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_integer" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#33-35">Source</a><h4 class="code-header">fn <a href="#method.visit_integer" class="fn">visit_integer</a>(&amp;mut self, integer: &amp;'ast <a class="struct" href="../ast/struct.Integer.html" title="struct lang_c::ast::Integer">Integer</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_integer_base" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#37-39">Source</a><h4 class="code-header">fn <a href="#method.visit_integer_base" class="fn">visit_integer_base</a>(
+    &amp;mut self,
+    integer_base: &amp;'ast <a class="enum" href="../ast/enum.IntegerBase.html" title="enum lang_c::ast::IntegerBase">IntegerBase</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_integer_suffix" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#41-43">Source</a><h4 class="code-header">fn <a href="#method.visit_integer_suffix" class="fn">visit_integer_suffix</a>(
+    &amp;mut self,
+    integer_suffix: &amp;'ast <a class="struct" href="../ast/struct.IntegerSuffix.html" title="struct lang_c::ast::IntegerSuffix">IntegerSuffix</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_integer_size" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#45-47">Source</a><h4 class="code-header">fn <a href="#method.visit_integer_size" class="fn">visit_integer_size</a>(
+    &amp;mut self,
+    integer_size: &amp;'ast <a class="enum" href="../ast/enum.IntegerSize.html" title="enum lang_c::ast::IntegerSize">IntegerSize</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_float" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#49-51">Source</a><h4 class="code-header">fn <a href="#method.visit_float" class="fn">visit_float</a>(&amp;mut self, float: &amp;'ast <a class="struct" href="../ast/struct.Float.html" title="struct lang_c::ast::Float">Float</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_float_base" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#53-55">Source</a><h4 class="code-header">fn <a href="#method.visit_float_base" class="fn">visit_float_base</a>(&amp;mut self, float_base: &amp;'ast <a class="enum" href="../ast/enum.FloatBase.html" title="enum lang_c::ast::FloatBase">FloatBase</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_float_suffix" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#57-59">Source</a><h4 class="code-header">fn <a href="#method.visit_float_suffix" class="fn">visit_float_suffix</a>(
+    &amp;mut self,
+    float_suffix: &amp;'ast <a class="struct" href="../ast/struct.FloatSuffix.html" title="struct lang_c::ast::FloatSuffix">FloatSuffix</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_float_format" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#61-63">Source</a><h4 class="code-header">fn <a href="#method.visit_float_format" class="fn">visit_float_format</a>(
+    &amp;mut self,
+    float_format: &amp;'ast <a class="enum" href="../ast/enum.FloatFormat.html" title="enum lang_c::ast::FloatFormat">FloatFormat</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_string_literal" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#65-67">Source</a><h4 class="code-header">fn <a href="#method.visit_string_literal" class="fn">visit_string_literal</a>(
+    &amp;mut self,
+    string_literal: &amp;'ast <a class="type" href="../ast/type.StringLiteral.html" title="type lang_c::ast::StringLiteral">StringLiteral</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#69-71">Source</a><h4 class="code-header">fn <a href="#method.visit_expression" class="fn">visit_expression</a>(&amp;mut self, expression: &amp;'ast <a class="enum" href="../ast/enum.Expression.html" title="enum lang_c::ast::Expression">Expression</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_member_operator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#73-75">Source</a><h4 class="code-header">fn <a href="#method.visit_member_operator" class="fn">visit_member_operator</a>(
+    &amp;mut self,
+    member_operator: &amp;'ast <a class="enum" href="../ast/enum.MemberOperator.html" title="enum lang_c::ast::MemberOperator">MemberOperator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_generic_selection" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#77-83">Source</a><h4 class="code-header">fn <a href="#method.visit_generic_selection" class="fn">visit_generic_selection</a>(
+    &amp;mut self,
+    generic_selection: &amp;'ast <a class="struct" href="../ast/struct.GenericSelection.html" title="struct lang_c::ast::GenericSelection">GenericSelection</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_generic_association" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#85-91">Source</a><h4 class="code-header">fn <a href="#method.visit_generic_association" class="fn">visit_generic_association</a>(
+    &amp;mut self,
+    generic_association: &amp;'ast <a class="enum" href="../ast/enum.GenericAssociation.html" title="enum lang_c::ast::GenericAssociation">GenericAssociation</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_generic_association_type" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#93-99">Source</a><h4 class="code-header">fn <a href="#method.visit_generic_association_type" class="fn">visit_generic_association_type</a>(
+    &amp;mut self,
+    generic_association_type: &amp;'ast <a class="struct" href="../ast/struct.GenericAssociationType.html" title="struct lang_c::ast::GenericAssociationType">GenericAssociationType</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_member_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#101-107">Source</a><h4 class="code-header">fn <a href="#method.visit_member_expression" class="fn">visit_member_expression</a>(
+    &amp;mut self,
+    member_expression: &amp;'ast <a class="struct" href="../ast/struct.MemberExpression.html" title="struct lang_c::ast::MemberExpression">MemberExpression</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_call_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#109-111">Source</a><h4 class="code-header">fn <a href="#method.visit_call_expression" class="fn">visit_call_expression</a>(
+    &amp;mut self,
+    call_expression: &amp;'ast <a class="struct" href="../ast/struct.CallExpression.html" title="struct lang_c::ast::CallExpression">CallExpression</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_compound_literal" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#113-119">Source</a><h4 class="code-header">fn <a href="#method.visit_compound_literal" class="fn">visit_compound_literal</a>(
+    &amp;mut self,
+    compound_literal: &amp;'ast <a class="struct" href="../ast/struct.CompoundLiteral.html" title="struct lang_c::ast::CompoundLiteral">CompoundLiteral</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_sizeofty" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#121-123">Source</a><h4 class="code-header">fn <a href="#method.visit_sizeofty" class="fn">visit_sizeofty</a>(&amp;mut self, sizeofty: &amp;'ast <a class="struct" href="../ast/struct.SizeOfTy.html" title="struct lang_c::ast::SizeOfTy">SizeOfTy</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_sizeofval" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#124-126">Source</a><h4 class="code-header">fn <a href="#method.visit_sizeofval" class="fn">visit_sizeofval</a>(&amp;mut self, sizeofval: &amp;'ast <a class="struct" href="../ast/struct.SizeOfVal.html" title="struct lang_c::ast::SizeOfVal">SizeOfVal</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_alignof" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#128-130">Source</a><h4 class="code-header">fn <a href="#method.visit_alignof" class="fn">visit_alignof</a>(&amp;mut self, alignofty: &amp;'ast <a class="struct" href="../ast/struct.AlignOf.html" title="struct lang_c::ast::AlignOf">AlignOf</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_unary_operator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#132-134">Source</a><h4 class="code-header">fn <a href="#method.visit_unary_operator" class="fn">visit_unary_operator</a>(
+    &amp;mut self,
+    unary_operator: &amp;'ast <a class="enum" href="../ast/enum.UnaryOperator.html" title="enum lang_c::ast::UnaryOperator">UnaryOperator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_unary_operator_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#136-142">Source</a><h4 class="code-header">fn <a href="#method.visit_unary_operator_expression" class="fn">visit_unary_operator_expression</a>(
+    &amp;mut self,
+    unary_operator_expression: &amp;'ast <a class="struct" href="../ast/struct.UnaryOperatorExpression.html" title="struct lang_c::ast::UnaryOperatorExpression">UnaryOperatorExpression</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_cast_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#144-146">Source</a><h4 class="code-header">fn <a href="#method.visit_cast_expression" class="fn">visit_cast_expression</a>(
+    &amp;mut self,
+    cast_expression: &amp;'ast <a class="struct" href="../ast/struct.CastExpression.html" title="struct lang_c::ast::CastExpression">CastExpression</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_binary_operator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#148-150">Source</a><h4 class="code-header">fn <a href="#method.visit_binary_operator" class="fn">visit_binary_operator</a>(
+    &amp;mut self,
+    binary_operator: &amp;'ast <a class="enum" href="../ast/enum.BinaryOperator.html" title="enum lang_c::ast::BinaryOperator">BinaryOperator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_binary_operator_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#152-158">Source</a><h4 class="code-header">fn <a href="#method.visit_binary_operator_expression" class="fn">visit_binary_operator_expression</a>(
+    &amp;mut self,
+    binary_operator_expression: &amp;'ast <a class="struct" href="../ast/struct.BinaryOperatorExpression.html" title="struct lang_c::ast::BinaryOperatorExpression">BinaryOperatorExpression</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_conditional_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#160-166">Source</a><h4 class="code-header">fn <a href="#method.visit_conditional_expression" class="fn">visit_conditional_expression</a>(
+    &amp;mut self,
+    conditional_expression: &amp;'ast <a class="struct" href="../ast/struct.ConditionalExpression.html" title="struct lang_c::ast::ConditionalExpression">ConditionalExpression</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_va_arg_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#168-174">Source</a><h4 class="code-header">fn <a href="#method.visit_va_arg_expression" class="fn">visit_va_arg_expression</a>(
+    &amp;mut self,
+    va_arg_expression: &amp;'ast <a class="struct" href="../ast/struct.VaArgExpression.html" title="struct lang_c::ast::VaArgExpression">VaArgExpression</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_offset_of_expression" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#176-182">Source</a><h4 class="code-header">fn <a href="#method.visit_offset_of_expression" class="fn">visit_offset_of_expression</a>(
+    &amp;mut self,
+    offset_of_expression: &amp;'ast <a class="struct" href="../ast/struct.OffsetOfExpression.html" title="struct lang_c::ast::OffsetOfExpression">OffsetOfExpression</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_offset_designator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#184-190">Source</a><h4 class="code-header">fn <a href="#method.visit_offset_designator" class="fn">visit_offset_designator</a>(
+    &amp;mut self,
+    offset_designator: &amp;'ast <a class="struct" href="../ast/struct.OffsetDesignator.html" title="struct lang_c::ast::OffsetDesignator">OffsetDesignator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_offset_member" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#192-194">Source</a><h4 class="code-header">fn <a href="#method.visit_offset_member" class="fn">visit_offset_member</a>(
+    &amp;mut self,
+    offset_member: &amp;'ast <a class="enum" href="../ast/enum.OffsetMember.html" title="enum lang_c::ast::OffsetMember">OffsetMember</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_declaration" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#196-198">Source</a><h4 class="code-header">fn <a href="#method.visit_declaration" class="fn">visit_declaration</a>(
+    &amp;mut self,
+    declaration: &amp;'ast <a class="struct" href="../ast/struct.Declaration.html" title="struct lang_c::ast::Declaration">Declaration</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_declaration_specifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#200-206">Source</a><h4 class="code-header">fn <a href="#method.visit_declaration_specifier" class="fn">visit_declaration_specifier</a>(
+    &amp;mut self,
+    declaration_specifier: &amp;'ast <a class="enum" href="../ast/enum.DeclarationSpecifier.html" title="enum lang_c::ast::DeclarationSpecifier">DeclarationSpecifier</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_init_declarator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#208-210">Source</a><h4 class="code-header">fn <a href="#method.visit_init_declarator" class="fn">visit_init_declarator</a>(
+    &amp;mut self,
+    init_declarator: &amp;'ast <a class="struct" href="../ast/struct.InitDeclarator.html" title="struct lang_c::ast::InitDeclarator">InitDeclarator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_storage_class_specifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#212-218">Source</a><h4 class="code-header">fn <a href="#method.visit_storage_class_specifier" class="fn">visit_storage_class_specifier</a>(
+    &amp;mut self,
+    storage_class_specifier: &amp;'ast <a class="enum" href="../ast/enum.StorageClassSpecifier.html" title="enum lang_c::ast::StorageClassSpecifier">StorageClassSpecifier</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_type_specifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#220-222">Source</a><h4 class="code-header">fn <a href="#method.visit_type_specifier" class="fn">visit_type_specifier</a>(
+    &amp;mut self,
+    type_specifier: &amp;'ast <a class="enum" href="../ast/enum.TypeSpecifier.html" title="enum lang_c::ast::TypeSpecifier">TypeSpecifier</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_ts18661_float_type" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#224-230">Source</a><h4 class="code-header">fn <a href="#method.visit_ts18661_float_type" class="fn">visit_ts18661_float_type</a>(
+    &amp;mut self,
+    ts18661_float_type: &amp;'ast <a class="struct" href="../ast/struct.TS18661FloatType.html" title="struct lang_c::ast::TS18661FloatType">TS18661FloatType</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_ts18661_float_format" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#232-238">Source</a><h4 class="code-header">fn <a href="#method.visit_ts18661_float_format" class="fn">visit_ts18661_float_format</a>(
+    &amp;mut self,
+    ts18661_float_format: &amp;'ast <a class="enum" href="../ast/enum.TS18661FloatFormat.html" title="enum lang_c::ast::TS18661FloatFormat">TS18661FloatFormat</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_struct_type" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#240-242">Source</a><h4 class="code-header">fn <a href="#method.visit_struct_type" class="fn">visit_struct_type</a>(&amp;mut self, struct_type: &amp;'ast <a class="struct" href="../ast/struct.StructType.html" title="struct lang_c::ast::StructType">StructType</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_struct_kind" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#244-246">Source</a><h4 class="code-header">fn <a href="#method.visit_struct_kind" class="fn">visit_struct_kind</a>(&amp;mut self, struct_kind: &amp;'ast <a class="enum" href="../ast/enum.StructKind.html" title="enum lang_c::ast::StructKind">StructKind</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_struct_declaration" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#248-254">Source</a><h4 class="code-header">fn <a href="#method.visit_struct_declaration" class="fn">visit_struct_declaration</a>(
+    &amp;mut self,
+    struct_declaration: &amp;'ast <a class="enum" href="../ast/enum.StructDeclaration.html" title="enum lang_c::ast::StructDeclaration">StructDeclaration</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_struct_field" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#256-258">Source</a><h4 class="code-header">fn <a href="#method.visit_struct_field" class="fn">visit_struct_field</a>(
+    &amp;mut self,
+    struct_field: &amp;'ast <a class="struct" href="../ast/struct.StructField.html" title="struct lang_c::ast::StructField">StructField</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_specifier_qualifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#260-266">Source</a><h4 class="code-header">fn <a href="#method.visit_specifier_qualifier" class="fn">visit_specifier_qualifier</a>(
+    &amp;mut self,
+    specifier_qualifier: &amp;'ast <a class="enum" href="../ast/enum.SpecifierQualifier.html" title="enum lang_c::ast::SpecifierQualifier">SpecifierQualifier</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_struct_declarator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#268-274">Source</a><h4 class="code-header">fn <a href="#method.visit_struct_declarator" class="fn">visit_struct_declarator</a>(
+    &amp;mut self,
+    struct_declarator: &amp;'ast <a class="struct" href="../ast/struct.StructDeclarator.html" title="struct lang_c::ast::StructDeclarator">StructDeclarator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_enum_type" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#276-278">Source</a><h4 class="code-header">fn <a href="#method.visit_enum_type" class="fn">visit_enum_type</a>(&amp;mut self, enum_type: &amp;'ast <a class="struct" href="../ast/struct.EnumType.html" title="struct lang_c::ast::EnumType">EnumType</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_enumerator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#280-282">Source</a><h4 class="code-header">fn <a href="#method.visit_enumerator" class="fn">visit_enumerator</a>(&amp;mut self, enumerator: &amp;'ast <a class="struct" href="../ast/struct.Enumerator.html" title="struct lang_c::ast::Enumerator">Enumerator</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_type_qualifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#284-286">Source</a><h4 class="code-header">fn <a href="#method.visit_type_qualifier" class="fn">visit_type_qualifier</a>(
+    &amp;mut self,
+    type_qualifier: &amp;'ast <a class="enum" href="../ast/enum.TypeQualifier.html" title="enum lang_c::ast::TypeQualifier">TypeQualifier</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_function_specifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#288-294">Source</a><h4 class="code-header">fn <a href="#method.visit_function_specifier" class="fn">visit_function_specifier</a>(
+    &amp;mut self,
+    function_specifier: &amp;'ast <a class="enum" href="../ast/enum.FunctionSpecifier.html" title="enum lang_c::ast::FunctionSpecifier">FunctionSpecifier</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_alignment_specifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#296-302">Source</a><h4 class="code-header">fn <a href="#method.visit_alignment_specifier" class="fn">visit_alignment_specifier</a>(
+    &amp;mut self,
+    alignment_specifier: &amp;'ast <a class="enum" href="../ast/enum.AlignmentSpecifier.html" title="enum lang_c::ast::AlignmentSpecifier">AlignmentSpecifier</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_declarator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#304-306">Source</a><h4 class="code-header">fn <a href="#method.visit_declarator" class="fn">visit_declarator</a>(&amp;mut self, declarator: &amp;'ast <a class="struct" href="../ast/struct.Declarator.html" title="struct lang_c::ast::Declarator">Declarator</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_declarator_kind" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#308-310">Source</a><h4 class="code-header">fn <a href="#method.visit_declarator_kind" class="fn">visit_declarator_kind</a>(
+    &amp;mut self,
+    declarator_kind: &amp;'ast <a class="enum" href="../ast/enum.DeclaratorKind.html" title="enum lang_c::ast::DeclaratorKind">DeclaratorKind</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_derived_declarator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#312-318">Source</a><h4 class="code-header">fn <a href="#method.visit_derived_declarator" class="fn">visit_derived_declarator</a>(
+    &amp;mut self,
+    derived_declarator: &amp;'ast <a class="enum" href="../ast/enum.DerivedDeclarator.html" title="enum lang_c::ast::DerivedDeclarator">DerivedDeclarator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_array_declarator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#320-326">Source</a><h4 class="code-header">fn <a href="#method.visit_array_declarator" class="fn">visit_array_declarator</a>(
+    &amp;mut self,
+    array_declarator: &amp;'ast <a class="struct" href="../ast/struct.ArrayDeclarator.html" title="struct lang_c::ast::ArrayDeclarator">ArrayDeclarator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_function_declarator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#328-334">Source</a><h4 class="code-header">fn <a href="#method.visit_function_declarator" class="fn">visit_function_declarator</a>(
+    &amp;mut self,
+    function_declarator: &amp;'ast <a class="struct" href="../ast/struct.FunctionDeclarator.html" title="struct lang_c::ast::FunctionDeclarator">FunctionDeclarator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_pointer_qualifier" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#336-342">Source</a><h4 class="code-header">fn <a href="#method.visit_pointer_qualifier" class="fn">visit_pointer_qualifier</a>(
+    &amp;mut self,
+    pointer_qualifier: &amp;'ast <a class="enum" href="../ast/enum.PointerQualifier.html" title="enum lang_c::ast::PointerQualifier">PointerQualifier</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_array_size" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#344-346">Source</a><h4 class="code-header">fn <a href="#method.visit_array_size" class="fn">visit_array_size</a>(&amp;mut self, array_size: &amp;'ast <a class="enum" href="../ast/enum.ArraySize.html" title="enum lang_c::ast::ArraySize">ArraySize</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_parameter_declaration" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#348-354">Source</a><h4 class="code-header">fn <a href="#method.visit_parameter_declaration" class="fn">visit_parameter_declaration</a>(
+    &amp;mut self,
+    parameter_declaration: &amp;'ast <a class="struct" href="../ast/struct.ParameterDeclaration.html" title="struct lang_c::ast::ParameterDeclaration">ParameterDeclaration</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_ellipsis" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#356-358">Source</a><h4 class="code-header">fn <a href="#method.visit_ellipsis" class="fn">visit_ellipsis</a>(&amp;mut self, ellipsis: &amp;'ast <a class="enum" href="../ast/enum.Ellipsis.html" title="enum lang_c::ast::Ellipsis">Ellipsis</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_type_name" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#360-362">Source</a><h4 class="code-header">fn <a href="#method.visit_type_name" class="fn">visit_type_name</a>(&amp;mut self, type_name: &amp;'ast <a class="struct" href="../ast/struct.TypeName.html" title="struct lang_c::ast::TypeName">TypeName</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_initializer" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#364-366">Source</a><h4 class="code-header">fn <a href="#method.visit_initializer" class="fn">visit_initializer</a>(
+    &amp;mut self,
+    initializer: &amp;'ast <a class="enum" href="../ast/enum.Initializer.html" title="enum lang_c::ast::Initializer">Initializer</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_initializer_list_item" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#368-374">Source</a><h4 class="code-header">fn <a href="#method.visit_initializer_list_item" class="fn">visit_initializer_list_item</a>(
+    &amp;mut self,
+    initializer_list_item: &amp;'ast <a class="struct" href="../ast/struct.InitializerListItem.html" title="struct lang_c::ast::InitializerListItem">InitializerListItem</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_designator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#376-378">Source</a><h4 class="code-header">fn <a href="#method.visit_designator" class="fn">visit_designator</a>(&amp;mut self, designator: &amp;'ast <a class="enum" href="../ast/enum.Designator.html" title="enum lang_c::ast::Designator">Designator</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_range_designator" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#380-386">Source</a><h4 class="code-header">fn <a href="#method.visit_range_designator" class="fn">visit_range_designator</a>(
+    &amp;mut self,
+    range_designator: &amp;'ast <a class="struct" href="../ast/struct.RangeDesignator.html" title="struct lang_c::ast::RangeDesignator">RangeDesignator</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_static_assert" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#388-390">Source</a><h4 class="code-header">fn <a href="#method.visit_static_assert" class="fn">visit_static_assert</a>(
+    &amp;mut self,
+    static_assert: &amp;'ast <a class="struct" href="../ast/struct.StaticAssert.html" title="struct lang_c::ast::StaticAssert">StaticAssert</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#392-394">Source</a><h4 class="code-header">fn <a href="#method.visit_statement" class="fn">visit_statement</a>(&amp;mut self, statement: &amp;'ast <a class="enum" href="../ast/enum.Statement.html" title="enum lang_c::ast::Statement">Statement</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_labeled_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#396-402">Source</a><h4 class="code-header">fn <a href="#method.visit_labeled_statement" class="fn">visit_labeled_statement</a>(
+    &amp;mut self,
+    labeled_statement: &amp;'ast <a class="struct" href="../ast/struct.LabeledStatement.html" title="struct lang_c::ast::LabeledStatement">LabeledStatement</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_if_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#404-406">Source</a><h4 class="code-header">fn <a href="#method.visit_if_statement" class="fn">visit_if_statement</a>(
+    &amp;mut self,
+    if_statement: &amp;'ast <a class="struct" href="../ast/struct.IfStatement.html" title="struct lang_c::ast::IfStatement">IfStatement</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_switch_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#408-414">Source</a><h4 class="code-header">fn <a href="#method.visit_switch_statement" class="fn">visit_switch_statement</a>(
+    &amp;mut self,
+    switch_statement: &amp;'ast <a class="struct" href="../ast/struct.SwitchStatement.html" title="struct lang_c::ast::SwitchStatement">SwitchStatement</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_while_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#416-418">Source</a><h4 class="code-header">fn <a href="#method.visit_while_statement" class="fn">visit_while_statement</a>(
+    &amp;mut self,
+    while_statement: &amp;'ast <a class="struct" href="../ast/struct.WhileStatement.html" title="struct lang_c::ast::WhileStatement">WhileStatement</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_do_while_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#420-426">Source</a><h4 class="code-header">fn <a href="#method.visit_do_while_statement" class="fn">visit_do_while_statement</a>(
+    &amp;mut self,
+    do_while_statement: &amp;'ast <a class="struct" href="../ast/struct.DoWhileStatement.html" title="struct lang_c::ast::DoWhileStatement">DoWhileStatement</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_for_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#428-430">Source</a><h4 class="code-header">fn <a href="#method.visit_for_statement" class="fn">visit_for_statement</a>(
+    &amp;mut self,
+    for_statement: &amp;'ast <a class="struct" href="../ast/struct.ForStatement.html" title="struct lang_c::ast::ForStatement">ForStatement</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_label" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#432-434">Source</a><h4 class="code-header">fn <a href="#method.visit_label" class="fn">visit_label</a>(&amp;mut self, label: &amp;'ast <a class="enum" href="../ast/enum.Label.html" title="enum lang_c::ast::Label">Label</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_case_range" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#436-438">Source</a><h4 class="code-header">fn <a href="#method.visit_case_range" class="fn">visit_case_range</a>(&amp;mut self, range: &amp;'ast <a class="struct" href="../ast/struct.CaseRange.html" title="struct lang_c::ast::CaseRange">CaseRange</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_for_initializer" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#440-442">Source</a><h4 class="code-header">fn <a href="#method.visit_for_initializer" class="fn">visit_for_initializer</a>(
+    &amp;mut self,
+    for_initializer: &amp;'ast <a class="enum" href="../ast/enum.ForInitializer.html" title="enum lang_c::ast::ForInitializer">ForInitializer</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_block_item" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#444-446">Source</a><h4 class="code-header">fn <a href="#method.visit_block_item" class="fn">visit_block_item</a>(&amp;mut self, block_item: &amp;'ast <a class="enum" href="../ast/enum.BlockItem.html" title="enum lang_c::ast::BlockItem">BlockItem</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_translation_unit" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#448-450">Source</a><h4 class="code-header">fn <a href="#method.visit_translation_unit" class="fn">visit_translation_unit</a>(&amp;mut self, translation_unit: &amp;'ast <a class="struct" href="../ast/struct.TranslationUnit.html" title="struct lang_c::ast::TranslationUnit">TranslationUnit</a>)</h4></section><section id="method.visit_external_declaration" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#452-458">Source</a><h4 class="code-header">fn <a href="#method.visit_external_declaration" class="fn">visit_external_declaration</a>(
+    &amp;mut self,
+    external_declaration: &amp;'ast <a class="enum" href="../ast/enum.ExternalDeclaration.html" title="enum lang_c::ast::ExternalDeclaration">ExternalDeclaration</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_function_definition" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#460-466">Source</a><h4 class="code-header">fn <a href="#method.visit_function_definition" class="fn">visit_function_definition</a>(
+    &amp;mut self,
+    function_definition: &amp;'ast <a class="struct" href="../ast/struct.FunctionDefinition.html" title="struct lang_c::ast::FunctionDefinition">FunctionDefinition</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_extension" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#468-470">Source</a><h4 class="code-header">fn <a href="#method.visit_extension" class="fn">visit_extension</a>(&amp;mut self, extension: &amp;'ast <a class="enum" href="../ast/enum.Extension.html" title="enum lang_c::ast::Extension">Extension</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_attribute" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#472-474">Source</a><h4 class="code-header">fn <a href="#method.visit_attribute" class="fn">visit_attribute</a>(&amp;mut self, attribute: &amp;'ast <a class="struct" href="../ast/struct.Attribute.html" title="struct lang_c::ast::Attribute">Attribute</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section><section id="method.visit_asm_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#476-478">Source</a><h4 class="code-header">fn <a href="#method.visit_asm_statement" class="fn">visit_asm_statement</a>(
+    &amp;mut self,
+    asm_statement: &amp;'ast <a class="enum" href="../ast/enum.AsmStatement.html" title="enum lang_c::ast::AsmStatement">AsmStatement</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_availability_attribute" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#480-486">Source</a><h4 class="code-header">fn <a href="#method.visit_availability_attribute" class="fn">visit_availability_attribute</a>(
+    &amp;mut self,
+    availability: &amp;'ast <a class="struct" href="../ast/struct.AvailabilityAttribute.html" title="struct lang_c::ast::AvailabilityAttribute">AvailabilityAttribute</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_availability_clause" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#488">Source</a><h4 class="code-header">fn <a href="#method.visit_availability_clause" class="fn">visit_availability_clause</a>(
+    &amp;mut self,
+    _clause: &amp;'ast <a class="enum" href="../ast/enum.AvailabilityClause.html" title="enum lang_c::ast::AvailabilityClause">AvailabilityClause</a>,
+    _span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_gnu_extended_asm_statement" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#490-496">Source</a><h4 class="code-header">fn <a href="#method.visit_gnu_extended_asm_statement" class="fn">visit_gnu_extended_asm_statement</a>(
+    &amp;mut self,
+    gnu_extended_asm_statement: &amp;'ast <a class="struct" href="../ast/struct.GnuExtendedAsmStatement.html" title="struct lang_c::ast::GnuExtendedAsmStatement">GnuExtendedAsmStatement</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_gnu_asm_operand" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#498-500">Source</a><h4 class="code-header">fn <a href="#method.visit_gnu_asm_operand" class="fn">visit_gnu_asm_operand</a>(
+    &amp;mut self,
+    gnu_asm_operand: &amp;'ast <a class="struct" href="../ast/struct.GnuAsmOperand.html" title="struct lang_c::ast::GnuAsmOperand">GnuAsmOperand</a>,
+    span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>,
+)</h4></section><section id="method.visit_type_of" class="method"><a class="src rightside" href="../../src/lang_c/visit.rs.html#502-504">Source</a><h4 class="code-header">fn <a href="#method.visit_type_of" class="fn">visit_type_of</a>(&amp;mut self, type_of: &amp;'ast <a class="enum" href="../ast/enum.TypeOf.html" title="enum lang_c::ast::TypeOf">TypeOf</a>, span: &amp;'ast <a class="struct" href="../span/struct.Span.html" title="struct lang_c::span::Span">Span</a>)</h4></section></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-Visit%3C'ast%3E-for-Printer%3C'a%3E" class="impl"><a class="src rightside" href="../../src/lang_c/print.rs.html#59-552">Source</a><a href="#impl-Visit%3C'ast%3E-for-Printer%3C'a%3E" class="anchor">§</a><h3 class="code-header">impl&lt;'ast, 'a&gt; <a class="trait" href="trait.Visit.html" title="trait lang_c::visit::Visit">Visit</a>&lt;'ast&gt; for <a class="struct" href="../print/struct.Printer.html" title="struct lang_c::print::Printer">Printer</a>&lt;'a&gt;</h3></section></div><script src="../../trait.impl/lang_c/visit/trait.Visit.js" async></script></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IrgenErrorMessage"],"fn":["is_invalid_structure","is_valid_initializer","name_of_declarator","name_of_parameter_declaration","name_of_params_from_derived_declarators","name_of_params_from_function_declarator"],"struct":["Context","Irgen","IrgenError","IrgenFunc"]};

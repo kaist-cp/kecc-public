@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["calculate_binary_operator_expression","calculate_float_binary_operator_expression","calculate_integer_binary_operator_expression","calculate_typecast","calculate_unary_operator_expression"]};
