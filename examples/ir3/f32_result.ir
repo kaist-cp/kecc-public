@@ -1,0 +1,21 @@
+var f32 @a = default
+
+fun i32 @main () {
+init:
+  bid: b0
+  allocations:
+    %l0:f32:b
+
+block b0:
+  %b0:i0:unit = store 0.0:f32 %l0:f32*
+  %b0:i1:f32 = typecast 3:i32 to f32
+  %b0:i2:unit = store %b0:i1:f32 @a:f32*
+  %b0:i3:f32 = load @a:f32*
+  %b0:i4:f32 = typecast 31506172:i32 to f32
+  %b0:i5:f32 = add %b0:i3:f32 %b0:i4:f32
+  %b0:i6:unit = store %b0:i5:f32 %l0:f32*
+  %b0:i7:f32 = load %l0:f32*
+  %b0:i8:i32 = typecast %b0:i7:f32 to i32
+  ret %b0:i8:i32
+}
+
