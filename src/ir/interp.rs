@@ -285,6 +285,24 @@ impl Value {
 
                     Ok(Self::structure(name.clone(), fields))
                 }
+                Dtype::Int { .. } | Dtype::Float { .. } | Dtype::Pointer { .. } => {
+                    // Handle the initialization of scalar types with the
+                    // `type name = { expr };` syntax
+                    // Reference: https://en.cppreference.com/w/c/language/scalar_initialization
+                    // There should only be one item in the list:
+                    if items.len() != 1 {
+                        return Err(());
+                    }
+                    let only_item = &items.first().unwrap().node;
+
+                    // With no designators
+                    if !only_item.designation.is_empty() {
+                        return Err(());
+                    }
+
+                    // Simply handle it as if it was `type name = expr;`
+                    Self::try_from_initializer(&only_item.initializer.node, dtype, structs)
+                }
                 _ => Err(()),
             },
         }
@@ -464,7 +482,7 @@ mod calculator {
                     // arithmetic shift right
                     let rhs = rhs as i128;
                     assert!(rhs >= 0);
-                    assert!(rhs < (width as i128));
+                    assert!(rhs < (width as i128), "test: rhs={rhs} width={width}");
                     ((lhs as i128) >> rhs) as u128
                 } else {
                     // logical shift right
@@ -1102,6 +1120,7 @@ impl Memory {
         dtype: &Dtype,
         structs: &HashMap<String, Option<Dtype>>,
     ) -> Result<Value, InterpreterError> {
+        // println!("interp::Memory::load {bid:?} {offset:?}");
         let size = dtype.size_align_of(structs).unwrap().0;
         let end = offset as usize + size;
         let block = self.inner[bid].as_ref().unwrap();
@@ -1121,6 +1140,7 @@ impl Memory {
         value: &Value,
         structs: &HashMap<String, Option<Dtype>>,
     ) -> Result<(), ()> {
+        // println!("interp::Memory::store {bid:?} {offset:?} {value:?}");
         let size = value.dtype().size_align_of(structs).unwrap().0;
         let end = offset as usize + size;
         let bytes = Byte::value_to_bytes(value, structs);
@@ -1473,7 +1493,9 @@ impl<'i> State<'i> {
                         a.dtype().set_const(false) == d.deref().clone().set_const(false)
                     }))
                 {
-                    panic!("dtype of args and phinodes of init block must be compatible");
+                    panic!(
+                        "dtype of args and phinodes of init block must be compatible {block_init:#?} {args:#?}"
+                    );
                 }
 
                 let args = self.interp_args(func_signature, args)?;
