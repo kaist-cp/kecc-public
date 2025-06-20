@@ -37,13 +37,14 @@
 use core::cmp::Ordering;
 use core::convert::TryFrom;
 use core::{fmt, mem};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::ops::Deref;
 
 use itertools::izip;
 use lang_c::ast::*;
 use lang_c::driver::Parse;
 use lang_c::span::Node;
+use rustc_hash::FxHashMap;
 use thiserror::Error;
 
 use crate::ir::{DtypeError, HasDtype, Named};
@@ -97,10 +98,10 @@ pub struct Irgen {
     /// Declarations made in the C file (e.g, global variables and functions)
     decls: BTreeMap<String, ir::Declaration>,
     /// Type definitions made in the C file (e.g, typedef my_type = int;)
-    typedefs: HashMap<String, ir::Dtype>,
+    typedefs: FxHashMap<String, ir::Dtype>,
     /// Structs defined in the C file,
     // TODO: explain how to use this.
-    structs: HashMap<String, Option<ir::Dtype>>,
+    structs: FxHashMap<String, Option<ir::Dtype>>,
     /// Temporary counter for anonymous structs. One should not need to use this any more.
     struct_tempid_counter: usize,
 }
@@ -332,7 +333,7 @@ impl Irgen {
         self.add_decl(&name, decl)?;
 
         // Prepare scope for global variable
-        let global_scope: HashMap<_, _> = self
+        let global_scope: FxHashMap<_, _> = self
             .decls
             .iter()
             .map(|(name, decl)| {
@@ -496,12 +497,12 @@ struct IrgenFunc<'i> {
     /// current temporary id. Used to create temporary names in the IR for e.g,
     tempid_counter: usize,
     /// Usable definitions
-    typedefs: &'i HashMap<String, ir::Dtype>,
+    typedefs: &'i FxHashMap<String, ir::Dtype>,
     /// Usable structs
     // TODO: Add examples on how to use properly use this field.
-    structs: &'i HashMap<String, Option<ir::Dtype>>,
+    structs: &'i FxHashMap<String, Option<ir::Dtype>>,
     /// Current symbol table. The initial symbol table has the global variables.
-    symbol_table: Vec<HashMap<String, ir::Operand>>,
+    symbol_table: Vec<FxHashMap<String, ir::Operand>>,
 }
 
 impl IrgenFunc<'_> {
@@ -548,7 +549,7 @@ impl IrgenFunc<'_> {
 
     /// Enter a scope and create a new symbol table entry, i.e, we are at a `{` in the function.
     fn enter_scope(&mut self) {
-        self.symbol_table.push(HashMap::new());
+        self.symbol_table.push(FxHashMap::default());
     }
 
     /// Exit a scope and remove the a oldest symbol table entry. i.e, we are at a `}` in the
@@ -732,7 +733,7 @@ fn name_of_parameter_declaration(parameter_declaration: &ParameterDeclaration) -
 fn is_valid_initializer(
     initializer: &Initializer,
     dtype: &ir::Dtype,
-    structs: &HashMap<String, Option<ir::Dtype>>,
+    structs: &FxHashMap<String, Option<ir::Dtype>>,
 ) -> bool {
     match initializer {
         Initializer::Expression(expr) => match dtype {
@@ -775,7 +776,7 @@ fn is_valid_initializer(
 }
 
 #[inline]
-fn is_invalid_structure(dtype: &ir::Dtype, structs: &HashMap<String, Option<ir::Dtype>>) -> bool {
+fn is_invalid_structure(dtype: &ir::Dtype, structs: &FxHashMap<String, Option<ir::Dtype>>) -> bool {
     // When `dtype` is `Dtype::Struct`, `structs` has real definition of `dtype`
     if let ir::Dtype::Struct { name, fields, .. } = dtype {
         assert!(name.is_some() && fields.is_none());

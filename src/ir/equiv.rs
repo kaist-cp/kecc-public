@@ -104,7 +104,7 @@ fn traverse_preorder(blocks: &BTreeMap<BlockId, Block>, bid: BlockId) -> Vec<Blo
     result
 }
 
-fn is_equiv_block(lhs: &Block, rhs: &Block, map: &HashMap<BlockId, BlockId>) -> bool {
+fn is_equiv_block(lhs: &Block, rhs: &Block, map: &FxHashMap<BlockId, BlockId>) -> bool {
     if lhs.phinodes != rhs.phinodes {
         return false;
     }
@@ -125,7 +125,7 @@ fn is_equiv_block(lhs: &Block, rhs: &Block, map: &HashMap<BlockId, BlockId>) -> 
 fn is_equiv_instruction(
     lhs: &Instruction,
     rhs: &Instruction,
-    map: &HashMap<BlockId, BlockId>,
+    map: &FxHashMap<BlockId, BlockId>,
 ) -> bool {
     match (lhs, rhs) {
         (Instruction::Nop, Instruction::Nop) => true,
@@ -211,7 +211,7 @@ fn is_equiv_instruction(
     }
 }
 
-fn is_equiv_operand(lhs: &Operand, rhs: &Operand, map: &HashMap<BlockId, BlockId>) -> bool {
+fn is_equiv_operand(lhs: &Operand, rhs: &Operand, map: &FxHashMap<BlockId, BlockId>) -> bool {
     match (lhs, rhs) {
         (Operand::Constant(_), Operand::Constant(_)) => lhs == rhs,
         (
@@ -225,7 +225,7 @@ fn is_equiv_operand(lhs: &Operand, rhs: &Operand, map: &HashMap<BlockId, BlockId
     }
 }
 
-fn is_equiv_rid(lhs: &RegisterId, rhs: &RegisterId, map: &HashMap<BlockId, BlockId>) -> bool {
+fn is_equiv_rid(lhs: &RegisterId, rhs: &RegisterId, map: &FxHashMap<BlockId, BlockId>) -> bool {
     match (lhs, rhs) {
         (RegisterId::Local { .. }, RegisterId::Local { .. }) => lhs == rhs,
         (
@@ -246,7 +246,11 @@ fn is_equiv_rid(lhs: &RegisterId, rhs: &RegisterId, map: &HashMap<BlockId, Block
     }
 }
 
-fn is_equiv_block_exit(lhs: &BlockExit, rhs: &BlockExit, map: &HashMap<BlockId, BlockId>) -> bool {
+fn is_equiv_block_exit(
+    lhs: &BlockExit,
+    rhs: &BlockExit,
+    map: &FxHashMap<BlockId, BlockId>,
+) -> bool {
     match (lhs, rhs) {
         (BlockExit::Jump { arg }, BlockExit::Jump { arg: arg_other }) => {
             is_equiv_arg(arg, arg_other, map)
@@ -312,7 +316,7 @@ fn is_equiv_block_exit(lhs: &BlockExit, rhs: &BlockExit, map: &HashMap<BlockId, 
     }
 }
 
-fn is_equiv_arg(lhs: &JumpArg, rhs: &JumpArg, map: &HashMap<BlockId, BlockId>) -> bool {
+fn is_equiv_arg(lhs: &JumpArg, rhs: &JumpArg, map: &FxHashMap<BlockId, BlockId>) -> bool {
     if map.get(&lhs.bid) != Some(&rhs.bid) {
         return false;
     }
@@ -345,7 +349,7 @@ impl IsEquiv for FunctionDefinition {
         let preorder_other = traverse_preorder(&other.blocks, other.bid_init);
         assert_eq!(preorder.len(), preorder_other.len());
 
-        let mut map = HashMap::new();
+        let mut map = FxHashMap::default();
         for (f, t) in izip!(&preorder, &preorder_other) {
             let _ = map.insert(*f, *t);
         }

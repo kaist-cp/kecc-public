@@ -1,0 +1,20 @@
+# Rusts default hash function is not very fast because it also aims to defend
+# against HashDoS attacks, however in a compiler this is not a concern.
+#
+# For reference, please see:
+# - <https://nnethercote.github.io/perf-book/hashing.html>
+# - <https://nnethercote.github.io/2021/12/08/a-brutally-effective-hash-function-in-rust.html>
+#
+# While KECC's internal use of HashSet and HashMap is not a major performance concern, using
+# the default hasher in your own compiler can have a major impact on performance.
+# Because students can not add crates to their code, the rustc-hash crate was added and use of
+# its FxHashMap and FxHashSet instead of the standard libraries std::collections::{ HashSet, HashMap }
+# is highly advised.
+#
+# Due to how FxHashSet and FxHashMap are defined as type aliases, you will not be able to
+# use `HashSet::new` or `HashMap::new`, instead use `FxHashSet::default` and `FxHashMap::default`.
+#
+disallowed-types = [
+  { path = "std::collections::HashSet", replacement = "rustc_hash::FxHashSet", reason = "Please use the faster replacement, for details, see clippy.toml" },
+  { path = "std::collections::HashMap", replacement = "rustc_hash::FxHashMap", reason = "Please use the faster replacement, for details, see clippy.toml" },
+]

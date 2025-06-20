@@ -1,7 +1,7 @@
-use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 
 use itertools::izip;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::ir::*;
 use crate::opt::opt_utils::*;

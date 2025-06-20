@@ -1,8 +1,8 @@
 use core::ops::Deref;
-use std::collections::HashMap;
 
 use itertools::izip;
 use lang_c::ast;
+use rustc_hash::FxHashMap;
 
 use crate::ir::*;
 use crate::opt::opt_utils::*;

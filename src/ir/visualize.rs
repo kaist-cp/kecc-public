@@ -1,17 +1,16 @@
 //! Visualize IR.
 
-use std::collections::HashMap;
-
 use crate::Translate;
 use crate::ir::*;
+use rustc_hash::FxHashMap;
 
 #[derive(Default, Debug)]
 pub struct Visualizer {
     /// First instruction in the function.
-    function_first_instruction: HashMap<String, String>,
+    function_first_instruction: FxHashMap<String, String>,
 
     /// First instruction in the block.
-    block_first_instruction: HashMap<(String, BlockId), String>,
+    block_first_instruction: FxHashMap<(String, BlockId), String>,
 }
 
 impl Translate<TranslationUnit> for Visualizer {

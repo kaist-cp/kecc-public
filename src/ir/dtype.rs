@@ -1,10 +1,10 @@
 use core::convert::TryFrom;
 use core::fmt;
-use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
 use lang_c::ast;
 use lang_c::span::Node;
+use rustc_hash::{FxHashMap, FxHashSet};
 use thiserror::Error;
 
 use crate::ir::*;
@@ -390,7 +390,7 @@ impl TryFrom<BaseDtype> for Dtype {
             };
 
             if let Some(fields) = &fields {
-                let mut field_names = HashSet::new();
+                let mut field_names = FxHashSet::default();
                 if !check_no_duplicate_field(fields, &mut field_names) {
                     return Err(DtypeError::Misc {
                         message: "struct has duplicate field name".to_string(),
@@ -648,7 +648,7 @@ impl Dtype {
 
     pub fn fill_size_align_offsets_of_struct(
         self,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<Self, DtypeError> {
         if let Self::Struct {
             name,
@@ -834,7 +834,7 @@ impl Dtype {
 
     #[inline]
     /// Check if `Dtype` is constant. if it is constant, the variable of `Dtype` is not assignable.
-    pub fn is_immutable(&self, structs: &HashMap<String, Option<Dtype>>) -> bool {
+    pub fn is_immutable(&self, structs: &FxHashMap<String, Option<Dtype>>) -> bool {
         match self {
             Self::Unit { is_const }
             | Self::Int { is_const, .. }
@@ -874,7 +874,7 @@ impl Dtype {
 
     fn is_immutable_for_array_struct_field_inner(
         &self,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> bool {
         if let Self::Array { inner, .. } = self {
             inner.is_immutable_for_array_struct_field_inner(structs)
@@ -915,7 +915,7 @@ impl Dtype {
 
     pub fn size_align_of(
         &self,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<(usize, usize), DtypeError> {
         match self {
             Self::Unit { .. } => Ok((0, 1)),
@@ -961,7 +961,7 @@ impl Dtype {
     pub fn get_offset_struct_field(
         &self,
         field_name: &str,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Option<(usize, Self)> {
         if let Self::Struct { name, .. } = self {
             let struct_name = name.as_ref().expect("`self` must have its name");
@@ -1173,7 +1173,7 @@ impl Dtype {
         Ok(Self::array(self, value as usize))
     }
 
-    pub fn resolve_typedefs(self, typedefs: &HashMap<String, Dtype>) -> Result<Self, DtypeError> {
+    pub fn resolve_typedefs(self, typedefs: &FxHashMap<String, Dtype>) -> Result<Self, DtypeError> {
         let dtype = match self {
             Self::Unit { .. } | Self::Int { .. } | Self::Float { .. } => self,
             Self::Pointer { inner, is_const } => {
@@ -1238,7 +1238,7 @@ impl Dtype {
     /// and transformed to a struct type with no definition.
     pub fn resolve_structs(
         self,
-        structs: &mut HashMap<String, Option<Dtype>>,
+        structs: &mut FxHashMap<String, Option<Dtype>>,
         tempid_counter: &mut usize,
     ) -> Result<Self, DtypeError> {
         let dtype = match self {
@@ -1403,7 +1403,7 @@ impl Default for Dtype {
 }
 
 #[inline]
-fn check_no_duplicate_field(fields: &[Named<Dtype>], field_names: &mut HashSet<String>) -> bool {
+fn check_no_duplicate_field(fields: &[Named<Dtype>], field_names: &mut FxHashSet<String>) -> bool {
     for field in fields {
         if let Some(name) = field.name() {
             if !field_names.insert(name.clone()) {

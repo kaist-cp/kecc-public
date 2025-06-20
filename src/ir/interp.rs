@@ -1,7 +1,7 @@
 use core::{fmt, iter, mem};
-use std::collections::HashMap;
 
 use ordered_float::OrderedFloat;
+use rustc_hash::FxHashMap;
 use thiserror::Error;
 
 use crate::ir::*;
@@ -172,7 +172,7 @@ impl Value {
     #[inline]
     fn default_from_dtype(
         dtype: &Dtype,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<Self, ()> {
         let value = match dtype {
             Dtype::Unit { .. } => Self::unit(),
@@ -220,7 +220,7 @@ impl Value {
     pub fn try_from_initializer(
         initializer: &ast::Initializer,
         dtype: &Dtype,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<Self, ()> {
         match initializer {
             ast::Initializer::Expression(expr) => match dtype {
@@ -333,7 +333,7 @@ impl Pc {
 
 #[derive(Default, Debug, PartialEq, Clone)]
 struct RegisterMap {
-    inner: HashMap<RegisterId, Value>,
+    inner: FxHashMap<RegisterId, Value>,
 }
 
 impl RegisterMap {
@@ -355,12 +355,12 @@ struct GlobalMap {
     ///
     /// Since IR treats global variables as `Constant::GlobalVariable`, the interpreter should be
     /// able to generate pointer values by inferring `bid` from the `name` of the global variable.
-    var_to_bid: HashMap<String, usize>,
+    var_to_bid: FxHashMap<String, usize>,
     /// Map the memory box id to the name of a global variable
     ///
     /// When a function call occurs, the interpreter should be able to find `name` of the function
     /// from `bid` of the `callee` which is a function pointer.
-    bid_to_var: HashMap<usize, String>,
+    bid_to_var: FxHashMap<usize, String>,
 }
 
 impl GlobalMap {
@@ -846,7 +846,7 @@ impl Byte {
         }
     }
 
-    fn block_from_dtype(dtype: &Dtype, structs: &HashMap<String, Option<Dtype>>) -> Vec<Self> {
+    fn block_from_dtype(dtype: &Dtype, structs: &FxHashMap<String, Option<Dtype>>) -> Vec<Self> {
         let size = dtype.size_align_of(structs).unwrap().0;
         iter::repeat_n(Self::Undef, size).collect()
     }
@@ -875,7 +875,7 @@ impl Byte {
     fn bytes_to_value<'b, I>(
         bytes: &mut I,
         dtype: &Dtype,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<Value, InterpreterError>
     where
         I: Iterator<Item = &'b Self>,
@@ -994,7 +994,7 @@ impl Byte {
         }
     }
 
-    fn value_to_bytes(value: &Value, structs: &HashMap<String, Option<Dtype>>) -> Vec<Self> {
+    fn value_to_bytes(value: &Value, structs: &FxHashMap<String, Option<Dtype>>) -> Vec<Self> {
         match value {
             Value::Undef { dtype } => Self::block_from_dtype(dtype, structs),
             Value::Unit => Vec::new(),
@@ -1070,7 +1070,7 @@ impl Memory {
     fn alloc(
         &mut self,
         dtype: &Dtype,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<usize, InterpreterError> {
         let bid = self.inner.len();
         self.inner
@@ -1083,7 +1083,7 @@ impl Memory {
         bid: usize,
         offset: isize,
         dtype: &Dtype,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<(), InterpreterError> {
         let block = &mut self.inner[bid];
         assert_eq!(offset, 0);
@@ -1100,7 +1100,7 @@ impl Memory {
         bid: usize,
         offset: isize,
         dtype: &Dtype,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<Value, InterpreterError> {
         let size = dtype.size_align_of(structs).unwrap().0;
         let end = offset as usize + size;
@@ -1119,7 +1119,7 @@ impl Memory {
         bid: usize,
         offset: isize,
         value: &Value,
-        structs: &HashMap<String, Option<Dtype>>,
+        structs: &FxHashMap<String, Option<Dtype>>,
     ) -> Result<(), ()> {
         let size = value.dtype().size_align_of(structs).unwrap().0;
         let end = offset as usize + size;

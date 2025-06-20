@@ -1,6 +1,7 @@
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 
 use lang_c::ast;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::ir::HasDtype;
 use crate::opt::opt_utils;

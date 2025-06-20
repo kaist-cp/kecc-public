@@ -10,7 +10,7 @@ mod write_ir;
 use core::convert::TryFrom;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 
 pub use dtype::{Dtype, DtypeError, HasDtype};
@@ -20,12 +20,13 @@ use itertools::Itertools;
 use lang_c::ast;
 use ordered_float::OrderedFloat;
 pub use parse::Parse;
+use rustc_hash::FxHashMap;
 pub use visualize::Visualizer;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TranslationUnit {
     pub decls: BTreeMap<String, Declaration>,
-    pub structs: HashMap<String, Option<Dtype>>,
+    pub structs: FxHashMap<String, Option<Dtype>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

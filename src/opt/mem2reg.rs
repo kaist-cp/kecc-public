@@ -1,5 +1,7 @@
 use core::ops::{Deref, DerefMut};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::BTreeMap;
+
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::ir::*;
 use crate::opt::opt_utils::*;

@@ -21,7 +21,7 @@ peg::parser! {
                     let name = named_struct.name.as_ref().unwrap();
                     let struct_type = &named_struct.inner;
                     (name.clone(), struct_type.clone())
-                }).collect::<HashMap<_,_>>();
+                }).collect::<FxHashMap<_,_>>();
 
                 // Resolve struct type in structs
                 // TODO: This is needed?
@@ -681,7 +681,7 @@ impl<P: AsRef<Path>> Translate<P> for Parse {
 }
 
 #[inline]
-fn resolve_structs(struct_type: Dtype, structs: &mut HashMap<String, Option<Dtype>>) {
+fn resolve_structs(struct_type: Dtype, structs: &mut FxHashMap<String, Option<Dtype>>) {
     let name = struct_type
         .get_struct_name()
         .expect("`struct_type` must be struct type")
